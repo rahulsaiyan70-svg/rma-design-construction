@@ -106,6 +106,8 @@ section{padding:78px 0}
 .error{background:#fdecec;color:var(--red)}
 .info{background:#eef4ff;color:var(--blue)}
 .hidden{display:none!important}
+.auth-shell{max-width:520px;margin:35px auto}.auth-tabs{display:flex;gap:8px;margin-bottom:18px}.auth-tab{flex:1;padding:12px;border:1px solid var(--line);background:#fff;border-radius:7px;font-weight:800}.auth-tab.active{background:var(--navy);color:#fff}.portal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:20px}.portal-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px}.portal-card h3{margin-bottom:8px}.doc-list{display:grid;gap:10px;margin-top:12px}.doc-item{border:1px solid var(--line);padding:12px;border-radius:8px;display:flex;justify-content:space-between;gap:12px;align-items:center}.auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}.role-badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#eef4ff;color:var(--blue);font-size:12px;font-weight:800}@media(max-width:800px){.portal-grid{grid-template-columns:1fr}}
+
 .site-layout{display:grid;grid-template-columns:1fr 420px;gap:25px;align-items:start}
 .map-card{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .map-head{background:var(--navy);color:#fff;padding:18px}
@@ -115,6 +117,7 @@ section{padding:78px 0}
 .toolrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .toolrow button{border:1px solid var(--line);background:#f5f7f9;border-radius:6px;padding:10px;font-weight:800}
 #map{height:490px}
+#visitMap{height:490px;min-height:490px;cursor:crosshair}
 .google-map-box{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}.google-map-box iframe{display:block;width:100%;height:320px;border:0}.location-data{padding:16px}
 .location-data label{display:block;font-size:12px;color:var(--muted);font-weight:800}
 .location-data input{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;margin:4px 0 10px;background:#fafbfc}
@@ -163,6 +166,7 @@ section{padding:78px 0}
       <li><button onclick="showPage('sitevisit')">Book a Site Visit</button></li>
       <li><button onclick="showPage('about')">About</button></li>
       <li><button onclick="showPage('contact')">Contact</button></li>
+      <li><button onclick="showPage('signin')" id="signinNavBtn">Sign In</button></li>
     </ul>
     <button class="menu" onclick="toggleMenu()">☰</button>
   </div>
@@ -353,18 +357,15 @@ section{padding:78px 0}
           <div class="line"><span>Discount</span><strong id="serviceDiscount">₹0</strong></div>
           <div class="line"><span>Taxable Subtotal</span><strong id="serviceSubtotal">₹0</strong></div>
           <div class="line"><span>GST 18%</span><strong id="serviceGST">₹0</strong></div>
-          <div class="line"><span>Automatic Discount</span><strong id="autoDiscountLabel">5%</strong></div>
+          <div class="line"><span>10% Discount</span><strong id="autoDiscountLabel">10%</strong></div>
           <div class="group" style="margin-top:12px">
-            <label style="color:#fff">Automatic Discount</label>
-            <select id="autoDiscount" onchange="updateServicePrice()">
-              <option value="5">5% automatic discount</option>
-              <option value="10">10% automatic discount</option>
-            </select>
+            <label style="color:#fff">10% Discount</label>
+            <div class="notice info" style="margin:0">A 10% discount is automatically applied to eligible services.</div>
           </div>
           <div class="group" style="margin-top:10px">
-            <label style="color:#fff">Special Discount Code</label>
-            <div style="display:flex;gap:8px"><input id="discountCode" placeholder="e.g. RMA20" style="flex:1"><button type="button" class="btn gold" onclick="applyDiscountCode()">Apply</button></div>
-            <small id="discountMessage" style="display:block;margin-top:6px;color:#cbd5df">RMA10 = 10% • RMA15 = 15% • RMA20 = 20% • RMA10SPECIAL = 10% • RMA20SPECIAL = 20%</small>
+            <label style="color:#fff">Special Discount</label>
+            <div style="display:flex;gap:8px"><input id="discountCode" placeholder="Enter special discount code" style="flex:1"><button type="button" class="btn gold" onclick="applyDiscountCode()">Apply</button></div>
+            <small id="discountMessage" style="display:block;margin-top:6px;color:#cbd5df">Special discount codes may provide an additional 5% or 10% discount.</small>
           </div>
           <div class="line total"><span>Total</span><span id="serviceTotal">₹0</span></div>
         </aside>
@@ -434,7 +435,7 @@ section{padding:78px 0}
             </div>
             <div class="group"><label>Construction Site / Plot Address</label><textarea id="c_address2" placeholder="Enter project location / address"></textarea></div>
             <div class="group"><label>Construction Requirements</label><textarea id="c_other2" placeholder="Structure, masonry, plaster, flooring, electrical, plumbing, finishing, timeline or other requirements"></textarea></div>
-            <div class="group"><label>Special Discount Code</label><input id="c_discount2" placeholder="Optional — RMA10 / RMA15 / RMA20 / RMA10SPECIAL / RMA20SPECIAL" oninput="updateConstructionPrice()"></div>
+            <div class="group"><label>Special Discount Code</label><input id="c_discount2" placeholder="Optional special discount code" oninput="updateConstructionPrice()"></div>
             <div id="constructionMessage" class="notice hidden"></div>
             <button type="submit" class="btn dark full">Submit Construction Request</button>
           </form>
@@ -535,6 +536,35 @@ section{padding:78px 0}
   </section>
 </main>
 
+<!-- SIGN IN / PORTAL -->
+<main id="page-signin" class="page">
+  <section class="page-head"><div class="container"><h1 id="authPageTitle">Sign In</h1><p>Secure access for RMA clients, staff and administration.</p></div></section>
+  <section id="authLoginSection">
+    <div class="container auth-shell">
+      <div class="form-panel">
+        <div class="auth-tabs"><button class="auth-tab active" id="clientTab" onclick="setAuthRole('client')">Client</button><button class="auth-tab" id="staffTab" onclick="setAuthRole('staff')">Staff / Admin</button></div>
+        <div class="form-note">Sign in with the email and password issued for your RMA account.</div>
+        <div class="group"><label>Email</label><input id="authEmail" type="email" placeholder="Enter your email"></div>
+        <div class="group"><label>Password</label><input id="authPassword" type="password" placeholder="Enter your password"></div>
+        <div class="auth-actions"><button class="btn dark" onclick="signInUser()">Sign In</button><button class="btn outline" onclick="resetPassword()">Forgot Password?</button></div>
+        <div id="authMessage" class="notice hidden"></div>
+      </div>
+    </div>
+  </section>
+  <section id="clientPortal" class="hidden"><div class="container">
+    <div class="backrow"><button onclick="signOutUser()">← Sign Out</button></div>
+    <div class="heading"><span class="kicker">CLIENT PORTAL</span><h2 id="portalWelcome">My Projects</h2><p>Your projects, drawings, payments and documents in one place.</p></div>
+    <div class="portal-grid"><div class="portal-card"><h3>My Projects</h3><div id="portalProjects" class="muted">Loading projects...</div></div><div class="portal-card"><h3>Payments</h3><div id="portalPayments" class="muted">Payment information will appear here.</div></div><div class="portal-card"><h3>Project Status</h3><div id="portalStatus" class="muted">Status information will appear here.</div></div></div>
+    <div class="form-panel" style="margin-top:20px"><h2>Documents & Drawings</h2><p class="form-note">Your approved drawings and project documents uploaded by RMA will appear here.</p><div id="portalDocuments" class="doc-list"><div class="muted">Loading documents...</div></div></div>
+  </div></section>
+  <section id="staffPortal" class="hidden"><div class="container">
+    <div class="backrow"><button onclick="signOutUser()">← Sign Out</button></div>
+    <div class="heading"><span class="kicker">RMA STAFF / ADMIN</span><h2 id="staffWelcome">Dashboard</h2><p>Authorized staff and administrators can access RMA management functions here.</p></div>
+    <div class="portal-grid"><div class="portal-card"><h3>Bookings</h3><p class="muted">Manage service and site-visit bookings.</p></div><div class="portal-card"><h3>Projects</h3><p class="muted">Manage client projects and project status.</p></div><div class="portal-card"><h3>Documents</h3><p class="muted">Upload drawings, estimates, BOQs, invoices and other project documents.</p></div></div>
+    <div class="notice info">The dashboard is role-protected. Admin/staff access is determined from the authenticated RMA profile.</div>
+  </div></section>
+</main>
+
 <!-- ABOUT -->
 <main id="page-about" class="page">
   <section class="profile">
@@ -559,7 +589,7 @@ section{padding:78px 0}
     <div class="container">
       <div class="info-grid">
         <div class="panel"><h3>Professional Services</h3><ul><li>Architectural Planning</li><li>Structural Design</li><li>Municipality / Approval Drawings</li><li>Estimation & BOQ</li><li>Survey / Plotting</li><li>Construction Services</li></ul></div>
-        <div class="panel"><h3>Online</h3><p>Instagram: <b>@arch_rahulbhatti</b></p><p>YouTube: <b>@rmadnc</b></p><p style="margin-top:12px">Use the Service Enquiry page for design/construction requests and Book a Site Visit for location-based consultation.</p></div>
+        <div class="panel"><h3>Contact</h3><p>Email: <a href="mailto:RMA.studies07@gmail.com">RMA.studies07@gmail.com</a></p><p>Phone: <a href="tel:+919622121692">+91 96221 21692</a></p><p>Instagram: <b>@arch_rahulbhatti</b></p><p>YouTube: <b>@rmadnc</b></p><p style="margin-top:12px">Use the Service Enquiry page for design/construction requests and Book a Site Visit for location-based consultation.</p></div>
       </div>
     </div>
   </section>
@@ -569,7 +599,7 @@ section{padding:78px 0}
   <div class="container footergrid">
     <div><h3>RMA Design & Construction</h3><p>Architectural Planning • Structural Design • Construction • Consultancy</p><p>Jammu & Kashmir, India</p></div>
     <div><h3>Services</h3><p>Architectural Planning</p><p>Structural Design</p><p>Municipality Approval</p><p>Estimation & BOQ</p><p>Survey / Plotting</p></div>
-    <div><h3>Contact</h3><p>Instagram: @arch_rahulbhatti</p><p>YouTube: @rmadnc</p></div>
+    <div><h3>Contact</h3><p>Email: <a href="mailto:RMA.studies07@gmail.com">RMA.studies07@gmail.com</a></p><p>Phone: <a href="tel:+919622121692">+91 96221 21692</a></p><p>Instagram: @arch_rahulbhatti</p><p>YouTube: @rmadnc</p></div>
   </div>
   <div class="container footbottom">© 2026 RMA Design & Construction. All Rights Reserved.</div>
 </footer>
@@ -608,6 +638,71 @@ let serviceLocation = {lat:RMA_LAT,lng:RMA_LNG};
 let visitLocation = {lat:RMA_LAT,lng:RMA_LNG};
 let visitDistance = 0;
 
+let authRole='client';
+function setAuthRole(role){
+  authRole=role;
+  document.getElementById('clientTab')?.classList.toggle('active',role==='client');
+  document.getElementById('staffTab')?.classList.toggle('active',role==='staff');
+}
+function authMsg(text,type='error'){
+  const el=document.getElementById('authMessage'); if(!el)return;
+  el.textContent=text; el.className='notice '+type;
+}
+async function signInUser(){
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  if(!email||!password){authMsg('Please enter your email and password.');return;}
+  authMsg('Signing in...','info');
+  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error){authMsg(error.message||'Sign in failed.');return;}
+  await loadSignedInPortal(data.user);
+}
+async function loadSignedInPortal(user){
+  document.getElementById('authLoginSection')?.classList.add('hidden');
+  document.getElementById('clientPortal')?.classList.add('hidden');
+  document.getElementById('staffPortal')?.classList.add('hidden');
+  let role='client', profile=null;
+  try{
+    const r=await supabaseClient.from('profiles').select('*').eq('id',user.id).maybeSingle();
+    if(!r.error) profile=r.data;
+    role=(profile?.role||'client').toLowerCase();
+  }catch(e){}
+  if(role==='admin'||role==='staff'||role==='employee'){
+    document.getElementById('staffPortal')?.classList.remove('hidden');
+    document.getElementById('staffWelcome').textContent='Welcome, '+(profile?.full_name||'RMA Team');
+  }else{
+    document.getElementById('clientPortal')?.classList.remove('hidden');
+    document.getElementById('portalWelcome').textContent='Welcome, '+(profile?.full_name||user.email||'Client');
+    await loadClientPortal(user);
+  }
+  document.getElementById('signinNavBtn').textContent='Account';
+}
+async function loadClientPortal(user){
+  const projects=document.getElementById('portalProjects');
+  const docs=document.getElementById('portalDocuments');
+  try{
+    let projectRows=[];
+    let q=await supabaseClient.from('projects').select('*').eq('client_user_id',user.id).order('created_at',{ascending:false});
+    if(q.error){q=await supabaseClient.from('projects').select('*').eq('client_id',user.id).order('created_at',{ascending:false});}
+    if(!q.error && q.data) projectRows=q.data;
+    if(!projectRows.length){projects.innerHTML='<span class="muted">No projects have been linked to this account yet.</span>';}
+    else{projects.innerHTML=projectRows.map((p,i)=>`<div class="doc-item"><div><strong>${p.project_name||p.name||('Project '+(i+1))}</strong><div class="muted">${p.status||'Project status pending'}</div></div><span class="role-badge">${p.status||'Active'}</span></div>`).join('');}
+    let d=await supabaseClient.from('project_documents').select('*').eq('client_user_id',user.id).order('created_at',{ascending:false});
+    if(d.error){d=await supabaseClient.from('project_documents').select('*').order('created_at',{ascending:false}).limit(50);}
+    const rows=d.data||[];
+    if(!rows.length) docs.innerHTML='<div class="muted">No documents have been uploaded yet.</div>';
+    else docs.innerHTML=rows.map(x=>`<div class="doc-item"><div><strong>${x.title||x.document_name||'Project Document'}</strong><div class="muted">${x.document_type||x.category||''}</div></div>${x.file_url||x.public_url?`<a class="btn dark" href="${x.file_url||x.public_url}" target="_blank" rel="noopener">Open</a>`:'<span class="muted">Available in portal</span>'}</div>`).join('');
+  }catch(e){projects.innerHTML='<span class="muted">Your client account is ready. Projects will appear after RMA links them to this account.</span>';docs.innerHTML='<div class="muted">Documents will appear here after RMA uploads them to your project.</div>';}
+}
+async function resetPassword(){
+  const email=document.getElementById('authEmail').value.trim();
+  if(!email){authMsg('Enter your email first.');return;}
+  const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
+  authMsg(error?error.message:'Password reset instructions have been sent to your email.','info');
+}
+async function signOutUser(){await supabaseClient.auth.signOut();document.getElementById('authLoginSection')?.classList.remove('hidden');document.getElementById('clientPortal')?.classList.add('hidden');document.getElementById('staffPortal')?.classList.add('hidden');document.getElementById('signinNavBtn').textContent='Sign In';showPage('signin');}
+async function checkExistingSession(){try{const {data}=await supabaseClient.auth.getSession();if(data?.session?.user) await loadSignedInPortal(data.session.user);}catch(e){}}
+
 /* ---------- pages ---------- */
 function showPage(name){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
@@ -622,8 +717,9 @@ function showPage(name){
     setTimeout(()=>updateConstructionPrice(),50);
   }
   if(name==="sitevisit"){
-    setTimeout(()=>{ if(visitMap) visitMap.invalidateSize(); },100);
+    setTimeout(()=>{ if(visitMap){ visitMap.invalidateSize(); visitMarker?.openPopup(); } },150);
   }
+  if(name==="signin"){ setTimeout(()=>checkExistingSession(),80); }
 }
 function toggleMenu(){
   const n=document.getElementById("navlinks");
@@ -742,17 +838,19 @@ function updateServicePrice(){
     subtotal+=v; lines.push(["Survey / Plotting",v,area>1?"> 1 kanal":"Up to 1 kanal"]);
   }
 
-  const auto=Number(document.getElementById("autoDiscount")?.value||5);
-  const code=(document.getElementById("discountCode")?.value||"").trim().toUpperCase();
-  const codeMap={RMA10:10,RMA15:15,RMA20:20,RMA10SPECIAL:10,RMA20SPECIAL:20};
-  const codePct=codeMap[code]||0;
-  const discountPct=codePct||auto;
-  const discount=subtotal*discountPct/100;
-  const discountedSubtotal=Math.max(0,subtotal-discount);
+  const autoPct=10;
+  const code=(document.getElementById("discountCode")?.value||"").trim().toUpperCase().replace(/\s+/g, " ");
+  const codeMap={"RMA SPECIAL 5":5,"RMASPECIAL5":5,"RMA SPECIAL 10":10,"RMASPECIAL10":10};
+  const specialPct=codeMap[code]||0;
+  const autoDiscount=subtotal*autoPct/100;
+  const afterAuto=Math.max(0,subtotal-autoDiscount);
+  const specialDiscount=afterAuto*specialPct/100;
+  const totalDiscount=autoDiscount+specialDiscount;
+  const discountedSubtotal=Math.max(0,subtotal-totalDiscount);
   const gst=discountedSubtotal*0.18;
   const total=discountedSubtotal+gst;
-  const ad=document.getElementById("autoDiscountLabel"); if(ad) ad.textContent=codePct?"Special code "+codePct+"%":auto+"%";
-  const dm=document.getElementById("discountMessage"); if(dm) dm.textContent=codePct?code+" applied — "+codePct+"% special discount.":"Automatic discount applied. Use a special code to override it.";
+  const ad=document.getElementById("autoDiscountLabel"); if(ad) ad.textContent="10%";
+  const dm=document.getElementById("discountMessage"); if(dm) dm.textContent=specialPct?"10% discount applied + additional "+specialPct+"% special discount.":"10% discount applied. A special code can add an extra 5% or 10%.";
   const holder=document.getElementById("selectedServiceLines");
   if(!lines.length){
     holder.innerHTML='<div style="color:#cbd5df">Select a service to see its price.</div>';
@@ -764,7 +862,7 @@ function updateServicePrice(){
   }
   document.getElementById("serviceBaseSubtotal").textContent=money(subtotal);
   document.getElementById("serviceSubtotal").textContent=money(discountedSubtotal);
-  document.getElementById("serviceDiscount").textContent=money(discount);
+  document.getElementById("serviceDiscount").textContent=money(totalDiscount);
   document.getElementById("serviceGST").textContent=money(gst);
   document.getElementById("serviceTotal").textContent=money(total);
 }
@@ -785,8 +883,8 @@ function constructionLabourTotal(type, area, floors){
   return total;
 }
 function getConstructionDiscount(){
-  const code=(document.getElementById("c_discount2")?.value||"").trim().toUpperCase();
-  const map={RMA10:10,RMA15:15,RMA20:20,RMA10SPECIAL:10,RMA20SPECIAL:20};
+  const code=(document.getElementById("c_discount2")?.value||"").trim().toUpperCase().replace(/\s+/g, " ");
+  const map={"RMA SPECIAL 5":5,"RMASPECIAL5":5,"RMA SPECIAL 10":10,"RMASPECIAL10":10};
   return {code,pct:map[code]||0};
 }
 function updateConstructionPrice(){
@@ -809,18 +907,21 @@ function updateConstructionPrice(){
     else { base=labour; rateText=floors===1?"₹300/sq.ft.":"₹300 ground + ₹350/floor above"; note="Residential labour-only calculation: Ground ₹300/sq.ft.; First/Second ₹350/sq.ft."; }
   }
   const d=getConstructionDiscount();
-  const discount=base*d.pct/100;
-  const taxable=base-discount;
+  const autoDiscount=base*0.10;
+  const afterAuto=Math.max(0,base-autoDiscount);
+  const specialDiscount=afterAuto*d.pct/100;
+  const discount=autoDiscount+specialDiscount;
+  const taxable=Math.max(0,base-discount);
   const gst=taxable*0.18;
   const total=taxable+gst;
   document.getElementById("c_summaryType").textContent=type;
   document.getElementById("c_summaryArea").textContent=totalArea.toLocaleString("en-IN")+" sq.ft.";
   document.getElementById("c_summaryRate").textContent=rateText;
   document.getElementById("c_summaryBase").textContent=money(base);
-  document.getElementById("c_summaryDiscount").textContent=d.pct?money(discount)+" ("+d.pct+"%)":"₹0";
+  document.getElementById("c_summaryDiscount").textContent=money(discount)+" (10% discount"+(d.pct?" + "+d.pct+"% special":"")+")";
   document.getElementById("c_summaryGST").textContent=money(gst);
   document.getElementById("c_summaryTotal").textContent=money(total);
-  document.getElementById("c_summaryNote").textContent=note+(d.pct?" "+d.code+" applied.":"");
+  document.getElementById("c_summaryNote").textContent=note+(d.pct?" Special discount applied.":" 10% discount applied.");
 }
 document.getElementById("constructionForm")?.addEventListener("submit",function(e){
   e.preventDefault();
@@ -893,12 +994,14 @@ function createMaps(){
   serviceMarker=L.marker([RMA_LAT,RMA_LNG],{draggable:true}).addTo(serviceMap);
   serviceMap.on("click",e=>{serviceMarker.setLatLng(e.latlng);serviceLocation={lat:e.latlng.lat,lng:e.latlng.lng};});
 
-  visitMap=L.map("visitMap").setView([RMA_LAT,RMA_LNG],10);
+  visitMap=L.map("visitMap").setView([RMA_LAT,RMA_LNG],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap contributors"}).addTo(visitMap);
-  visitMarker=L.marker([RMA_LAT,RMA_LNG],{draggable:true}).addTo(visitMap);
+  visitMarker=L.marker([RMA_LAT,RMA_LNG],{draggable:true,title:"Drag this pin to the project location"}).addTo(visitMap);
+  visitMarker.bindPopup("<b>Project Location</b><br>Drag this pin to the project site, or tap anywhere on the map.").openPopup();
   visitMarker.on("dragend",()=>{const p=visitMarker.getLatLng();setVisitLocation(p.lat,p.lng)});
   visitMap.on("click",e=>{visitMarker.setLatLng(e.latlng);setVisitLocation(e.latlng.lat,e.latlng.lng)});
-  setVisitLocation(RMA_LAT,RMA_LNG);
+  visitDistance=0;
+  updateVisitPrice();
 }
 async function reverseGeo(lat,lng){
   try{
@@ -1007,6 +1110,8 @@ function toast(text){
 createMaps();
 renderFloorRequirements();
 updateServicePrice();
+
+checkExistingSession();
 </script>
 </body>
 </html>
