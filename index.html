@@ -1,257 +1,314 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RMA Design & Construction</title>
 
 <style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,Helvetica,sans-serif;
+:root{
+  --navy:#0f172a;
+  --blue:#1d4ed8;
+  --gold:#d4a72c;
+  --light:#f8fafc;
+  --border:#e2e8f0;
+  --text:#172033;
+  --muted:#64748b;
+  --green:#15803d
 }
 
+*{box-sizing:border-box}
+
 body{
-  background:#f4f7fb;
-  color:#172033;
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--text);
+  background:#f4f6f8;
+  line-height:1.5
 }
 
 header{
-  background:linear-gradient(135deg,#0b4f9c,#1478d4);
-  color:white;
-  padding:22px 18px;
+  background:var(--navy);
+  color:#fff;
   position:sticky;
   top:0;
-  z-index:100;
-  box-shadow:0 3px 12px #0002;
+  z-index:10;
+  box-shadow:0 2px 12px #0002
 }
 
-.header-inner{
-  max-width:1100px;
+.nav{
+  max-width:1150px;
   margin:auto;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
+  padding:14px 18px
 }
 
-.logo{
-  font-size:22px;
-  font-weight:bold;
+.brand{
+  font-weight:800;
+  letter-spacing:.5px
 }
 
-.logo small{
+.brand small{
   display:block;
   font-size:11px;
-  margin-top:4px;
-  opacity:.9;
+  letter-spacing:2px;
+  color:#cbd5e1
 }
 
-.menu{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
+nav a{
+  color:#fff;
+  text-decoration:none;
+  margin-left:18px;
+  font-size:14px;
+  cursor:pointer
 }
 
-.menu button{
-  background:#ffffff22;
-  color:white;
-  border:1px solid #ffffff55;
-  border-radius:8px;
-  padding:9px 12px;
-  cursor:pointer;
-}
-
-.container{
-  max-width:1100px;
-  margin:auto;
-  padding:25px 16px 60px;
+nav a:hover{
+  color:#f5c84b
 }
 
 .hero{
-  background:white;
-  border-radius:18px;
-  padding:35px 25px;
-  margin-bottom:22px;
-  box-shadow:0 4px 18px #0000000d;
+  background:linear-gradient(135deg,#0f172a,#1e293b);
+  color:#fff;
+  padding:70px 18px
+}
+
+.wrap{
+  max-width:1150px;
+  margin:auto
 }
 
 .hero h1{
-  font-size:34px;
-  color:#0b4f9c;
-  margin-bottom:12px;
+  font-size:44px;
+  line-height:1.05;
+  margin:0 0 14px
 }
 
 .hero p{
-  color:#596579;
-  line-height:1.6;
-  margin-bottom:20px;
+  max-width:700px;
+  color:#cbd5e1;
+  font-size:18px
 }
 
-.primary{
-  background:#0b63ce;
-  color:white;
+.btn{
   border:0;
-  border-radius:10px;
-  padding:14px 22px;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.secondary{
-  background:#eef5ff;
-  color:#0754a0;
-  border:1px solid #c9ddf7;
-  border-radius:10px;
+  border-radius:9px;
   padding:12px 18px;
+  font-weight:700;
   cursor:pointer;
-  font-weight:bold;
+  background:var(--blue);
+  color:#fff
 }
 
-.section-title{
-  margin:25px 0 15px;
-  color:#17365f;
+.btn.gold{
+  background:var(--gold);
+  color:#111827
 }
 
-.cards{
+.btn.secondary{
+  background:#e2e8f0;
+  color:#0f172a
+}
+
+section{
+  padding:48px 18px
+}
+
+.title{
+  font-size:30px;
+  margin:0 0 10px
+}
+
+.subtitle{
+  color:var(--muted);
+  margin:0 0 25px
+}
+
+.grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-  gap:15px;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px
 }
 
 .card{
-  background:white;
+  background:#fff;
+  border:1px solid var(--border);
   border-radius:14px;
   padding:20px;
-  box-shadow:0 3px 15px #0000000b;
-  border:1px solid #e5ebf3;
-}
-
-.card .icon{
-  font-size:30px;
-  margin-bottom:10px;
+  box-shadow:0 4px 18px #0000000a
 }
 
 .card h3{
-  color:#124f91;
-  margin-bottom:7px;
+  margin-top:0
 }
 
-.card p{
-  color:#657184;
-  font-size:14px;
-  line-height:1.5;
+.icon{
+  font-size:28px
 }
 
-.form-box{
-  background:white;
-  border-radius:16px;
-  padding:22px;
-  box-shadow:0 4px 18px #0000000d;
-  max-width:750px;
+.formbox{
+  max-width:850px;
   margin:auto;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:24px;
+  box-shadow:0 5px 24px #0000000c
 }
 
-.form-box h2{
-  color:#0b4f9c;
-  margin-bottom:20px;
+.formgrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px
+}
+
+.full{
+  grid-column:1/-1
 }
 
 label{
+  font-weight:700;
+  font-size:13px;
   display:block;
-  font-weight:bold;
-  margin:14px 0 6px;
+  margin-bottom:6px
 }
 
 input,select,textarea{
   width:100%;
-  padding:12px;
-  border:1px solid #cdd6e3;
+  padding:11px 12px;
+  border:1px solid #cbd5e1;
   border-radius:8px;
-  font-size:15px;
-  background:white;
+  font:inherit;
+  background:#fff
 }
 
 textarea{
-  min-height:90px;
-  resize:vertical;
+  min-height:100px;
+  resize:vertical
 }
 
-.row{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-}
-
-.price-box{
-  background:#f1f7ff;
-  border:1px solid #c8def8;
-  border-radius:12px;
-  padding:18px;
-  margin:20px 0;
-}
-
-.price-line{
+.locrow{
   display:flex;
-  justify-content:space-between;
-  padding:6px 0;
+  gap:10px;
+  align-items:center
 }
 
-.total{
-  border-top:2px solid #c8def8;
-  margin-top:8px;
-  padding-top:12px;
-  font-size:20px;
-  font-weight:bold;
-  color:#0754a0;
+.locrow input{
+  flex:1
 }
 
 .notice{
-  padding:14px;
+  padding:12px;
   border-radius:9px;
-  background:#fff7df;
-  border:1px solid #f0d37a;
-  color:#755800;
-  margin:15px 0;
+  background:#f1f5f9;
+  margin-top:10px;
+  color:#334155;
+  font-size:14px
+}
+
+.price{
+  background:#f8fafc;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  margin-top:18px
+}
+
+.price div{
+  display:flex;
+  justify-content:space-between;
+  padding:5px 0
+}
+
+.price .total{
+  font-size:20px;
+  font-weight:800;
+  border-top:1px solid var(--border);
+  margin-top:6px;
+  padding-top:10px
 }
 
 .success{
-  background:#eaf8ef;
-  border:1px solid #a9ddb8;
-  color:#176b31;
+  display:none;
+  background:#ecfdf5;
+  border:1px solid #86efac;
+  color:#166534;
   padding:18px;
-  border-radius:10px;
-  margin-top:20px;
+  border-radius:12px;
+  margin-top:18px
 }
 
-.hidden{
-  display:none;
+.success h3{
+  margin:0 0 4px
 }
 
 footer{
-  background:#102a43;
-  color:white;
-  text-align:center;
-  padding:25px;
-  margin-top:40px;
-  line-height:1.7;
+  background:#0b1120;
+  color:#cbd5e1;
+  padding:30px 18px;
+  margin-top:20px
 }
 
-@media(max-width:650px){
-  .header-inner{
-    flex-direction:column;
-    gap:12px;
-    align-items:flex-start;
+.footergrid{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr;
+  gap:25px
+}
+
+.staffbox{
+  max-width:500px;
+  margin:auto
+}
+
+.hidden{
+  display:none
+}
+
+@media(max-width:800px){
+
+  .grid{
+    grid-template-columns:1fr 1fr
   }
 
   .hero h1{
-    font-size:27px;
+    font-size:36px
   }
 
-  .row{
-    grid-template-columns:1fr;
+  .formgrid{
+    grid-template-columns:1fr
+  }
+
+  .full{
+    grid-column:auto
+  }
+
+  .footergrid{
+    grid-template-columns:1fr
+  }
+
+  nav a{
+    margin-left:8px;
+    font-size:12px
+  }
+}
+
+@media(max-width:520px){
+
+  .grid{
+    grid-template-columns:1fr
+  }
+
+  .nav{
+    align-items:flex-start;
+    gap:10px
+  }
+
+  .nav nav{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end
   }
 }
 </style>
@@ -260,365 +317,781 @@ footer{
 <body>
 
 <header>
-  <div class="header-inner">
-    <div class="logo">
+
+  <div class="nav">
+
+    <div class="brand">
       RMA DESIGN & CONSTRUCTION
-      <small>Engineering • Architecture • Construction</small>
+      <small>ARCHITECTURE • STRUCTURE • CONSTRUCTION</small>
     </div>
 
-    <div class="menu">
-      <button onclick="showPage('home')">Home</button>
-      <button onclick="showPage('services')">Services</button>
-      <button onclick="showPage('booking')">Site Visit</button>
-      <button onclick="showPage('staff')">Staff</button>
-    </div>
+    <nav>
+      <a onclick="showSection('home')">Home</a>
+      <a onclick="showSection('services')">Services</a>
+      <a onclick="showSection('visit')">Site Visit</a>
+      <a onclick="showSection('staff')">Staff</a>
+    </nav>
+
   </div>
+
 </header>
 
-<div class="container">
 
-<!-- HOME -->
-<section id="home">
+<main>
 
-  <div class="hero">
-    <h1>Build Your Vision With RMA</h1>
+<section id="home" class="hero">
+
+  <div class="wrap">
+
+    <h1>
+      Design. Structure.<br>
+      Build with confidence.
+    </h1>
 
     <p>
       Professional architectural planning, structural design,
-      construction and site consultation services.
+      construction and approval drawing services by RMA Design & Construction.
     </p>
 
-    <button class="primary" onclick="showPage('booking')">
-      📍 Book a Site Visit
+    <button class="btn gold" onclick="showSection('visit')">
+      Book a Site Visit
     </button>
-  </div>
-
-  <h2 class="section-title">Our Services</h2>
-
-  <div class="cards">
-
-    <div class="card">
-      <div class="icon">📐</div>
-      <h3>Architectural Planning</h3>
-      <p>Residential and commercial building planning.</p>
-    </div>
-
-    <div class="card">
-      <div class="icon">🏗️</div>
-      <h3>Structural Design</h3>
-      <p>RCC structural design and engineering solutions.</p>
-    </div>
-
-    <div class="card">
-      <div class="icon">🏠</div>
-      <h3>House Planning</h3>
-      <p>Modern, practical and customized house plans.</p>
-    </div>
-
-    <div class="card">
-      <div class="icon">🏢</div>
-      <h3>Commercial Buildings</h3>
-      <p>Planning and design for commercial projects.</p>
-    </div>
-
-    <div class="card">
-      <div class="icon">👷</div>
-      <h3>Construction</h3>
-      <p>Construction planning and project execution.</p>
-    </div>
-
-    <div class="card">
-      <div class="icon">📋</div>
-      <h3>Municipality Drawings</h3>
-      <p>Approval drawings and building documentation.</p>
-    </div>
-
-    <div class="card">
-      <div class="icon">📍</div>
-      <h3>Site Consultation</h3>
-      <p>Professional site inspection and consultation.</p>
-    </div>
-
-    <div class="card">
-      <div class="icon">📊</div>
-      <h3>BOQ & Estimation</h3>
-      <p>Quantity estimation and project costing.</p>
-    </div>
 
   </div>
 
 </section>
 
 
-<!-- SERVICES -->
-<section id="services" class="hidden">
+<section id="services">
 
-  <div class="form-box">
+  <div class="wrap">
 
-    <h2>Our Services</h2>
+    <h2 class="title">Our Services</h2>
 
-    <div class="cards">
+    <p class="subtitle">
+      Complete support from planning to construction.
+    </p>
+
+    <div class="grid">
 
       <div class="card">
+        <div class="icon">📐</div>
         <h3>Architectural Planning</h3>
-        <p>Complete floor plans and building planning.</p>
+        <p>House and building planning with practical layouts.</p>
       </div>
 
       <div class="card">
+        <div class="icon">🏗️</div>
         <h3>Structural Design</h3>
-        <p>RCC framing, foundation and structural drawings.</p>
+        <p>RCC structural design and engineering solutions.</p>
       </div>
 
       <div class="card">
-        <h3>Construction</h3>
-        <p>Turnkey and labour construction services.</p>
+        <div class="icon">🏠</div>
+        <h3>House Planning</h3>
+        <p>Residential planning for new construction and renovation.</p>
       </div>
 
       <div class="card">
-        <h3>Approval Drawings</h3>
-        <p>Municipality and authority submission drawings.</p>
+        <div class="icon">🏢</div>
+        <h3>Commercial Design</h3>
+        <p>Planning for commercial and institutional buildings.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">👷</div>
+        <h3>Construction Services</h3>
+        <p>Construction execution and project support.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">📄</div>
+        <h3>Municipality / Approval</h3>
+        <p>Approval-ready drawings and documentation.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">📍</div>
+        <h3>Site Consultation</h3>
+        <p>Professional site assessment and consultation.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">🧮</div>
+        <h3>Quantity / BOQ</h3>
+        <p>Quantity estimation, costing and BOQ preparation.</p>
       </div>
 
     </div>
-
-    <br>
-
-    <button class="primary" onclick="showPage('booking')">
-      Book Site Consultation
-    </button>
 
   </div>
 
 </section>
 
 
-<!-- BOOKING -->
-<section id="booking" class="hidden">
+<section id="visit">
 
-  <div class="form-box">
+  <div class="wrap">
 
-    <h2>📍 Book a Site Visit</h2>
+    <h2 class="title">Book a Site Visit</h2>
 
-    <label>Client Name</label>
-    <input id="name" placeholder="Enter your name">
+    <p class="subtitle">
+      Submit your project details. The visit fee is calculated
+      from the road/travel distance entered below.
+    </p>
 
-    <label>Mobile Number</label>
-    <input id="mobile" type="tel" placeholder="Enter mobile number">
 
-    <label>Email / WhatsApp</label>
-    <input id="email" placeholder="Optional">
+    <div class="formbox">
 
-    <label>Project Address</label>
-    <textarea id="address" placeholder="Enter complete project address"></textarea>
+      <form id="bookingForm">
 
-    <label>Building Type</label>
-    <select id="building">
-      <option>Residential House</option>
-      <option>Commercial Building</option>
-      <option>School / Institution</option>
-      <option>Industrial Building</option>
-      <option>Other</option>
-    </select>
+        <div class="formgrid">
 
-    <div class="row">
+          <div>
+            <label>Full Name *</label>
+            <input id="clientName" required>
+          </div>
 
-      <div>
-        <label>Plot Size</label>
-        <input id="plot" placeholder="Example: 40 x 60 ft">
-      </div>
+          <div>
+            <label>Mobile Number *</label>
+            <input id="mobile" required inputmode="tel">
+          </div>
 
-      <div>
-        <label>Number of Floors</label>
-        <input id="floors" placeholder="Example: G+2">
-      </div>
+          <div>
+            <label>Email</label>
+            <input id="email" type="email">
+          </div>
+
+
+          <div class="full">
+
+            <label>Project Address *</label>
+
+            <textarea
+              id="projectAddress"
+              required
+              placeholder="Full project address / landmark">
+            </textarea>
+
+          </div>
+
+
+          <div class="full">
+
+            <label>Project Location</label>
+
+            <div class="locrow">
+
+              <input
+                id="coordinates"
+                placeholder="Use current location or leave blank">
+
+              <button
+                type="button"
+                class="btn secondary"
+                onclick="getLocation()">
+
+                📍 Use My Location
+
+              </button>
+
+            </div>
+
+            <div id="locationStatus" class="notice">
+
+              GPS will record your location.
+              Road distance is entered below.
+
+            </div>
+
+          </div>
+
+
+          <div>
+
+            <label>Road / Travel Distance (km) *</label>
+
+            <input
+              id="distanceKm"
+              type="number"
+              min="0"
+              step="0.1"
+              required
+              oninput="calculateFee()">
+
+          </div>
+
+
+          <div>
+
+            <label>Building Type *</label>
+
+            <select id="buildingType" required>
+
+              <option value="">Select</option>
+
+              <option>Residential House</option>
+              <option>Duplex</option>
+              <option>Commercial Building</option>
+              <option>School / Institutional</option>
+              <option>Renovation</option>
+              <option>Other</option>
+
+            </select>
+
+          </div>
+
+
+          <div>
+
+            <label>Plot Size</label>
+
+            <input
+              id="plotSize"
+              placeholder="e.g. 40 x 60 ft">
+
+          </div>
+
+
+          <div>
+
+            <label>Built-up Area (sq.ft.)</label>
+
+            <input
+              id="builtUpArea"
+              type="number"
+              min="0"
+              step="1">
+
+          </div>
+
+
+          <div>
+
+            <label>Number of Floors</label>
+
+            <select id="floors">
+
+              <option value="">Select</option>
+              <option>Ground</option>
+              <option>G+1</option>
+              <option>G+2</option>
+              <option>G+3</option>
+              <option>Other</option>
+
+            </select>
+
+          </div>
+
+
+          <div>
+
+            <label>Project Stage</label>
+
+            <select id="stage">
+
+              <option>New Construction</option>
+              <option>Existing / Renovation</option>
+              <option>Under Construction</option>
+
+            </select>
+
+          </div>
+
+
+          <div>
+
+            <label>Preferred Date</label>
+
+            <input
+              id="preferredDate"
+              type="date">
+
+          </div>
+
+
+          <div>
+
+            <label>Preferred Time</label>
+
+            <input
+              id="preferredTime"
+              type="time">
+
+          </div>
+
+
+          <div class="full">
+
+            <label>Requirement / Message</label>
+
+            <textarea
+              id="requirement"
+              placeholder="Tell us what you need: planning, structure, approval, construction, etc.">
+            </textarea>
+
+          </div>
+
+        </div>
+
+
+        <div id="priceBox" class="price">
+
+          <div>
+            <span>Professional / Site Visit Fee</span>
+            <strong id="feeText">₹0</strong>
+          </div>
+
+          <div>
+            <span>GST (18%)</span>
+            <strong id="gstText">₹0</strong>
+          </div>
+
+          <div class="total">
+            <span>Total</span>
+            <strong id="totalText">₹0</strong>
+          </div>
+
+          <div
+            id="specialText"
+            class="notice hidden">
+          </div>
+
+        </div>
+
+
+        <div style="margin-top:18px">
+
+          <label>Payment Method</label>
+
+          <select id="paymentMethod">
+
+            <option value="online">
+              Online Payment
+            </option>
+
+            <option value="cash">
+              Cash (staff visit / office)
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div style="margin-top:20px">
+
+          <button
+            class="btn"
+            type="submit"
+            id="submitBtn">
+
+            Submit Site Visit Request
+
+          </button>
+
+        </div>
+
+
+        <div
+          id="formMessage"
+          class="notice hidden">
+        </div>
+
+
+        <div id="success" class="success">
+
+          <h3>✓ Request Submitted</h3>
+
+          <div>
+            Thank you for choosing RMA Design & Construction.
+          </div>
+
+          <div style="margin-top:8px">
+
+            Request ID:
+            <strong id="requestId"></strong>
+
+          </div>
+
+          <div style="margin-top:5px">
+
+            We will contact you to confirm
+            the visit and payment.
+
+          </div>
+
+        </div>
+
+      </form>
 
     </div>
-
-    <label>Requirement</label>
-    <textarea id="requirement"
-      placeholder="Tell us what you require"></textarea>
-
-    <label>Travel Distance</label>
-
-    <div class="row">
-
-      <div>
-        <input id="distance"
-          type="number"
-          min="0"
-          step="0.1"
-          placeholder="Road distance in km">
-      </div>
-
-      <div>
-        <button class="secondary"
-          style="width:100%"
-          onclick="getLocation()">
-          📍 Use Current Location
-        </button>
-      </div>
-
-    </div>
-
-    <div id="locationStatus" class="notice hidden"></div>
-
-    <button class="primary"
-      style="width:100%;margin-top:20px"
-      onclick="calculateFee()">
-      CALCULATE SITE VISIT FEE
-    </button>
-
-    <div id="priceBox" class="price-box hidden">
-
-      <div class="price-line">
-        <span>Professional Fee</span>
-        <strong id="fee">₹0</strong>
-      </div>
-
-      <div class="price-line">
-        <span>GST (18%)</span>
-        <strong id="gst">₹0</strong>
-      </div>
-
-      <div class="price-line total">
-        <span>Total</span>
-        <strong id="total">₹0</strong>
-      </div>
-
-      <div id="specialNotice"></div>
-
-    </div>
-
-    <label>Payment Method</label>
-
-    <select id="payment">
-      <option>Online Payment</option>
-      <option>Cash to Staff</option>
-    </select>
-
-    <button class="primary"
-      style="width:100%;margin-top:18px"
-      onclick="submitBooking()">
-      SUBMIT SITE VISIT REQUEST
-    </button>
-
-    <div id="bookingResult"></div>
 
   </div>
 
 </section>
 
 
-<!-- STAFF -->
-<section id="staff" class="hidden">
+<section id="staff">
 
-  <div class="form-box">
+  <div class="wrap">
 
-    <h2>👷 Staff Login</h2>
+    <h2 class="title">Staff</h2>
 
-    <label>Staff ID</label>
-    <input id="staffId" placeholder="Enter Staff ID">
+    <p class="subtitle">
+      Staff login will be connected to Supabase Auth in the next stage.
+    </p>
 
-    <label>Password</label>
-    <input id="staffPassword"
-      type="password"
-      placeholder="Enter password">
+    <div class="formbox staffbox">
 
-    <button class="primary"
-      style="width:100%;margin-top:18px"
-      onclick="staffLogin()">
-      LOGIN
-    </button>
+      <label>Staff ID</label>
 
-    <div id="staffResult"></div>
+      <input
+        id="staffId"
+        placeholder="Staff ID">
+
+
+      <label style="margin-top:12px">
+        Password
+      </label>
+
+      <input
+        id="staffPassword"
+        type="password"
+        placeholder="Password">
+
+
+      <button
+        class="btn"
+        style="margin-top:18px"
+        onclick="staffLogin()">
+
+        Staff Login
+
+      </button>
+
+
+      <div
+        id="staffMessage"
+        class="notice hidden">
+      </div>
+
+    </div>
 
   </div>
 
 </section>
 
-</div>
+</main>
 
 
 <footer>
 
-  <strong>RMA DESIGN & CONSTRUCTION</strong><br>
+  <div class="wrap footergrid">
 
-  Engineering • Architecture • Construction<br>
+    <div>
 
-  Jammu & Kashmir, India<br><br>
+      <strong style="color:#fff">
+        RMA Design & Construction
+      </strong>
 
-  Professional site consultation and construction services
+      <br>
+
+      Architecture • Structure • Construction
+
+      <br>
+
+      Jammu, J&K
+
+    </div>
+
+
+    <div>
+
+      <strong style="color:#fff">
+        Services
+      </strong>
+
+      <br>
+
+      Planning
+
+      <br>
+
+      Structural Design
+
+      <br>
+
+      Construction
+
+    </div>
+
+
+    <div>
+
+      <strong style="color:#fff">
+        Contact
+      </strong>
+
+      <br>
+
+      Site Visits
+
+      <br>
+
+      Municipality / Approval Drawings
+
+      <br>
+
+      Quantity / BOQ
+
+    </div>
+
+  </div>
 
 </footer>
 
 
+<!-- SUPABASE -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
 <script>
 
-function showPage(page){
+/* ============================================================
+   IMPORTANT:
+   REPLACE ONLY THESE TWO VALUES
+   ============================================================ */
 
-  const pages = [
-    "home",
-    "services",
-    "booking",
-    "staff"
-  ];
+const SUPABASE_URL = 'https://llcyedxmixehxuxefjjg.supabase.co';
 
-  pages.forEach(function(p){
-    document.getElementById(p).classList.add("hidden");
-  });
+const SUPABASE_PUBLISHABLE_KEY =
+'sb_publishable_-6zKr0W51pX_FAYPxid6cA_Lr7YUKKv';
 
-  document.getElementById(page).classList.remove("hidden");
 
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
+const supabaseClient =
+window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+
+/* ============================================================
+   RMA PRICING
+   ============================================================ */
+
+const PRICING = [
+
+  {max:10, fee:1500},
+
+  {max:15, fee:2000},
+
+  {max:20, fee:2500},
+
+  {max:25, fee:3500},
+
+  {max:35, fee:5000},
+
+  {max:50, fee:7500},
+
+  {max:Infinity, fee:10000}
+
+];
+
+
+let currentFee = 0;
+
+let currentPricingType = 'standard';
+
+let specialRateNote = '';
+
+
+function money(n){
+
+  return '₹' +
+    Number(n || 0).toLocaleString(
+      'en-IN',
+      {maximumFractionDigits:0}
+    );
+
 }
 
 
-/* CURRENT LOCATION */
+/* ============================================================
+   CALCULATE FEE
+   ============================================================ */
+
+function calculateFee(){
+
+  const d =
+    parseFloat(
+      document.getElementById('distanceKm').value
+    );
+
+
+  if(!Number.isFinite(d) || d < 0){
+
+    currentFee = 0;
+
+    currentPricingType = 'standard';
+
+    specialRateNote = '';
+
+  }
+
+  else{
+
+    const slab =
+      PRICING.find(
+        x => d <= x.max
+      );
+
+
+    currentFee =
+      slab ? slab.fee : 10000;
+
+
+    currentPricingType =
+      d > 50 ? 'special' : 'standard';
+
+
+    specialRateNote =
+      d > 50
+
+      ? 'Special Visit Charges. Special rates will be charged on a per-day basis, plus applicable travel, accommodation and food expenses. 18% GST will be charged separately. Final charges will be confirmed before booking.'
+
+      : '';
+
+  }
+
+
+  const gst =
+    currentFee * 0.18;
+
+
+  const total =
+    currentFee + gst;
+
+
+  document.getElementById('feeText')
+    .textContent = money(currentFee);
+
+
+  document.getElementById('gstText')
+    .textContent = money(gst);
+
+
+  document.getElementById('totalText')
+    .textContent = money(total);
+
+
+  const s =
+    document.getElementById('specialText');
+
+
+  s.textContent =
+    specialRateNote;
+
+
+  s.classList.toggle(
+    'hidden',
+    !specialRateNote
+  );
+
+}
+
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+function showSection(id){
+
+  ['home','services','visit','staff']
+  .forEach(x => {
+
+    const el =
+      document.getElementById(x);
+
+    el.style.display =
+      x === id ? '' : 'none';
+
+  });
+
+
+  window.scrollTo({
+    top:0,
+    behavior:'smooth'
+  });
+
+}
+
+
+showSection('home');
+
+
+/* ============================================================
+   GPS LOCATION
+   ============================================================ */
 
 function getLocation(){
 
   const status =
-    document.getElementById("locationStatus");
+    document.getElementById(
+      'locationStatus'
+    );
 
-  status.classList.remove("hidden");
 
   if(!navigator.geolocation){
 
-    status.innerHTML =
-      "Location is not supported by this browser.";
+    status.textContent =
+      'GPS is not supported by this browser.';
 
     return;
+
   }
 
-  status.innerHTML =
-    "Getting your current location...";
+
+  status.textContent =
+    'Getting your current location…';
+
 
   navigator.geolocation.getCurrentPosition(
 
-    function(position){
+    p => {
 
       const lat =
-        position.coords.latitude;
+        p.coords.latitude.toFixed(6);
 
       const lon =
-        position.coords.longitude;
+        p.coords.longitude.toFixed(6);
 
-      status.innerHTML =
-        "📍 Location captured successfully.<br>" +
-        "Latitude: " + lat.toFixed(6) +
-        "<br>Longitude: " + lon.toFixed(6) +
-        "<br><small>Road distance still needs to be entered or connected to a routing service.</small>";
+
+      document.getElementById(
+        'coordinates'
+      ).value =
+        lat + ', ' + lon;
+
+
+      status.textContent =
+        'Current location captured successfully. Please enter the road/travel distance in km.';
 
     },
 
-    function(){
 
-      status.innerHTML =
-        "Unable to get location. Please allow location permission.";
+    e => {
 
+      status.textContent =
+        'Could not get your location. Please allow location permission and try again.';
+
+    },
+
+
+    {
+      enableHighAccuracy:true,
+      timeout:15000,
+      maximumAge:0
     }
 
   );
@@ -626,177 +1099,461 @@ function getLocation(){
 }
 
 
-/* SITE VISIT PRICING */
+/* ============================================================
+   MESSAGE
+   ============================================================ */
 
-function calculateFee(){
+function setMessage(text,good=false){
 
-  const distance =
-    parseFloat(document.getElementById("distance").value);
-
-  if(isNaN(distance) || distance < 0){
-
-    alert("Please enter the road distance in kilometres.");
-
-    return;
-  }
-
-  let fee = 0;
-  let special = "";
-
-  if(distance <= 10){
-
-    fee = 1500;
-
-  }else if(distance <= 15){
-
-    fee = 2000;
-
-  }else if(distance <= 20){
-
-    fee = 2500;
-
-  }else if(distance <= 25){
-
-    fee = 3500;
-
-  }else if(distance <= 35){
-
-    fee = 5000;
-
-  }else if(distance <= 50){
-
-    fee = 7500;
-
-  }else{
-
-    fee = 10000;
-
-    special =
-      "<div class='notice'>" +
-      "Distances above 50 km are subject to special confirmation. " +
-      "Additional travel expenses may apply." +
-      "</div>";
-
-  }
-
-  const gst =
-    fee * 0.18;
-
-  const total =
-    fee + gst;
-
-  document.getElementById("fee").innerText =
-    "₹" + fee.toLocaleString("en-IN");
-
-  document.getElementById("gst").innerText =
-    "₹" + gst.toLocaleString("en-IN");
-
-  document.getElementById("total").innerText =
-    "₹" + total.toLocaleString("en-IN");
-
-  document.getElementById("specialNotice").innerHTML =
-    special;
-
-  document.getElementById("priceBox")
-    .classList.remove("hidden");
-
-}
-
-
-/* BOOKING */
-
-function submitBooking(){
-
-  const name =
-    document.getElementById("name").value.trim();
-
-  const mobile =
-    document.getElementById("mobile").value.trim();
-
-  const address =
-    document.getElementById("address").value.trim();
-
-  const distance =
-    document.getElementById("distance").value;
-
-  if(!name || !mobile || !address || !distance){
-
-    alert(
-      "Please enter your name, mobile number, project address and distance."
+  const el =
+    document.getElementById(
+      'formMessage'
     );
 
-    return;
-  }
 
-  const requestId =
-    "RMA-" +
-    new Date().getFullYear() +
-    "-" +
-    Math.floor(100000 + Math.random()*900000);
+  el.textContent = text;
 
-  const result =
-    document.getElementById("bookingResult");
+  el.classList.remove('hidden');
 
-  result.innerHTML =
 
-    "<div class='success'>" +
+  el.style.background =
+    good ? '#ecfdf5' : '#f1f5f9';
 
-    "<h3>✅ Request Submitted</h3><br>" +
 
-    "<strong>Request ID:</strong> " +
-    requestId +
-
-    "<br><strong>Client:</strong> " +
-    name +
-
-    "<br><strong>Mobile:</strong> " +
-    mobile +
-
-    "<br><strong>Distance:</strong> " +
-    distance + " km" +
-
-    "<br><br>" +
-
-    "Your site visit request has been recorded in this browser." +
-
-    "<br><br>" +
-
-    "<small>Online payment and live database will be connected in the next version.</small>" +
-
-    "</div>";
+  el.style.color =
+    good ? '#166534' : '#334155';
 
 }
 
 
-/* STAFF LOGIN - DEMO */
+/* ============================================================
+   REQUEST ID
+   ============================================================ */
+
+function makeRequestId(){
+
+  const d =
+    new Date();
+
+
+  const stamp =
+    d.getFullYear().toString() +
+
+    String(
+      d.getMonth()+1
+    ).padStart(2,'0') +
+
+    String(
+      d.getDate()
+    ).padStart(2,'0') +
+
+    String(
+      d.getHours()
+    ).padStart(2,'0') +
+
+    String(
+      d.getMinutes()
+    ).padStart(2,'0') +
+
+    String(
+      d.getSeconds()
+    ).padStart(2,'0');
+
+
+  return 'RMA' + stamp;
+
+}
+
+
+/* ============================================================
+   READ GPS COORDINATES
+   ============================================================ */
+
+function parseCoordinates(){
+
+  const raw =
+    document.getElementById(
+      'coordinates'
+    ).value.trim();
+
+
+  const m =
+    raw.match(
+      /(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/
+    );
+
+
+  if(!m)
+
+    return {
+      lat:null,
+      lon:null
+    };
+
+
+  return {
+    lat:Number(m[1]),
+    lon:Number(m[2])
+  };
+
+}
+
+
+/* ============================================================
+   BOOKING SUBMISSION
+   ============================================================ */
+
+document
+  .getElementById('bookingForm')
+  .addEventListener(
+    'submit',
+    async (e) => {
+
+      e.preventDefault();
+
+
+      calculateFee();
+
+
+      if(
+
+        !SUPABASE_URL ||
+
+        SUPABASE_URL.includes(
+          'YOUR_'
+        ) ||
+
+        !SUPABASE_PUBLISHABLE_KEY ||
+
+        SUPABASE_PUBLISHABLE_KEY.includes(
+          'YOUR_'
+        )
+
+      ){
+
+        setMessage(
+          'The website is not connected to Supabase yet. Please paste the Project URL and Publishable Key into the two marked lines in index.html.'
+        );
+
+        return;
+
+      }
+
+
+      const btn =
+        document.getElementById(
+          'submitBtn'
+        );
+
+
+      btn.disabled = true;
+
+      btn.textContent =
+        'Submitting…';
+
+
+      setMessage(
+        'Saving your request…'
+      );
+
+
+      const d =
+        parseFloat(
+          document.getElementById(
+            'distanceKm'
+          ).value
+        );
+
+
+      const gst =
+        currentFee * 0.18;
+
+
+      const total =
+        currentFee + gst;
+
+
+      const coords =
+        parseCoordinates();
+
+
+      const requestId =
+        makeRequestId();
+
+
+      const booking = {
+
+        request_id:
+          requestId,
+
+
+        client_name:
+          document.getElementById(
+            'clientName'
+          ).value.trim(),
+
+
+        mobile:
+          document.getElementById(
+            'mobile'
+          ).value.trim(),
+
+
+        email:
+          document.getElementById(
+            'email'
+          ).value.trim() || null,
+
+
+        project_address:
+          document.getElementById(
+            'projectAddress'
+          ).value.trim(),
+
+
+        latitude:
+          coords.lat,
+
+
+        longitude:
+          coords.lon,
+
+
+        distance_km:
+          d,
+
+
+        distance_source:
+          'manual',
+
+
+        building_type:
+          document.getElementById(
+            'buildingType'
+          ).value,
+
+
+        plot_size:
+          document.getElementById(
+            'plotSize'
+          ).value.trim() || null,
+
+
+        built_up_area:
+
+          document.getElementById(
+            'builtUpArea'
+          ).value
+
+          ? Number(
+              document.getElementById(
+                'builtUpArea'
+              ).value
+            )
+
+          : null,
+
+
+        number_of_floors:
+          (() => {
+
+            const v =
+              document.getElementById(
+                'floors'
+              ).value;
+
+
+            if(v === 'Ground')
+              return 1;
+
+
+            if(v === 'G+1')
+              return 2;
+
+
+            if(v === 'G+2')
+              return 3;
+
+
+            if(v === 'G+3')
+              return 4;
+
+
+            const n =
+              parseInt(v,10);
+
+
+            return Number.isFinite(n)
+              ? n
+              : null;
+
+          })(),
+
+
+        project_stage:
+          document.getElementById(
+            'stage'
+          ).value,
+
+
+        requirement:
+          document.getElementById(
+            'requirement'
+          ).value.trim() || null,
+
+
+        preferred_date:
+          document.getElementById(
+            'preferredDate'
+          ).value || null,
+
+
+        preferred_time:
+          document.getElementById(
+            'preferredTime'
+          ).value || null,
+
+
+        professional_fee:
+          currentFee,
+
+
+        gst_percent:
+          18,
+
+
+        gst_amount:
+          gst,
+
+
+        total_amount:
+          total,
+
+
+        pricing_type:
+          currentPricingType,
+
+
+        payment_method:
+          document.getElementById(
+            'paymentMethod'
+          ).value,
+
+
+        payment_status:
+          'pending',
+
+
+        booking_status:
+          'pending',
+
+
+        special_rate_note:
+          specialRateNote || null
+
+      };
+
+
+      const {error} =
+        await supabaseClient
+          .from('bookings')
+          .insert(booking);
+
+
+      btn.disabled = false;
+
+      btn.textContent =
+        'Submit Site Visit Request';
+
+
+      if(error){
+
+        console.error(error);
+
+
+        setMessage(
+          'Booking could not be saved. Database message: ' +
+          error.message
+        );
+
+
+        return;
+
+      }
+
+
+      document.getElementById(
+        'requestId'
+      ).textContent =
+        requestId;
+
+
+      document.getElementById(
+        'success'
+      ).style.display =
+        'block';
+
+
+      setMessage(
+        'Request saved successfully.',
+        true
+      );
+
+
+      document.getElementById(
+        'success'
+      ).scrollIntoView({
+        behavior:'smooth',
+        block:'center'
+      });
+
+    }
+
+  );
+
+
+/* ============================================================
+   TEMPORARY STAFF LOGIN
+   ============================================================ */
 
 function staffLogin(){
 
   const id =
-    document.getElementById("staffId").value;
+    document.getElementById(
+      'staffId'
+    ).value.trim();
 
-  const password =
-    document.getElementById("staffPassword").value;
 
-  const result =
-    document.getElementById("staffResult");
+  const msg =
+    document.getElementById(
+      'staffMessage'
+    );
 
-  if(id === "staff" && password === "1234"){
 
-    result.innerHTML =
-      "<div class='success'>" +
-      "<h3>✅ Staff Login Successful</h3>" +
-      "<br>Welcome to RMA Staff Portal." +
-      "<br><br>" +
-      "Staff can later create bookings, collect cash and view their visit history." +
-      "</div>";
+  msg.classList.remove(
+    'hidden'
+  );
 
-  }else{
 
-    result.innerHTML =
-      "<div class='notice'>" +
-      "Invalid Staff ID or Password." +
-      "</div>";
+  if(
+
+    id === 'staff' &&
+
+    document.getElementById(
+      'staffPassword'
+    ).value === '1234'
+
+  ){
+
+    msg.textContent =
+      'Demo staff login accepted. Real Supabase staff authentication will be connected in the next stage.';
+
+  }
+
+  else{
+
+    msg.textContent =
+      'Demo login: Staff ID = staff, Password = 1234';
 
   }
 
