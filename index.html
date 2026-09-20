@@ -115,7 +115,7 @@ section{padding:78px 0}
 .toolrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .toolrow button{border:1px solid var(--line);background:#f5f7f9;border-radius:6px;padding:10px;font-weight:800}
 #map{height:490px}
-.location-data{padding:16px}
+.google-map-box{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}.google-map-box iframe{display:block;width:100%;height:320px;border:0}.location-data{padding:16px}
 .location-data label{display:block;font-size:12px;color:var(--muted);font-weight:800}
 .location-data input{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;margin:4px 0 10px;background:#fafbfc}
 .visit-price{background:var(--cream);border-radius:8px;padding:14px}
@@ -159,6 +159,7 @@ section{padding:78px 0}
     <ul class="navlinks" id="navlinks">
       <li><button onclick="showPage('home')">Home</button></li>
       <li><button onclick="showPage('services')">Services</button></li>
+      <li><button onclick="showPage('construction')">Construction</button></li>
       <li><button onclick="showPage('sitevisit')">Book a Site Visit</button></li>
       <li><button onclick="showPage('about')">About</button></li>
       <li><button onclick="showPage('contact')">Contact</button></li>
@@ -230,10 +231,10 @@ section{padding:78px 0}
       <div class="cards">
         <div class="card clickable" onclick="selectService('architectural')"><div class="icon">🏠</div><h3>Architectural Planning</h3><p>Floor plans, residential/commercial planning and detailed requirements.</p><div class="price">₹15,000 / floor • Duplex ₹20,000 plan</div></div>
         <div class="card clickable" onclick="selectService('structural')"><div class="icon">🏗️</div><h3>Structural Design</h3><p>RCC slab, beam, column and foundation design.</p><div class="price">₹5,000 / floor</div></div>
-        <div class="card clickable" onclick="selectService('municipality')"><div class="icon">📑</div><h3>Municipality / Approval</h3><p>Approval drawings and documentation.</p><div class="price">₹15,000 lump sum + GST</div></div>
+        <div class="card clickable" onclick="selectService('municipality')"><div class="icon">📑</div><h3>Municipality / Approval</h3><p>Approval drawings and documentation.</p><div class="price">₹15,000 / floor + GST</div></div>
         <div class="card clickable" onclick="selectService('estimation')"><div class="icon">💰</div><h3>Estimation & BOQ</h3><p>Quantity and construction cost estimation.</p><div class="price">₹3,000 ground + ₹5,000/additional floor</div></div>
         <div class="card clickable" onclick="selectService('survey')"><div class="icon">📍</div><h3>Survey / Plotting</h3><p>Plot survey and measurement services.</p><div class="price">₹5,000 up to 1 kanal</div></div>
-        <div class="card clickable" onclick="selectService('construction')"><div class="icon">👷</div><h3>Construction Services</h3><p>Labour or material-inclusive construction options.</p><div class="price">₹1,300 grey • ₹2,300–₹2,700 finishing</div></div>
+        <div class="card clickable" onclick="showPage('construction')"><div class="icon">👷</div><h3>Construction Services</h3><p>Separate construction quotation for material or labour-only work.</p><div class="price">Open Construction Form →</div></div>
       </div>
     </div>
   </section>
@@ -275,10 +276,10 @@ section{padding:78px 0}
               <div class="service-picks">
                 <label class="pick"><input type="checkbox" name="service" value="architectural" onchange="refreshServiceDetails()"> <span><b>Architectural Planning</b><br><small>₹15,000/floor; duplex plan ₹20,000</small></span></label>
                 <label class="pick"><input type="checkbox" name="service" value="structural" onchange="refreshServiceDetails()"> <span><b>Structural Design</b><br><small>₹5,000/floor</small></span></label>
-                <label class="pick"><input type="checkbox" name="service" value="municipality" onchange="refreshServiceDetails()"> <span><b>Municipality / Approval</b><br><small>₹15,000 lump sum</small></span></label>
+                <label class="pick"><input type="checkbox" name="service" value="municipality" onchange="refreshServiceDetails()"> <span><b>Municipality / Approval</b><br><small>₹15,000 per floor</small></span></label>
                 <label class="pick"><input type="checkbox" name="service" value="estimation" onchange="refreshServiceDetails()"> <span><b>Estimation & BOQ</b><br><small>₹3,000 + ₹5,000/additional floor</small></span></label>
                 <label class="pick"><input type="checkbox" name="service" value="survey" onchange="refreshServiceDetails()"> <span><b>Survey / Plotting</b><br><small>₹5,000 up to 1 kanal</small></span></label>
-                <label class="pick"><input type="checkbox" name="service" value="construction" onchange="refreshServiceDetails()"> <span><b>Construction Services</b><br><small>Material / labour options</small></span></label>
+                
               </div>
             </div>
 
@@ -294,7 +295,14 @@ section{padding:78px 0}
               </div>
               <div class="form-grid">
                 <div class="group"><label>Plumbing Drawing</label><select id="a_plumbing" onchange="updateServicePrice()"><option value="0">Not required</option><option value="2500">Required — ₹2,500</option></select></div>
-                <div class="group"><label>Front Elevation</label><select id="a_elevation" onchange="updateServicePrice()"><option value="0">Not required</option><option value="6000">Required — ₹6,000</option></select></div>
+                <div class="group"><label>Elevation</label>
+                  <select id="a_elevation" onchange="updateServicePrice()">
+                    <option value="0">Not required</option>
+                    <option value="6000">Front Elevation — ₹6,000</option>
+                    <option value="6000">Side Elevation — ₹6,000</option>
+                    <option value="12000">Front + Side Elevation — ₹12,000</option>
+                  </select>
+                </div>
               </div>
 
               <div class="subsection"><b>Floor-wise requirements</b><div id="floorRequirements"></div></div>
@@ -309,8 +317,8 @@ section{padding:78px 0}
 
             <div id="municipalityDetails" class="detail-box hidden">
               <h3>📑 Municipality / Approval Drawing</h3>
-              <p class="muted">Lump-sum approval drawing charge.</p>
-              <div class="notice info">₹15,000 + 18% GST. This is not a per-floor charge.</div>
+              <p class="muted">Municipality approval drawing charges are calculated per floor.</p>
+              <div class="notice info">₹15,000 per floor + 18% GST. Example: 2 floors = ₹30,000 before GST.</div>
             </div>
 
             <div id="estimationDetails" class="detail-box hidden">
@@ -328,31 +336,6 @@ section{padding:78px 0}
               <div class="notice info">Up to 1 kanal: ₹5,000. More than 1 kanal: approximately ₹10,000. Applicable site/travel charges may be added.</div>
             </div>
 
-            <div id="constructionDetails" class="detail-box hidden">
-              <h3>👷 Construction Services</h3>
-              <div class="group"><label>Construction Basis</label>
-                <select id="c_basis" onchange="updateServicePrice()">
-                  <option value="material">With Material</option>
-                  <option value="labour">Labour Only</option>
-                </select>
-              </div>
-              <div id="materialOptions">
-                <div class="group"><label>Construction Stage / Class</label>
-                  <select id="c_rate" onchange="updateServicePrice()">
-                    <option value="1300">Up to Grey Stage — ₹1,300/sq.ft.</option>
-                    <option value="2300">Finishing Stage — Class C — ₹2,300/sq.ft.</option>
-                    <option value="2500">Finishing Stage — Class B — ₹2,500/sq.ft.</option>
-                    <option value="2700">Finishing Stage — Class A — ₹2,700/sq.ft.</option>
-                  </select>
-                </div>
-                <div class="notice info">Construction area is calculated as <b>built-up area per floor × number of floors</b>. Enter the estimated built-up area above.</div>
-              </div>
-              <div id="labourOptions" class="hidden">
-                <div class="notice info">Labour-only construction is available. The labour rate will be confirmed according to the project scope, site conditions and construction stage.</div>
-              </div>
-              <div class="group" style="margin-top:12px"><label>Construction Requirements</label><textarea id="c_other" placeholder="Structure, masonry, plaster, flooring, electrical, plumbing, finishing or other requirements"></textarea></div>
-            </div>
-
             <div class="group">
               <label>Additional Message</label>
               <textarea id="s_message" placeholder="Anything else you want us to know?"></textarea>
@@ -366,10 +349,106 @@ section{padding:78px 0}
         <aside class="pricebox">
           <h3>Your Selected Services</h3>
           <div id="selectedServiceLines"><div class="muted" style="color:#cbd5df">Select a service to see its price.</div></div>
-          <div class="line"><span>Subtotal</span><strong id="serviceSubtotal">₹0</strong></div>
+          <div class="line"><span>Base Subtotal</span><strong id="serviceBaseSubtotal">₹0</strong></div>
+          <div class="line"><span>Discount</span><strong id="serviceDiscount">₹0</strong></div>
+          <div class="line"><span>Taxable Subtotal</span><strong id="serviceSubtotal">₹0</strong></div>
           <div class="line"><span>GST 18%</span><strong id="serviceGST">₹0</strong></div>
+          <div class="line"><span>Automatic Discount</span><strong id="autoDiscountLabel">5%</strong></div>
+          <div class="group" style="margin-top:12px">
+            <label style="color:#fff">Automatic Discount</label>
+            <select id="autoDiscount" onchange="updateServicePrice()">
+              <option value="5">5% automatic discount</option>
+              <option value="10">10% automatic discount</option>
+            </select>
+          </div>
+          <div class="group" style="margin-top:10px">
+            <label style="color:#fff">Special Discount Code</label>
+            <div style="display:flex;gap:8px"><input id="discountCode" placeholder="e.g. RMA20" style="flex:1"><button type="button" class="btn gold" onclick="applyDiscountCode()">Apply</button></div>
+            <small id="discountMessage" style="display:block;margin-top:6px;color:#cbd5df">RMA10 = 10% • RMA15 = 15% • RMA20 = 20% • RMA10SPECIAL = 10% • RMA20SPECIAL = 20%</small>
+          </div>
           <div class="line total"><span>Total</span><span id="serviceTotal">₹0</span></div>
-          <div id="constructionAreaNote" style="font-size:12px;color:#cbd5df;margin-top:10px"></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- CONSTRUCTION -->
+<main id="page-construction" class="page">
+  <div class="page-head">
+    <div class="container">
+      <div class="kicker">RMA CONSTRUCTION SERVICES</div>
+      <h1>Construction Quotation Form</h1>
+      <p>Material-inclusive and labour-only construction quotations are calculated separately from architectural and professional services.</p>
+    </div>
+  </div>
+  <section>
+    <div class="container">
+      <div class="form-layout">
+        <div class="form-panel">
+          <h2>Construction Requirements</h2>
+          <p class="form-note">This form is only for construction. Architectural planning, structural design, municipality approval, estimation/BOQ and survey/plotting are not included here.</p>
+          <form id="constructionForm">
+            <div class="form-grid">
+              <div class="group"><label>Full Name *</label><input id="c_name2" required placeholder="Client name"></div>
+              <div class="group"><label>Mobile Number *</label><input id="c_mobile2" required inputmode="numeric" placeholder="10-digit mobile number"></div>
+            </div>
+            <div class="group"><label>Email ID</label><input id="c_email2" type="email" placeholder="Email address"></div>
+            <div class="form-grid">
+              <div class="group"><label>Building Type *</label>
+                <select id="c_building2" required onchange="updateConstructionPrice()">
+                  <option value="Residential">Residential</option>
+                  <option value="Commercial">Commercial</option>
+                </select>
+              </div>
+              <div class="group"><label>Number of Floors *</label>
+                <select id="c_floors2" onchange="updateConstructionPrice()" required>
+                  <option value="1">Ground Floor</option>
+                  <option value="2">G+1 (Ground + First)</option>
+                  <option value="3">G+2 (Ground + First + Second)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="group"><label>Built-up Area per Floor (sq.ft.) *</label><input id="c_area2" type="number" min="1" step="1" required placeholder="Example: 1200" oninput="updateConstructionPrice()"></div>
+              <div class="group"><label>Construction Basis *</label>
+                <select id="c_basis2" onchange="updateConstructionPrice()">
+                  <option value="material">With Material</option>
+                  <option value="labour">Labour Only</option>
+                </select>
+              </div>
+            </div>
+            <div id="c_material2">
+              <div class="group"><label>Construction Stage / Class</label>
+                <select id="c_rate2" onchange="updateConstructionPrice()">
+                  <option value="grey">Grey Stage</option>
+                  <option value="C">Finishing Stage — Class C</option>
+                  <option value="B">Finishing Stage — Class B</option>
+                  <option value="A">Finishing Stage — Class A</option>
+                </select>
+              </div>
+              <div class="notice info">Residential rates: Grey ₹1,300/sq.ft.; Class C ₹2,300/sq.ft.; Class B ₹2,500/sq.ft.; Class A ₹2,700/sq.ft. Commercial rates: Grey ₹1,400/sq.ft.; Class C ₹2,400/sq.ft.; Class B ₹2,500/sq.ft.; Class A ₹2,700/sq.ft.</div>
+            </div>
+            <div id="c_labour2" class="hidden">
+              <div class="notice info">Labour-only rate: Residential Ground Floor ₹300/sq.ft.; First Floor ₹350/sq.ft.; Second Floor ₹350/sq.ft. Commercial labour-only rate is subject to project-specific quotation.</div>
+            </div>
+            <div class="group"><label>Construction Site / Plot Address</label><textarea id="c_address2" placeholder="Enter project location / address"></textarea></div>
+            <div class="group"><label>Construction Requirements</label><textarea id="c_other2" placeholder="Structure, masonry, plaster, flooring, electrical, plumbing, finishing, timeline or other requirements"></textarea></div>
+            <div class="group"><label>Special Discount Code</label><input id="c_discount2" placeholder="Optional — RMA10 / RMA15 / RMA20 / RMA10SPECIAL / RMA20SPECIAL" oninput="updateConstructionPrice()"></div>
+            <div id="constructionMessage" class="notice hidden"></div>
+            <button type="submit" class="btn dark full">Submit Construction Request</button>
+          </form>
+        </div>
+        <aside class="pricebox">
+          <h3>Construction Quotation</h3>
+          <div class="line"><span>Building Type</span><strong id="c_summaryType">Residential</strong></div>
+          <div class="line"><span>Total Construction Area</span><strong id="c_summaryArea">0 sq.ft.</strong></div>
+          <div class="line"><span>Rate</span><strong id="c_summaryRate">₹0/sq.ft.</strong></div>
+          <div class="line"><span>Base Amount</span><strong id="c_summaryBase">₹0</strong></div>
+          <div class="line"><span>Discount</span><strong id="c_summaryDiscount">₹0</strong></div>
+          <div class="line"><span>GST 18%</span><strong id="c_summaryGST">₹0</strong></div>
+          <div class="line total"><span>Total</span><span id="c_summaryTotal">₹0</span></div>
+          <div id="c_summaryNote" style="font-size:12px;color:#cbd5df;margin-top:10px"></div>
         </aside>
       </div>
     </div>
@@ -399,6 +478,7 @@ section{padding:78px 0}
             </div>
           </div>
           <div id="visitMap"></div>
+          <div class="google-map-box"><div class="map-head"><h3>🗺️ Google Maps</h3><p>The selected project location will appear here.</p></div><iframe id="googleMapFrame" title="Project location on Google Maps" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=32.7266,74.8570&z=12&output=embed"></iframe></div>
           <div class="location-data">
             <label>Project Address</label><input id="v_address" readonly>
             <label>Latitude</label><input id="v_lat" readonly>
@@ -538,6 +618,9 @@ function showPage(name){
   if(name==="services"){
     setTimeout(()=>refreshServiceDetails(),50);
   }
+  if(name==="construction"){
+    setTimeout(()=>updateConstructionPrice(),50);
+  }
   if(name==="sitevisit"){
     setTimeout(()=>{ if(visitMap) visitMap.invalidateSize(); },100);
   }
@@ -565,7 +648,7 @@ function selectedServiceKeys(){
 }
 function refreshServiceDetails(){
   const keys=selectedServiceKeys();
-  ["architectural","structural","municipality","estimation","survey","construction"].forEach(k=>{
+  ["architectural","structural","municipality","estimation","survey"].forEach(k=>{
     const box=document.getElementById(k+"Details");
     if(box) box.classList.toggle("hidden",!keys.includes(k));
   });
@@ -578,7 +661,7 @@ function renderFloorRequirements(){
   const floors=Number(document.getElementById("s_floors").value||1);
   let out="";
   for(let i=0;i<floors;i++){
-    const title=i===0 ? "Ground Floor" : "Floor "+i;
+    const title=i===0 ? "Ground Floor" : i===1 ? "First Floor" : i===2 ? "Second Floor" : "Third Floor";
     out += `
       <div class="floor-card">
         <div class="floor-title">${title}</div>
@@ -634,16 +717,18 @@ function updateServicePrice(){
     lines.push(["Architectural Planning",plan,duplex?"Duplex plan":"₹15,000 × "+floors+" floor(s)"]);
     const e=Number(document.getElementById("a_electrical")?.value||0);
     const p=Number(document.getElementById("a_plumbing")?.value||0);
-    const el=Number(document.getElementById("a_elevation")?.value||0);
+    const elev=document.getElementById("a_elevation");
+    const el=Number(elev?.value||0);
+    const elLabel=elev?.options[elev.selectedIndex]?.text?.replace(/\s+—\s+₹[0-9,]+/,"")||"Elevation";
     if(e){subtotal+=e;lines.push(["Electrical Drawing",e,""])}
     if(p){subtotal+=p;lines.push(["Plumbing Drawing",p,""])}
-    if(el){subtotal+=el;lines.push(["Front Elevation",el,""])}
+    if(el){subtotal+=el;lines.push([elLabel,el,""])}
   }
   if(keys.includes("structural")){
     const v=5000*floors; subtotal+=v; lines.push(["Structural Design",v,"₹5,000 × "+floors]);
   }
   if(keys.includes("municipality")){
-    subtotal+=15000; lines.push(["Municipality / Approval",15000,"Lump sum"]);
+    const v=15000*floors; subtotal+=v; lines.push(["Municipality / Approval",v,"₹15,000 × "+floors+" floor(s)"]);
   }
   if(keys.includes("estimation")){
     const v=3000 + Math.max(0,floors-1)*5000;
@@ -656,25 +741,18 @@ function updateServicePrice(){
     const v=area>1 ? 10000 : 5000;
     subtotal+=v; lines.push(["Survey / Plotting",v,area>1?"> 1 kanal":"Up to 1 kanal"]);
   }
-  if(keys.includes("construction")){
-    const basis=document.getElementById("c_basis")?.value||"material";
-    const areaPerFloor=Number(document.getElementById("s_area")?.value||0);
-    const totalArea=areaPerFloor*floors;
-    const note=document.getElementById("constructionAreaNote");
-    if(basis==="material"){
-      const rate=Number(document.getElementById("c_rate")?.value||1300);
-      const v=totalArea*rate;
-      subtotal+=v;
-      lines.push(["Construction — Material",v,(totalArea?totalArea.toLocaleString("en-IN")+" sq.ft. × ₹"+rate:"Enter built-up area")]);
-      if(note) note.textContent=totalArea ? "Construction area: "+totalArea.toLocaleString("en-IN")+" sq.ft. ("+areaPerFloor+" × "+floors+" floors)" : "Enter estimated built-up area per floor to calculate construction cost.";
-    }else{
-      lines.push(["Construction — Labour Only",null,"Rate to be confirmed"]);
-      if(note) note.textContent="Labour-only rate is confirmed after project scope/site review.";
-    }
-  }
 
-  const gst=subtotal*0.18;
-  const total=subtotal+gst;
+  const auto=Number(document.getElementById("autoDiscount")?.value||5);
+  const code=(document.getElementById("discountCode")?.value||"").trim().toUpperCase();
+  const codeMap={RMA10:10,RMA15:15,RMA20:20,RMA10SPECIAL:10,RMA20SPECIAL:20};
+  const codePct=codeMap[code]||0;
+  const discountPct=codePct||auto;
+  const discount=subtotal*discountPct/100;
+  const discountedSubtotal=Math.max(0,subtotal-discount);
+  const gst=discountedSubtotal*0.18;
+  const total=discountedSubtotal+gst;
+  const ad=document.getElementById("autoDiscountLabel"); if(ad) ad.textContent=codePct?"Special code "+codePct+"%":auto+"%";
+  const dm=document.getElementById("discountMessage"); if(dm) dm.textContent=codePct?code+" applied — "+codePct+"% special discount.":"Automatic discount applied. Use a special code to override it.";
   const holder=document.getElementById("selectedServiceLines");
   if(!lines.length){
     holder.innerHTML='<div style="color:#cbd5df">Select a service to see its price.</div>';
@@ -684,11 +762,77 @@ function updateServicePrice(){
       return '<div class="line"><span>'+x[0]+'<br><small style="color:#aebdca">'+x[2]+'</small></span><strong>'+value+'</strong></div>';
     }).join("");
   }
-  document.getElementById("serviceSubtotal").textContent=money(subtotal);
+  document.getElementById("serviceBaseSubtotal").textContent=money(subtotal);
+  document.getElementById("serviceSubtotal").textContent=money(discountedSubtotal);
+  document.getElementById("serviceDiscount").textContent=money(discount);
   document.getElementById("serviceGST").textContent=money(gst);
   document.getElementById("serviceTotal").textContent=money(total);
 }
+function applyDiscountCode(){ updateServicePrice(); }
 function money(v){return "₹"+Number(v||0).toLocaleString("en-IN",{maximumFractionDigits:2})}
+
+/* ---------- separate construction quotation ---------- */
+function constructionRate(type, stage){
+  const residential={grey:1300,C:2300,B:2500,A:2700};
+  const commercial={grey:1400,C:2400,B:2500,A:2700};
+  return (type==="Commercial"?commercial:residential)[stage]||0;
+}
+function constructionLabourTotal(type, area, floors){
+  if(type!=="Residential") return null;
+  if(!area) return 0;
+  let total=area*300;
+  for(let i=2;i<=floors;i++) total+=area*350;
+  return total;
+}
+function getConstructionDiscount(){
+  const code=(document.getElementById("c_discount2")?.value||"").trim().toUpperCase();
+  const map={RMA10:10,RMA15:15,RMA20:20,RMA10SPECIAL:10,RMA20SPECIAL:20};
+  return {code,pct:map[code]||0};
+}
+function updateConstructionPrice(){
+  const type=document.getElementById("c_building2")?.value||"Residential";
+  const floors=Number(document.getElementById("c_floors2")?.value||1);
+  const area=Number(document.getElementById("c_area2")?.value||0);
+  const basis=document.getElementById("c_basis2")?.value||"material";
+  const stage=document.getElementById("c_rate2")?.value||"grey";
+  const totalArea=area*floors;
+  const mat=document.getElementById("c_material2"), lab=document.getElementById("c_labour2");
+  if(mat) mat.classList.toggle("hidden",basis!=="material");
+  if(lab) lab.classList.toggle("hidden",basis!=="labour");
+  let base=0, rateText="To confirm", note="";
+  if(basis==="material") {
+    const rate=constructionRate(type,stage); base=totalArea*rate; rateText="₹"+rate.toLocaleString("en-IN")+"/sq.ft.";
+    note=type+" material rate — "+stage+".";
+  } else {
+    const labour=constructionLabourTotal(type,area,floors);
+    if(labour===null){ base=0; note="Commercial labour-only quotation will be confirmed separately."; }
+    else { base=labour; rateText=floors===1?"₹300/sq.ft.":"₹300 ground + ₹350/floor above"; note="Residential labour-only calculation: Ground ₹300/sq.ft.; First/Second ₹350/sq.ft."; }
+  }
+  const d=getConstructionDiscount();
+  const discount=base*d.pct/100;
+  const taxable=base-discount;
+  const gst=taxable*0.18;
+  const total=taxable+gst;
+  document.getElementById("c_summaryType").textContent=type;
+  document.getElementById("c_summaryArea").textContent=totalArea.toLocaleString("en-IN")+" sq.ft.";
+  document.getElementById("c_summaryRate").textContent=rateText;
+  document.getElementById("c_summaryBase").textContent=money(base);
+  document.getElementById("c_summaryDiscount").textContent=d.pct?money(discount)+" ("+d.pct+"%)":"₹0";
+  document.getElementById("c_summaryGST").textContent=money(gst);
+  document.getElementById("c_summaryTotal").textContent=money(total);
+  document.getElementById("c_summaryNote").textContent=note+(d.pct?" "+d.code+" applied.":"");
+}
+document.getElementById("constructionForm")?.addEventListener("submit",function(e){
+  e.preventDefault();
+  const mobile=document.getElementById("c_mobile2").value.trim();
+  const box=document.getElementById("constructionMessage");
+  if(!/^[0-9]{10}$/.test(mobile)){box.className="notice error";box.classList.remove("hidden");box.textContent="Please enter a valid 10-digit mobile number.";return;}
+  updateConstructionPrice();
+  const requestId="RMA-C-"+Date.now().toString().slice(-9);
+  const payload={request_id:requestId,client_name:document.getElementById("c_name2").value.trim(),mobile,email:document.getElementById("c_email2").value.trim()||null,building_type:document.getElementById("c_building2").value,floors:Number(document.getElementById("c_floors2").value),built_up_area_per_floor:Number(document.getElementById("c_area2").value||0),basis:document.getElementById("c_basis2").value,stage:document.getElementById("c_rate2").value,site_address:document.getElementById("c_address2").value.trim(),requirements:document.getElementById("c_other2").value.trim(),discount_code:document.getElementById("c_discount2").value.trim().toUpperCase()||null};
+  localStorage.setItem("rma_last_construction_request",JSON.stringify(payload));
+  box.className="notice success";box.classList.remove("hidden");box.innerHTML="<b>Construction request prepared successfully.</b><br>Your Request ID is <b>"+requestId+"</b>.<br>The quotation is shown on the right.";
+});
 
 /* ---------- service form ---------- */
 document.getElementById("serviceForm").addEventListener("submit",async function(e){
@@ -722,11 +866,6 @@ document.getElementById("serviceForm").addEventListener("submit",async function(
       elevation:document.getElementById("a_elevation")?.value||null,
       floors:document.getElementById("floorRequirements")?.innerText||null,
       other:document.getElementById("a_other")?.value||null
-    },
-    construction:{
-      basis:document.getElementById("c_basis")?.value||null,
-      rate:document.getElementById("c_rate")?.value||null,
-      requirements:document.getElementById("c_other")?.value||null
     },
     survey:{
       area_kanal:document.getElementById("sv_area")?.value||null,
@@ -780,6 +919,7 @@ async function setVisitLocation(lat,lng){
   document.getElementById("v_lng").value=visitLocation.lng.toFixed(6);
   document.getElementById("v_address").value=await reverseGeo(visitLocation.lat,visitLocation.lng);
   document.getElementById("v_google").href="https://www.google.com/maps/search/?api=1&query="+visitLocation.lat+","+visitLocation.lng;
+  const gm=document.getElementById("googleMapFrame"); if(gm) gm.src="https://www.google.com/maps?q="+visitLocation.lat+","+visitLocation.lng+"&z=16&output=embed";
   await calculateVisitDistance();
 }
 async function calculateVisitDistance(){
@@ -816,7 +956,7 @@ function visitCurrentLocation(){
     visitMap.setView([p.coords.latitude,p.coords.longitude],17);
     visitMarker.setLatLng([p.coords.latitude,p.coords.longitude]);
     await setVisitLocation(p.coords.latitude,p.coords.longitude);
-  },()=>toast("Please allow location permission, or search/click the project location manually."),{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+  },err=>{const msg=err&&err.code===1?"Location permission was denied. On iPhone, allow Location for Safari/Chrome in Settings, then try again.":err&&err.code===2?"Your location could not be determined. Please try again or search the project location.":"Location request timed out. Please try again.";toast(msg)}, {enableHighAccuracy:true,timeout:20000,maximumAge:0});
 }
 document.getElementById("visitForm").addEventListener("submit",async function(e){
   e.preventDefault();
