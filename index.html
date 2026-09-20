@@ -1,1 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMA Design & Construction</title>
 
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+  background:#f4f7fb;
+  color:#172033;
+}
+
+header{
+  background:linear-gradient(135deg,#0b4f9c,#1478d4);
+  color:white;
+  padding:22px 18px;
+  position:sticky;
+  top:0;
+  z-index:100;
+  box-shadow:0 3px 12px #0002;
+}
+
+.header-inner{
+  max-width:1100px;
+  margin:auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.logo{
+  font-size:22px;
+  font-weight:bold;
+}
+
+.logo small{
+  display:block;
+  font-size:11px;
+  margin-top:4px;
+  opacity:.9;
+}
+
+.menu{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.menu button{
+  background:#ffffff22;
+  color:white;
+  border:1px solid #ffffff55;
+  border-radius:8px;
+  padding:9px 12px;
+  cursor:pointer;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:25px 16px 60px;
+}
+
+.hero{
+  background:white;
+  border-radius:18px;
+  padding:35px 25px;
+  margin-bottom:22px;
+  box-shadow:0 4px 18px #0000000d;
+}
+
+.hero h1{
+  font-size:34px;
+  color:#0b4f9c;
+  margin-bottom:12px;
+}
+
+.hero p{
+  color:#596579;
+  line-height:1.6;
+  margin-bottom:20px;
+}
+
+.primary{
+  background:#0b63ce;
+  color:white;
+  border:0;
+  border-radius:10px;
+  padding:14px 22px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.secondary{
+  background:#eef5ff;
+  color:#0754a0;
+  border:1px solid #c9ddf7;
+  border-radius:10px;
+  padding:12px 18px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.section-title{
+  margin:25px 0 15px;
+  color:#17365f;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:15px;
+}
+
+.card{
+  background:white;
+  border-radius:14px;
+  padding:20px;
+  box-shadow:0 3px 15px #0000000b;
+  border:1px solid #e5ebf3;
+}
+
+.card .icon{
+  font-size:30px;
+  margin-bottom:10px;
+}
+
+.card h3{
+  color:#124f91;
+  margin-bottom:7px;
+}
+
+.card p{
+  color:#657184;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.form-box{
+  background:white;
+  border-radius:16px;
+  padding:22px;
+  box-shadow:0 4px 18px #0000000d;
+  max-width:750px;
+  margin:auto;
+}
+
+.form-box h2{
+  color:#0b4f9c;
+  margin-bottom:20px;
+}
+
+label{
+  display:block;
+  font-weight:bold;
+  margin:14px 0 6px;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #cdd6e3;
+  border-radius:8px;
+  font-size:15px;
+  background:white;
+}
+
+textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.price-box{
+  background:#f1f7ff;
+  border:1px solid #c8def8;
+  border-radius:12px;
+  padding:18px;
+  margin:20px 0;
+}
+
+.price-line{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+}
+
+.total{
+  border-top:2px solid #c8def8;
+  margin-top:8px;
+  padding-top:12px;
+  font-size:20px;
+  font-weight:bold;
+  color:#0754a0;
+}
+
+.notice{
+  padding:14px;
+  border-radius:9px;
+  background:#fff7df;
+  border:1px solid #f0d37a;
+  color:#755800;
+  margin:15px 0;
+}
+
+.success{
+  background:#eaf8ef;
+  border:1px solid #a9ddb8;
+  color:#176b31;
+  padding:18px;
+  border-radius:10px;
+  margin-top:20px;
+}
+
+.hidden{
+  display:none;
+}
+
+footer{
+  background:#102a43;
+  color:white;
+  text-align:center;
+  padding:25px;
+  margin-top:40px;
+  line-height:1.7;
+}
+
+@media(max-width:650px){
+  .header-inner{
+    flex-direction:column;
+    gap:12px;
+    align-items:flex-start;
+  }
+
+  .hero h1{
+    font-size:27px;
+  }
+
+  .row{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      RMA DESIGN & CONSTRUCTION
+      <small>Engineering • Architecture • Construction</small>
+    </div>
+
+    <div class="menu">
+      <button onclick="showPage('home')">Home</button>
+      <button onclick="showPage('services')">Services</button>
+      <button onclick="showPage('booking')">Site Visit</button>
+      <button onclick="showPage('staff')">Staff</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- HOME -->
+<section id="home">
+
+  <div class="hero">
+    <h1>Build Your Vision With RMA</h1>
+
+    <p>
+      Professional architectural planning, structural design,
+      construction and site consultation services.
+    </p>
+
+    <button class="primary" onclick="showPage('booking')">
+      📍 Book a Site Visit
+    </button>
+  </div>
+
+  <h2 class="section-title">Our Services</h2>
+
+  <div class="cards">
+
+    <div class="card">
+      <div class="icon">📐</div>
+      <h3>Architectural Planning</h3>
+      <p>Residential and commercial building planning.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">🏗️</div>
+      <h3>Structural Design</h3>
+      <p>RCC structural design and engineering solutions.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">🏠</div>
+      <h3>House Planning</h3>
+      <p>Modern, practical and customized house plans.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">🏢</div>
+      <h3>Commercial Buildings</h3>
+      <p>Planning and design for commercial projects.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">👷</div>
+      <h3>Construction</h3>
+      <p>Construction planning and project execution.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">📋</div>
+      <h3>Municipality Drawings</h3>
+      <p>Approval drawings and building documentation.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">📍</div>
+      <h3>Site Consultation</h3>
+      <p>Professional site inspection and consultation.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">📊</div>
+      <h3>BOQ & Estimation</h3>
+      <p>Quantity estimation and project costing.</p>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- SERVICES -->
+<section id="services" class="hidden">
+
+  <div class="form-box">
+
+    <h2>Our Services</h2>
+
+    <div class="cards">
+
+      <div class="card">
+        <h3>Architectural Planning</h3>
+        <p>Complete floor plans and building planning.</p>
+      </div>
+
+      <div class="card">
+        <h3>Structural Design</h3>
+        <p>RCC framing, foundation and structural drawings.</p>
+      </div>
+
+      <div class="card">
+        <h3>Construction</h3>
+        <p>Turnkey and labour construction services.</p>
+      </div>
+
+      <div class="card">
+        <h3>Approval Drawings</h3>
+        <p>Municipality and authority submission drawings.</p>
+      </div>
+
+    </div>
+
+    <br>
+
+    <button class="primary" onclick="showPage('booking')">
+      Book Site Consultation
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- BOOKING -->
+<section id="booking" class="hidden">
+
+  <div class="form-box">
+
+    <h2>📍 Book a Site Visit</h2>
+
+    <label>Client Name</label>
+    <input id="name" placeholder="Enter your name">
+
+    <label>Mobile Number</label>
+    <input id="mobile" type="tel" placeholder="Enter mobile number">
+
+    <label>Email / WhatsApp</label>
+    <input id="email" placeholder="Optional">
+
+    <label>Project Address</label>
+    <textarea id="address" placeholder="Enter complete project address"></textarea>
+
+    <label>Building Type</label>
+    <select id="building">
+      <option>Residential House</option>
+      <option>Commercial Building</option>
+      <option>School / Institution</option>
+      <option>Industrial Building</option>
+      <option>Other</option>
+    </select>
+
+    <div class="row">
+
+      <div>
+        <label>Plot Size</label>
+        <input id="plot" placeholder="Example: 40 x 60 ft">
+      </div>
+
+      <div>
+        <label>Number of Floors</label>
+        <input id="floors" placeholder="Example: G+2">
+      </div>
+
+    </div>
+
+    <label>Requirement</label>
+    <textarea id="requirement"
+      placeholder="Tell us what you require"></textarea>
+
+    <label>Travel Distance</label>
+
+    <div class="row">
+
+      <div>
+        <input id="distance"
+          type="number"
+          min="0"
+          step="0.1"
+          placeholder="Road distance in km">
+      </div>
+
+      <div>
+        <button class="secondary"
+          style="width:100%"
+          onclick="getLocation()">
+          📍 Use Current Location
+        </button>
+      </div>
+
+    </div>
+
+    <div id="locationStatus" class="notice hidden"></div>
+
+    <button class="primary"
+      style="width:100%;margin-top:20px"
+      onclick="calculateFee()">
+      CALCULATE SITE VISIT FEE
+    </button>
+
+    <div id="priceBox" class="price-box hidden">
+
+      <div class="price-line">
+        <span>Professional Fee</span>
+        <strong id="fee">₹0</strong>
+      </div>
+
+      <div class="price-line">
+        <span>GST (18%)</span>
+        <strong id="gst">₹0</strong>
+      </div>
+
+      <div class="price-line total">
+        <span>Total</span>
+        <strong id="total">₹0</strong>
+      </div>
+
+      <div id="specialNotice"></div>
+
+    </div>
+
+    <label>Payment Method</label>
+
+    <select id="payment">
+      <option>Online Payment</option>
+      <option>Cash to Staff</option>
+    </select>
+
+    <button class="primary"
+      style="width:100%;margin-top:18px"
+      onclick="submitBooking()">
+      SUBMIT SITE VISIT REQUEST
+    </button>
+
+    <div id="bookingResult"></div>
+
+  </div>
+
+</section>
+
+
+<!-- STAFF -->
+<section id="staff" class="hidden">
+
+  <div class="form-box">
+
+    <h2>👷 Staff Login</h2>
+
+    <label>Staff ID</label>
+    <input id="staffId" placeholder="Enter Staff ID">
+
+    <label>Password</label>
+    <input id="staffPassword"
+      type="password"
+      placeholder="Enter password">
+
+    <button class="primary"
+      style="width:100%;margin-top:18px"
+      onclick="staffLogin()">
+      LOGIN
+    </button>
+
+    <div id="staffResult"></div>
+
+  </div>
+
+</section>
+
+</div>
+
+
+<footer>
+
+  <strong>RMA DESIGN & CONSTRUCTION</strong><br>
+
+  Engineering • Architecture • Construction<br>
+
+  Jammu & Kashmir, India<br><br>
+
+  Professional site consultation and construction services
+
+</footer>
+
+
+<script>
+
+function showPage(page){
+
+  const pages = [
+    "home",
+    "services",
+    "booking",
+    "staff"
+  ];
+
+  pages.forEach(function(p){
+    document.getElementById(p).classList.add("hidden");
+  });
+
+  document.getElementById(page).classList.remove("hidden");
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+}
+
+
+/* CURRENT LOCATION */
+
+function getLocation(){
+
+  const status =
+    document.getElementById("locationStatus");
+
+  status.classList.remove("hidden");
+
+  if(!navigator.geolocation){
+
+    status.innerHTML =
+      "Location is not supported by this browser.";
+
+    return;
+  }
+
+  status.innerHTML =
+    "Getting your current location...";
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position){
+
+      const lat =
+        position.coords.latitude;
+
+      const lon =
+        position.coords.longitude;
+
+      status.innerHTML =
+        "📍 Location captured successfully.<br>" +
+        "Latitude: " + lat.toFixed(6) +
+        "<br>Longitude: " + lon.toFixed(6) +
+        "<br><small>Road distance still needs to be entered or connected to a routing service.</small>";
+
+    },
+
+    function(){
+
+      status.innerHTML =
+        "Unable to get location. Please allow location permission.";
+
+    }
+
+  );
+
+}
+
+
+/* SITE VISIT PRICING */
+
+function calculateFee(){
+
+  const distance =
+    parseFloat(document.getElementById("distance").value);
+
+  if(isNaN(distance) || distance < 0){
+
+    alert("Please enter the road distance in kilometres.");
+
+    return;
+  }
+
+  let fee = 0;
+  let special = "";
+
+  if(distance <= 10){
+
+    fee = 1500;
+
+  }else if(distance <= 15){
+
+    fee = 2000;
+
+  }else if(distance <= 20){
+
+    fee = 2500;
+
+  }else if(distance <= 25){
+
+    fee = 3500;
+
+  }else if(distance <= 35){
+
+    fee = 5000;
+
+  }else if(distance <= 50){
+
+    fee = 7500;
+
+  }else{
+
+    fee = 10000;
+
+    special =
+      "<div class='notice'>" +
+      "Distances above 50 km are subject to special confirmation. " +
+      "Additional travel expenses may apply." +
+      "</div>";
+
+  }
+
+  const gst =
+    fee * 0.18;
+
+  const total =
+    fee + gst;
+
+  document.getElementById("fee").innerText =
+    "₹" + fee.toLocaleString("en-IN");
+
+  document.getElementById("gst").innerText =
+    "₹" + gst.toLocaleString("en-IN");
+
+  document.getElementById("total").innerText =
+    "₹" + total.toLocaleString("en-IN");
+
+  document.getElementById("specialNotice").innerHTML =
+    special;
+
+  document.getElementById("priceBox")
+    .classList.remove("hidden");
+
+}
+
+
+/* BOOKING */
+
+function submitBooking(){
+
+  const name =
+    document.getElementById("name").value.trim();
+
+  const mobile =
+    document.getElementById("mobile").value.trim();
+
+  const address =
+    document.getElementById("address").value.trim();
+
+  const distance =
+    document.getElementById("distance").value;
+
+  if(!name || !mobile || !address || !distance){
+
+    alert(
+      "Please enter your name, mobile number, project address and distance."
+    );
+
+    return;
+  }
+
+  const requestId =
+    "RMA-" +
+    new Date().getFullYear() +
+    "-" +
+    Math.floor(100000 + Math.random()*900000);
+
+  const result =
+    document.getElementById("bookingResult");
+
+  result.innerHTML =
+
+    "<div class='success'>" +
+
+    "<h3>✅ Request Submitted</h3><br>" +
+
+    "<strong>Request ID:</strong> " +
+    requestId +
+
+    "<br><strong>Client:</strong> " +
+    name +
+
+    "<br><strong>Mobile:</strong> " +
+    mobile +
+
+    "<br><strong>Distance:</strong> " +
+    distance + " km" +
+
+    "<br><br>" +
+
+    "Your site visit request has been recorded in this browser." +
+
+    "<br><br>" +
+
+    "<small>Online payment and live database will be connected in the next version.</small>" +
+
+    "</div>";
+
+}
+
+
+/* STAFF LOGIN - DEMO */
+
+function staffLogin(){
+
+  const id =
+    document.getElementById("staffId").value;
+
+  const password =
+    document.getElementById("staffPassword").value;
+
+  const result =
+    document.getElementById("staffResult");
+
+  if(id === "staff" && password === "1234"){
+
+    result.innerHTML =
+      "<div class='success'>" +
+      "<h3>✅ Staff Login Successful</h3>" +
+      "<br>Welcome to RMA Staff Portal." +
+      "<br><br>" +
+      "Staff can later create bookings, collect cash and view their visit history." +
+      "</div>";
+
+  }else{
+
+    result.innerHTML =
+      "<div class='notice'>" +
+      "Invalid Staff ID or Password." +
+      "</div>";
+
+  }
+
+}
+
+</script>
+
+</body>
+</html>
