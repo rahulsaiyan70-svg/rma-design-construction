@@ -1063,19 +1063,98 @@ document.getElementById("constructionForm")?.addEventListener("submit",function(
 });
 
 /* ---------- Razorpay online payment ---------- */
-/* Add your Razorpay Key ID here after creating your Razorpay account.
-   A production payment must use a server-created Razorpay Order and server-side signature verification. */
-const RAZORPAY_KEY_ID = "";
+const RAZORPAY_KEY_ID = "rzp_live_TefvEpMCdEf0Il";
+window.RAZORPAY_KEY_ID = RAZORPAY_KEY_ID;
+const RMA_CREATE_ORDER_URL = SUPABASE_URL + "/functions/v1/create-razorpay-order";
+const RMA_VERIFY_PAYMENT_URL = SUPABASE_URL + "/functions/v1/verify-razorpay-payment";
+
+async function rmaCreateRazorpayOrder(amount, receipt, description, notes={}){
+  const {data:{session}} = await supabaseClient.auth.getSession();
+  const headers={
+    "Content-Type":"application/json",
+    "apikey":SUPABASE_PUBLISHABLE_KEY,
+    "Authorization":"Bearer "+(session?.access_token || SUPABASE_PUBLISHABLE_KEY)
+  };
+  const r=await fetch(RMA_CREATE_ORDER_URL,{method:"POST",headers,body:JSON.stringify({
+    amount:Number(amount),currency:"INR",receipt:String(receipt).slice(0,40),description,notes
+  })});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok || !d.order_id) throw new Error(d.error||"Could not create Razorpay order.");
+  return d;
+}
+
+async function rmaVerifyRazorpayPayment(response){
+  const {data:{session}} = await supabaseClient.auth.getSession();
+  const headers={
+    "Content-Type":"application/json",
+    "apikey":SUPABASE_PUBLISHABLE_KEY,
+    "Authorization":"Bearer "+(session?.access_token || SUPABASE_PUBLISHABLE_KEY)
+  };
+  const r=await fetch(RMA_VERIFY_PAYMENT_URL,{method:"POST",headers,body:JSON.stringify(response)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok || !d.verified) throw new Error(d.error||"Payment verification failed.");
+  return d;
+}
+
+async function openRazorpayPayment({amount,receipt,description,name,email,contact,messageEl,notes={}}){
+  const box=document.getElementById(messageEl);
+  if(!Number(amount)||Number(amount)<=0){
+    box.className="notice error";box.classList.remove("hidden");box.textContent="Please complete the required details before making payment.";return;
+  }
+  if(!window.Razorpay){
+    box.className="notice error";box.classList.remove("hidden");box.textContent="Razorpay could not be loaded. Please check your internet connection and try again.";return;
+  }
+  try{
+    box.className="notice info";box.classList.remove("hidden");box.textContent="Creating secure Razorpay order...";
+    const order=await rmaCreateRazorpayOrder(amount,receipt,description,notes);
+    const options={
+      key:RAZORPAY_KEY_ID,
+      order_id:order.order_id,
+      amount:order.amount,
+      currency:order.currency||"INR",
+      name:"RMA Design & Construction",
+      description,
+      prefill:{name:name||"",email:email||"",contact:contact||""},
+      theme:{color:"#2e7d5b"},
+      modal:{ondismiss:function(){box.className="notice info";box.classList.remove("hidden");box.textContent="Payment window closed. No payment was confirmed.";}},
+      handler:async function(response){
+        try{
+          box.className="notice info";box.classList.remove("hidden");box.textContent="Verifying payment securely...";
+          await rmaVerifyRazorpayPayment(response);
+          box.className="notice success";box.classList.remove("hidden");box.innerHTML="<b>Payment verified successfully.</b><br>Payment ID: <b>"+response.razorpay_payment_id+"</b>";
+          return response;
+        }catch(err){
+          console.error(err);
+          box.className="notice error";box.classList.remove("hidden");box.textContent=err.message||"Payment verification failed.";
+        }
+      }
+    };
+    new window.Razorpay(options).open();
+  }catch(err){
+    console.error(err);
+    box.className="notice error";box.classList.remove("hidden");box.textContent=err.message||"Unable to start Razorpay payment.";
+  }
+}
+
 function payServiceWithRazorpay(){
-  const box=document.getElementById("razorpayMessage");
+  window.updateServicePrice?.();
   const amountText=document.getElementById("serviceTotal")?.textContent||"₹0";
   const amount=Number(amountText.replace(/[^0-9.]/g,""));
-  if(!amount){box.className="notice error";box.classList.remove("hidden");box.textContent="Please select a service before making payment.";return;}
-  if(!RAZORPAY_KEY_ID){box.className="notice info";box.classList.remove("hidden");box.textContent="Razorpay is added to the website. Your Razorpay Key ID and secure server-side Order API still need to be connected before live payments can be accepted.";return;}
-  const options={key:RAZORPAY_KEY_ID,amount:Math.round(amount*100),currency:"INR",name:"RMA Design & Construction",description:"Service payment",prefill:{name:document.getElementById("s_name")?.value||"",email:document.getElementById("s_email")?.value||"",contact:document.getElementById("s_mobile")?.value||""},theme:{color:"#2e7d5b"},handler:function(response){
-    box.className="notice success";box.classList.remove("hidden");box.textContent="Payment initiated successfully. Payment ID: "+response.razorpay_payment_id;
-  }};
-  if(window.Razorpay){new Razorpay(options).open();}else{box.className="notice error";box.classList.remove("hidden");box.textContent="Razorpay could not be loaded. Please check your internet connection and try again.";}
+  const keys=selectedServiceKeys();
+  if(!keys.length){
+    const box=document.getElementById("razorpayMessage");box.className="notice error";box.classList.remove("hidden");box.textContent="Please select at least one service before making payment.";return;
+  }
+  const requestId="RMA-S-"+Date.now().toString().slice(-9);
+  openRazorpayPayment({
+    amount,
+    receipt:requestId,
+    description:"RMA professional service payment",
+    name:document.getElementById("s_name")?.value||"",
+    email:document.getElementById("s_email")?.value||"",
+    contact:document.getElementById("s_mobile")?.value||"",
+    messageEl:"razorpayMessage",
+    notes:{request_id:requestId,service_type:keys.join(",")}
+  });
 }
 
 /* ---------- service form ---------- */
@@ -1748,10 +1827,31 @@ checkExistingSession();
   window.updateServicePrice=function(){oldUpdateServicePrice();const combo=window.rmaSelectedCombo;const floors=Number(document.getElementById('s_floors')?.value||1);if(!combo)return;let total=combo===1?18000:(floors===1?27000:floors===2?49990:74990);document.getElementById('serviceBaseSubtotal').textContent=v3Money(total);document.getElementById('serviceDiscount').textContent='₹0';document.getElementById('serviceSubtotal').textContent=v3Money(total/1.18);document.getElementById('serviceGST').textContent=v3Money(total-total/1.18);document.getElementById('serviceTotal').textContent=v3Money(total);const n=document.getElementById('serviceDiscountNote');if(n)n.textContent='Combo package price locked; GST included. Departmental approval charges, where applicable, are extra.';const lines=document.getElementById('selectedServiceLines');if(lines)lines.innerHTML='<div class="line"><span>'+esc(combo===1?'Combo 1: Architectural + Structural + Estimation':'Combo 2: Architectural + Municipality Approval')+'<br><small style="color:#aebdca">GST included</small></span><strong>'+v3Money(total)+'</strong></div>';};
 
   /* ---------- 4. Site visit Razorpay ---------- */
+  /* ---------- 4. Site visit Razorpay ---------- */
   function addVisitPayment(){
-    const vp=document.querySelector('#visitForm .visit-price');if(!vp||document.getElementById('rmaVisitPayment'))return;
-    const b=document.createElement('div');b.id='rmaVisitPayment';b.className='rma-v3-pay';b.innerHTML='<h3>💳 Pay Site Visit Fee with Razorpay</h3><p class="muted">After your location and visit charge are calculated, you can pay online.</p><button type="button" class="btn gold full" id="rmaVisitPayBtn">Pay with Razorpay</button><div id="rmaVisitPayMsg" class="notice hidden"></div>';vp.appendChild(b);
-    document.getElementById('rmaVisitPayBtn').onclick=()=>{const msg=document.getElementById('rmaVisitPayMsg'),amt=(document.getElementById('v_total')?.textContent||'').replace(/[^0-9.]/g,'');if(!amt||Number(amt)<=0){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Please complete the project location first so the site-visit charge can be calculated.';return;}const key=window.RAZORPAY_KEY_ID||'';if(!key){msg.className='notice info';msg.classList.remove('hidden');msg.textContent='Razorpay checkout is connected to this button. Add your Razorpay Key ID and secure server-side Order API to activate live payments.';return;}if(!window.Razorpay){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Razorpay could not be loaded.';return;}new window.Razorpay({key:key,amount:Math.round(Number(amt)*100),currency:'INR',name:'RMA Design & Construction',description:'Site Visit Fee',prefill:{name:document.getElementById('v_name')?.value||'',email:document.getElementById('v_email')?.value||'',contact:document.getElementById('v_mobile')?.value||''},theme:{color:'#2e7d5b'},handler:r=>{msg.className='notice success';msg.classList.remove('hidden');msg.textContent='Payment initiated. Payment ID: '+r.razorpay_payment_id;}}).open();};
+    const vp=document.querySelector('#visitForm .visit-price');
+    if(!vp||document.getElementById('rmaVisitPayment'))return;
+    const b=document.createElement('div');
+    b.id='rmaVisitPayment';
+    b.className='rma-v3-pay';
+    b.innerHTML='<h3>💳 Pay Site Visit Fee with Razorpay</h3><p class="muted">After your location and visit charge are calculated, you can pay securely online.</p><button type="button" class="btn gold full" id="rmaVisitPayBtn">Pay with Razorpay</button><div id="rmaVisitPayMsg" class="notice hidden"></div>';
+    vp.appendChild(b);
+    document.getElementById('rmaVisitPayBtn').onclick=async()=>{
+      const msg=document.getElementById('rmaVisitPayMsg');
+      const amt=(document.getElementById('v_total')?.textContent||'').replace(/[^0-9.]/g,'');
+      if(!amt||Number(amt)<=0){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Please complete the project location first so the site-visit charge can be calculated.';return;}
+      const requestId="RMA-V-"+Date.now().toString().slice(-9);
+      await openRazorpayPayment({
+        amount:Number(amt),
+        receipt:requestId,
+        description:'RMA Site Visit Fee',
+        name:document.getElementById('v_name')?.value||'',
+        email:document.getElementById('v_email')?.value||'',
+        contact:document.getElementById('v_mobile')?.value||'',
+        messageEl:'rmaVisitPayMsg',
+        notes:{request_id:requestId,service_type:'Site Visit',distance_km:String(Number(visitDistance||0).toFixed(2))}
+      });
+    };
   }
 
   /* ---------- 5. Path Seeker International School client account ---------- */
@@ -2052,6 +2152,10 @@ const oldSubmit=document.getElementById('visitForm');
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV3);else initV3();
   window.rmaV3Init=initV3;
 })();
+
+/* ---------- Final Razorpay wiring override ---------- */
+window.payServiceWithRazorpay=payServiceWithRazorpay;
+window.RAZORPAY_KEY_ID=RAZORPAY_KEY_ID;
 </script>
 
 
