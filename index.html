@@ -143,7 +143,7 @@ section{padding:78px 0}
 .hidden{display:none!important}
 .auth-shell{max-width:520px;margin:35px auto}.auth-tabs{display:flex;gap:8px;margin-bottom:18px}.auth-tab{flex:1;padding:12px;border:1px solid var(--line);background:#fff;border-radius:7px;font-weight:800}.auth-tab.active{background:var(--navy);color:#fff}.portal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:20px}.portal-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px}.portal-card h3{margin-bottom:8px}.doc-list{display:grid;gap:10px;margin-top:12px}.doc-item{border:1px solid var(--line);padding:12px;border-radius:8px;display:flex;justify-content:space-between;gap:12px;align-items:center}.auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}.role-badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#e7f4ed;color:var(--blue);font-size:12px;font-weight:800}@media(max-width:800px){.portal-grid{grid-template-columns:1fr}}
 
-.site-layout{display:grid;grid-template-columns:1fr 420px;gap:25px;align-items:start}
+.site-layout{display:grid;grid-template-columns:1fr;gap:25px;align-items:start}
 .map-card{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .map-head{background:var(--navy);color:#fff;padding:18px}
 .map-head p{color:#567267;font-size:13px}
@@ -517,40 +517,11 @@ section{padding:78px 0}
   <section>
     <div class="container">
       <div class="site-layout">
-        <div class="map-card">
-          <div class="map-head"><h3>📍 Project Location</h3><p>Use GPS for the project location, or enter the project coordinates manually. Google Maps is not required.</p></div>
-          <div class="map-tools">
-            <input id="visitSearch" placeholder="Search project location...">
-            <div class="toolrow">
-              <button type="button" onclick="visitSearchLocation()">🔎 Search</button>
-              <button type="button" onclick="visitCurrentLocation()">📍 Use My Location</button>
-            </div>
-          </div>
-          <div class="location-data">
-            <div class="notice info"><b>GPS location</b><br>This website uses your device GPS directly. No Google Maps is required. For iPhone, allow location access when Safari asks.</div>
-            <div class="notice info" style="margin-bottom:14px"><b>Location Coordinates</b><br>Tap <b>Use My Location</b> to automatically get the project latitude and longitude. You can also enter coordinates manually.</div>
-            <label>Project Address</label><input id="v_address" readonly placeholder="Address will appear after location is selected">
-            <div class="form-grid">
-              <div class="group"><label>Latitude</label><input id="v_lat" inputmode="decimal" placeholder="e.g. 32.726600"></div>
-              <div class="group"><label>Longitude</label><input id="v_lng" inputmode="decimal" placeholder="e.g. 74.857000"></div>
-            </div>
-            <div class="toolrow" style="margin-top:10px">
-              <button type="button" class="btn dark" onclick="visitCurrentLocation()">📍 Use My Location</button>
-              <button type="button" class="btn" onclick="useManualCoordinates()">✓ Use Coordinates</button>
-            </div>
-            <div class="visit-price">
-              <div class="line"><span>Road Distance</span><strong id="v_distance">-- km</strong></div>
-              <div class="line"><span>Visit Fee</span><strong id="v_fee">₹0</strong></div>
-              <div class="line"><span>GST 18%</span><strong id="v_gst">₹0</strong></div>
-              <div class="line total"><span>Total</span><strong id="v_total">₹0</strong></div>
-            </div>
-          </div>
-        </div>
-
         <div class="form-panel">
           <h2>Visit Booking Form</h2>
           <p class="form-note">This form is only for the site visit. Preferred date and time are intentionally kept here.</p>
           <form id="visitForm">
+            <input type="hidden" id="v_address" name="project_address">
             <div class="group"><label>Full Name *</label><input id="v_name" required></div>
             <div class="group"><label>Mobile Number *</label><input id="v_mobile" required inputmode="numeric" placeholder="10-digit mobile number"></div>
             <div class="group"><label>Email ID</label><input id="v_email" type="email"></div>
@@ -1650,11 +1621,14 @@ checkExistingSession();
       const state=document.getElementById('rma_state')?.value||'';
       const district=document.getElementById('rma_district')?.value||'';
       const pin=document.getElementById('rma_pin')?.value.trim()||'';
-      if(!house||!locality||!state||!district||!/^[0-9]{6}$/.test(pin)){
+      const lat=Number(document.getElementById('v_lat')?.value||0),lng=Number(document.getElementById('v_lng')?.value||0);
+      const hasPin=/^[0-9]{6}$/.test(pin);
+      const hasCoordinates=Number.isFinite(lat)&&Number.isFinite(lng)&&lat!==0&&lng!==0;
+      if(!house||!locality||!state||!district||(!hasPin&&!hasCoordinates)){
         e.preventDefault();
         e.stopImmediatePropagation();
         const box=document.getElementById('visitMessage');
-        if(box){box.className='notice error';box.classList.remove('hidden');box.textContent='Please complete House/Plot No., Locality/Area, State, District and the 6-digit PIN code before booking.';}
+        if(box){box.className='notice error';box.classList.remove('hidden');box.textContent='Please complete the address and choose one location method: enter a valid 6-digit PIN code OR use My Location.';}
         return;
       }
       const oldAddress=document.getElementById('v_address')?.value||'';
@@ -1671,7 +1645,7 @@ checkExistingSession();
 
   /* Inject the new UI after the existing DOM has loaded. */
   function rma2Init(){
-    rma2InjectAddress();window.updateServicePrice();window.updateVisitPrice();
+    window.updateServicePrice();window.updateVisitPrice();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',rma2Init);else rma2Init();
 })();
@@ -1748,10 +1722,21 @@ checkExistingSession();
         <div class="group"><label>Sub-district / Tehsil</label><select id="${prefix}_tehsil" disabled><option value="">Select sub-district / tehsil</option></select></div>
       </div>
       <div class="rma-v3-grid">
-        <div class="group"><label>PIN Code *</label><input id="${prefix}_pin" inputmode="numeric" maxlength="6" placeholder="6-digit PIN code"></div>
-        <div class="group"><label>Address Search</label><div style="display:flex;gap:8px"><input id="${prefix}_search" placeholder="Search address / locality / PIN" style="flex:1"><button type="button" class="btn outline" id="${prefix}_searchBtn">Search</button></div></div>
+        <div class="group"><label>PIN Code</label><input id="${prefix}_pin" inputmode="numeric" maxlength="6" placeholder="6-digit PIN code"></div>
+        <div class="group"><label>Latitude</label><input id="${prefix}_lat" inputmode="decimal" placeholder="Filled automatically by My Location"></div>
       </div>
-      <div class="auth-actions"><button type="button" class="btn dark" id="${prefix}_gps">Use My Location</button><button type="button" class="btn outline" id="${prefix}_pinBtn">Verify PIN & Calculate Distance</button></div>
+      <div class="rma-v3-grid">
+        <div class="group"><label>Longitude</label><input id="${prefix}_lng" inputmode="decimal" placeholder="Filled automatically by My Location"></div>
+        <div class="group" style="display:flex;align-items:end">
+          <div style="width:100%;padding:11px 0;color:var(--muted);font-size:13px">
+            <b>Choose one location method:</b><br><span>PIN code <b>OR</b> Use My Location.</span>
+          </div>
+        </div>
+      </div>
+      <div class="auth-actions">
+        <button type="button" class="btn dark" id="${prefix}_gps">📍 Use My Location</button>
+        <button type="button" class="btn outline" id="${prefix}_pinBtn">Verify PIN & Calculate Distance</button>
+      </div>
       <div id="${prefix}_result" class="notice info hidden"></div>`;
     return wrap;
   }
@@ -1792,16 +1777,40 @@ checkExistingSession();
     district.onchange=()=>{tehsil.innerHTML='<option value="">Select sub-district / tehsil</option>';const a=JK_TEHSILS[district.value]||[];if(a.length)tehsil.innerHTML+='<option>'+a.join('</option><option>')+'</option>';else tehsil.innerHTML+='<option>Other / Not required</option>';tehsil.disabled=false;compose(prefix,oldId);};
     ['house','landmark','locality','pin','tehsil'].forEach(k=>document.getElementById(prefix+'_'+k)?.addEventListener('input',()=>compose(prefix,oldId)));
     document.getElementById(prefix+'_pinBtn').onclick=()=>verifyPin(prefix);
-    document.getElementById(prefix+'_searchBtn').onclick=async()=>{const q=document.getElementById(prefix+'_search').value.trim();if(!q)return;try{const p=await geocode(q);await setGPS(prefix,p.lat,p.lng,p.display,oldId);}catch(e){alert('Address not found.');}};
     document.getElementById(prefix+'_gps').onclick=()=>{if(!navigator.geolocation)return alert('Location is not supported by this browser.');navigator.geolocation.getCurrentPosition(p=>setGPS(prefix,p.coords.latitude,p.coords.longitude,'',oldId),()=>alert('Location permission was denied.'));};
   }
   async function setGPS(prefix,lat,lng,display,oldId){
-    try{const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&zoom=18&addressdetails=1',{headers:{Accept:'application/json'}}),d=await r.json(),a=d.address||{};const st=a.state==='Jammu and Kashmir'?'Jammu & Kashmir':a.state;if(st&&ALLOWED.includes(st)){document.getElementById(prefix+'_state').value=st;document.getElementById(prefix+'_state').dispatchEvent(new Event('change'));const di=document.getElementById(prefix+'_district');di.value=a.state_district||a.county||'';di.dispatchEvent(new Event('change'));}document.getElementById(prefix+'_locality').value=a.suburb||a.neighbourhood||a.village||a.town||a.city||'';document.getElementById(prefix+'_pin').value=(a.postcode||'').replace(/\D/g,'').slice(0,6);compose(prefix,oldId);const dist=await routeFromBase(lat,lng);if(prefix==='v')window.visitDistance=dist;const o=document.getElementById(prefix+'_result');o.classList.remove('hidden');o.innerHTML='<b>Location detected.</b> Approx. road distance from RMA base PIN 181010: <b>'+dist.toFixed(1)+' km</b>';if(typeof window.updateVisitPrice==='function')window.updateVisitPrice();}catch(e){compose(prefix,oldId);}}
+    try{
+      const latEl=document.getElementById(prefix+'_lat'),lngEl=document.getElementById(prefix+'_lng');
+      if(latEl)latEl.value=Number(lat).toFixed(6);
+      if(lngEl)lngEl.value=Number(lng).toFixed(6);
+      const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&zoom=18&addressdetails=1',{headers:{Accept:'application/json'}});
+      const d=await r.json(),a=d.address||{};
+      const st=a.state==='Jammu and Kashmir'?'Jammu & Kashmir':a.state;
+      if(st&&ALLOWED.includes(st)){
+        document.getElementById(prefix+'_state').value=st;
+        document.getElementById(prefix+'_state').dispatchEvent(new Event('change'));
+        const di=document.getElementById(prefix+'_district');
+        di.value=a.state_district||a.county||'';
+        di.dispatchEvent(new Event('change'));
+      }
+      document.getElementById(prefix+'_locality').value=a.suburb||a.neighbourhood||a.village||a.town||a.city||'';
+      const pc=(a.postcode||'').replace(/\D/g,'').slice(0,6);
+      if(pc)document.getElementById(prefix+'_pin').value=pc;
+      compose(prefix,oldId);
+      const dist=await routeFromBase(lat,lng);
+      if(prefix==='v')window.visitDistance=dist;
+      const o=document.getElementById(prefix+'_result');o.classList.remove('hidden');
+      o.innerHTML='<b>My Location detected.</b> Latitude: <b>'+Number(lat).toFixed(6)+'</b>, Longitude: <b>'+Number(lng).toFixed(6)+'</b><br>Approx. road distance from RMA base PIN 181010: <b>'+dist.toFixed(1)+' km</b>.';
+      if(typeof window.updateVisitPrice==='function')window.updateVisitPrice();
+    }catch(e){compose(prefix,oldId);}
+  }
 
   /* ---------- 2. Put the structured address into Services, Construction and Site Visit ---------- */
   function injectAddress(prefix,form,oldId){
     if(!form||document.getElementById(prefix+'_structuredAddress'))return;
     if(prefix==='s' && !document.getElementById('s_project_address')){const h=document.createElement('input');h.type='hidden';h.id='s_project_address';h.name='project_address';form.appendChild(h);oldId='s_project_address';}
+    if(prefix==='v' && !document.getElementById('v_address')){const h=document.createElement('input');h.type='hidden';h.id='v_address';h.name='project_address';form.appendChild(h);}
     const box=addressBox(prefix,oldId);form.insertBefore(box,form.querySelector('.group')||form.firstChild);setupAddress(prefix,oldId);
   }
   function injectAllAddresses(){
@@ -1829,17 +1838,21 @@ checkExistingSession();
   /* ---------- 4. Site visit Razorpay ---------- */
   /* ---------- 4. Site visit Razorpay ---------- */
   function addVisitPayment(){
-    const vp=document.querySelector('#visitForm .visit-price');
-    if(!vp||document.getElementById('rmaVisitPayment'))return;
+    const form=document.getElementById('visitForm');
+    if(!form||document.getElementById('rmaVisitPayment'))return;
+    const submit=form.querySelector('#visitSubmit');
     const b=document.createElement('div');
     b.id='rmaVisitPayment';
     b.className='rma-v3-pay';
-    b.innerHTML='<h3>💳 Pay Site Visit Fee with Razorpay</h3><p class="muted">After your location and visit charge are calculated, you can pay securely online.</p><button type="button" class="btn gold full" id="rmaVisitPayBtn">Pay with Razorpay</button><div id="rmaVisitPayMsg" class="notice hidden"></div>';
-    vp.appendChild(b);
+    b.innerHTML='<h3>💳 Pay Site Visit Fee with Razorpay</h3><p class="muted">After your PIN or My Location is verified and the visit amount is calculated, you can pay securely online.</p><div class="visit-price" style="margin-bottom:12px"><div class="line"><span>Road Distance</span><strong id="v_distance">-- km</strong></div><div class="line"><span>Visit Fee</span><strong id="v_fee">₹0</strong></div><div class="line" id="rmaVisitDiscountLine"><span>Discount</span><strong>₹0</strong></div><div class="line"><span>GST 18%</span><strong id="v_gst">₹0</strong></div><div class="line total"><span>Total</span><strong id="v_total">₹0</strong></div></div><button type="button" class="btn gold full" id="rmaVisitPayBtn">Pay with Razorpay</button><div id="rmaVisitPayMsg" class="notice hidden"></div>';
+    if(submit)form.insertBefore(b,submit);else form.appendChild(b);
     document.getElementById('rmaVisitPayBtn').onclick=async()=>{
       const msg=document.getElementById('rmaVisitPayMsg');
       const amt=(document.getElementById('v_total')?.textContent||'').replace(/[^0-9.]/g,'');
-      if(!amt||Number(amt)<=0){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Please complete the project location first so the site-visit charge can be calculated.';return;}
+      const pin=document.getElementById('v_pin')?.value.trim()||'';
+      const lat=Number(document.getElementById('v_lat')?.value||0),lng=Number(document.getElementById('v_lng')?.value||0);
+      if(!amt||Number(amt)<=0){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Please verify the PIN code or use My Location first so the site-visit charge can be calculated.';return;}
+      if(!(/^[0-9]{6}$/.test(pin)) && !(Number.isFinite(lat)&&Number.isFinite(lng)&&lat!==0&&lng!==0)){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Choose either a valid PIN code or Use My Location before paying.';return;}
       const requestId="RMA-V-"+Date.now().toString().slice(-9);
       await openRazorpayPayment({
         amount:Number(amt),
@@ -1849,7 +1862,7 @@ checkExistingSession();
         email:document.getElementById('v_email')?.value||'',
         contact:document.getElementById('v_mobile')?.value||'',
         messageEl:'rmaVisitPayMsg',
-        notes:{request_id:requestId,service_type:'Site Visit',distance_km:String(Number(visitDistance||0).toFixed(2))}
+        notes:{request_id:requestId,service_type:'Site Visit',distance_km:String(Number(visitDistance||0).toFixed(2)),pin_code:pin,latitude:String(lat||''),longitude:String(lng||'')}
       });
     };
   }
