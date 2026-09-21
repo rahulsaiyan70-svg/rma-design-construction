@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="RMA Design & Construction — Architectural Planning, Structural Design, Municipality Approval, Estimation, Survey and Construction.">
 <title>RMA Design & Construction</title>
+<!-- RMA V9: fixed Path Seeker login scope; combo packages removed; service layout + hero site-visit CTA -->
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
  integrity="sha256-p4NxAoJBhIINfQ3nJ5e5J1R8k3x5x7l4KQ1Q0e1Z0vM="
@@ -37,7 +38,25 @@ button{cursor:pointer}
 .hero{min-height:620px;color:#173f2f;display:flex;align-items:center;background:
 linear-gradient(90deg,#eef7f1e8,#eef7f1b8,#eef7f1a8),
 url("https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1800&q=80") center/cover}
+ .hero .container{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.65fr);gap:55px;align-items:center}
 .hero .copy{max-width:760px;padding:90px 0}
+.hero-quick-card{background:#ffffffee;border:1px solid #ffffffcc;border-radius:16px;padding:28px;box-shadow:0 18px 45px #173f2f22;backdrop-filter:blur(5px)}
+.hero-quick-card h2{font-size:28px;margin:6px 0 10px;color:var(--navy)}
+.hero-quick-card p{font-size:15px;color:#567267;margin:0 0 18px}
+.hero-quick-card .quick-points{display:grid;gap:9px;margin:0 0 20px;padding:0;list-style:none;color:#244337;font-size:14px}
+.hero-quick-card .quick-points li::before{content:'✓';font-weight:900;color:var(--gold);margin-right:8px}
+.service-enquiry-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:25px;align-items:start}
+.service-list{position:sticky;top:95px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px;box-shadow:0 7px 25px #00000009}
+.service-list h3{margin:0 0 12px;color:var(--navy)}
+.service-list button{width:100%;text-align:left;border:1px solid var(--line);background:#f8fbf9;color:var(--ink);border-radius:7px;padding:11px 12px;margin:5px 0;font-weight:700}
+.service-list button:hover{border-color:#2e7d5b;background:#eef7f1;color:#176b3a}
+.service-right-stack{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+#page-services .cards{display:none}
+#page-services .form-layout{display:block}
+#page-services .pricebox{position:sticky;top:95px}
+@media(max-width:1100px){.service-right-stack{grid-template-columns:1fr}.service-right-stack .pricebox{position:relative;top:0}}
+@media(max-width:900px){.hero .container{grid-template-columns:1fr;gap:10px}.hero .copy{padding:70px 0 25px}.hero-quick-card{margin-bottom:45px}.service-enquiry-layout{grid-template-columns:1fr}.service-list{position:relative;top:0}.service-right-stack{grid-template-columns:1fr}}
+
 .kicker{color:var(--gold);font-weight:800;letter-spacing:3px;font-size:13px}
 .hero h1{font-size:62px;line-height:1.02;margin:16px 0}
 .hero p{font-size:19px;color:#244337;max-width:670px}
@@ -77,6 +96,17 @@ section{padding:78px 0}
 .backrow{margin:22px 0}
 .backrow button{background:none;border:0;color:var(--blue);font-weight:800}
 .form-layout{display:grid;grid-template-columns:1fr 360px;gap:25px;align-items:start}
+.service-request-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:25px;align-items:start}
+.service-sidebar{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;box-shadow:0 7px 25px #00000009}
+.service-sidebar-head{padding:8px 8px 14px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.service-sidebar-head h2{font-size:25px;margin:4px 0}
+.service-sidebar-head p{font-size:13px;color:var(--muted);margin:0}
+.service-side-item{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:0;border-bottom:1px solid #e8eeea;background:#fff;color:var(--ink);padding:15px 9px;font-weight:700}
+.service-side-item:last-child{border-bottom:0}
+.service-side-item span{font-size:21px;width:28px}
+.service-side-item:hover{background:#eef7f1;color:#245b43}
+.service-form-area{min-width:0}
+
 .form-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:28px}
 .form-panel h2{margin-bottom:5px}
 .form-note{color:var(--muted);margin-bottom:22px}
@@ -136,8 +166,8 @@ section{padding:78px 0}
 .toast{position:fixed;right:18px;bottom:18px;z-index:3000;max-width:360px;background:#0b1b2b;color:#fff;padding:14px 17px;border-radius:8px;box-shadow:0 10px 35px #0004;display:none}
 @media(max-width:900px){
  .navlinks{display:none}.menu{display:block}
- .cards{grid-template-columns:1fr 1fr}.form-layout,.site-layout,.profile,.info-grid{grid-template-columns:1fr}
- .pricebox{position:relative;top:0}.profile{display:grid}
+ .cards{grid-template-columns:1fr 1fr}.form-layout,.site-layout,.profile,.info-grid{grid-template-columns:1fr}.service-request-layout{grid-template-columns:1fr}
+ .pricebox{position:relative;top:0}.profile{display:grid}.service-sidebar{order:2}.service-form-area{order:1}
 }
 @media(max-width:600px){
  .hero h1{font-size:40px}.statsgrid,.cards,.form-grid,.service-picks{grid-template-columns:1fr}
@@ -175,13 +205,25 @@ section{padding:78px 0}
 <!-- HOME -->
 <main id="page-home" class="page active">
   <section class="hero">
-    <div class="container copy">
-      <span class="kicker">RMA DESIGN & CONSTRUCTION</span>
-      <h1>BUILDING<br>YOUR VISION</h1>
-      <p>Professional architectural planning, structural design, municipality approval drawings, estimation, surveying and construction services.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:28px">
-        <button class="btn gold" onclick="showPage('services')">Explore Services</button>
-        <button class="btn outline" onclick="showPage('sitevisit')">Book My Site Visit</button>
+    <div class="container">
+      <div class="copy">
+        <span class="kicker">RMA DESIGN & CONSTRUCTION</span>
+        <h1>BUILDING<br>YOUR VISION</h1>
+        <p>Professional architectural planning, structural design, municipality approval drawings, estimation, surveying and construction services.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:28px">
+          <button class="btn gold" onclick="showPage('services')">Explore Services</button>
+        </div>
+      </div>
+      <div class="hero-quick-card">
+        <span class="kicker">QUICK CONSULTATION</span>
+        <h2>Book My Site Visit</h2>
+        <p>Need an on-site consultation? Choose your project location, calculate the applicable visit charge and request a convenient date and time.</p>
+        <ul class="quick-points">
+          <li>Location by GPS, address search or PIN code</li>
+          <li>Road distance from RMA base</li>
+          <li>Choose your preferred visit date and time</li>
+        </ul>
+        <button class="btn dark full" onclick="showPage('sitevisit')">Book My Site Visit →</button>
       </div>
     </div>
   </section>
@@ -220,32 +262,29 @@ section{padding:78px 0}
     <div class="container">
       <div class="kicker">RMA SERVICES</div>
       <h1>Professional Service Enquiry</h1>
-      <p>Select one or more services. The relevant details and charges will appear automatically.</p>
+      <p>Select the services you need. The enquiry form is shown beside the service list so the form is immediately visible.</p>
     </div>
   </div>
 
-  <section>
+  <section style="padding-top:35px">
     <div class="container">
-      <div class="heading">
-        <span class="kicker">SELECT A SERVICE</span>
-        <h2>What Can We Do For You?</h2>
-        <p>Click a service card or select multiple services in the full enquiry form below.</p>
-      </div>
+      <div class="service-request-layout">
+        <aside class="service-sidebar">
+          <div class="service-sidebar-head">
+            <span class="kicker">OUR SERVICES</span>
+            <h2>Services</h2>
+            <p>Select a service to jump to its section in the form.</p>
+          </div>
+          <button type="button" class="service-side-item" onclick="selectService('architectural')"><span>🏠</span><b>Architectural Planning</b></button>
+          <button type="button" class="service-side-item" onclick="selectService('structural')"><span>🏗️</span><b>Structural Design</b></button>
+          <button type="button" class="service-side-item" onclick="selectService('municipality')"><span>📑</span><b>Municipality Approval</b></button>
+          <button type="button" class="service-side-item" onclick="selectService('estimation')"><span>💰</span><b>Estimation & BOQ</b></button>
+          <button type="button" class="service-side-item" onclick="selectService('survey')"><span>📍</span><b>Survey / Plotting</b></button>
+          <button type="button" class="service-side-item" onclick="showPage('construction')"><span>👷</span><b>Construction Services</b></button>
+        </aside>
 
-      <div class="cards">
-        <div class="card clickable" onclick="selectService('architectural')"><div class="icon">🏠</div><h3>Architectural Planning</h3><p>Floor plans, residential/commercial planning and detailed requirements.</p><div class="price">₹15,000 / floor • Duplex ₹20,000 plan</div></div>
-        <div class="card clickable" onclick="selectService('structural')"><div class="icon">🏗️</div><h3>Structural Design</h3><p>RCC slab, beam, column and foundation design.</p><div class="price">₹5,000 / floor</div></div>
-        <div class="card clickable" onclick="selectService('municipality')"><div class="icon">📑</div><h3>Municipality / Approval</h3><p>Approval drawings and documentation.</p><div class="price">₹15,000 / floor + GST</div></div>
-        <div class="card clickable" onclick="selectService('estimation')"><div class="icon">💰</div><h3>Estimation & BOQ</h3><p>Quantity and construction cost estimation.</p><div class="price">₹3,000 ground + ₹5,000/additional floor</div></div>
-        <div class="card clickable" onclick="selectService('survey')"><div class="icon">📍</div><h3>Survey / Plotting</h3><p>Plot survey and measurement services.</p><div class="price">₹5,000 up to 1 kanal</div></div>
-        <div class="card clickable" onclick="showPage('construction')"><div class="icon">👷</div><h3>Construction Services</h3><p>Separate construction quotation for material or labour-only work.</p><div class="price">Open Construction Form →</div></div>
-      </div>
-    </div>
-  </section>
-
-  <section style="padding-top:0">
-    <div class="container">
-      <div class="form-layout">
+        <div class="service-form-area">
+          <div class="form-layout">
         <div class="form-panel">
           <h2>Full Service Enquiry Form</h2>
           <p class="form-note">No site-visit date or preferred visit time is asked here. Those are handled separately in <b>Book My Site Visit</b>.</p>
@@ -369,6 +408,9 @@ section{padding:78px 0}
             <div id="razorpayMessage" class="notice hidden" style="margin-top:10px"></div>
           </div>
         </aside>
+
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -698,13 +740,31 @@ async function loadSignedInPortal(user){
   const identity=((profile?.full_name||'')+' '+(user.email||'')).toLowerCase();
   const isPathSeeker=identity.includes('path seeker')||identity.includes('pathseeker')||identity.includes('path.seeker');
   if(isPathSeeker){
-    addPathSeekerPortal?.();
+    // Wait briefly for the dedicated Path Seeker portal module to register.
+    if(typeof window.addPathSeekerPortal!=='function'){
+      await new Promise(resolve=>{
+        const started=Date.now();
+        const timer=setInterval(()=>{
+          if(typeof window.addPathSeekerPortal==='function' || Date.now()-started>5000){
+            clearInterval(timer); resolve();
+          }
+        },100);
+      });
+    }
+    if(typeof window.addPathSeekerPortal==='function'){
+      window.addPathSeekerPortal();
+    }else{
+      throw new Error('Path Seeker portal module did not load. Please refresh the page and try again.');
+    }
     document.getElementById('authLoginSection')?.classList.add('hidden');
     document.getElementById('clientPortal')?.classList.add('hidden');
     document.getElementById('staffPortal')?.classList.add('hidden');
     document.getElementById('rmaPathSeekerPortal')?.classList.remove('hidden');
     document.getElementById('signinNavBtn').textContent='Account';
-    try { await loadPathSeeker(user); } catch(e) {
+    try {
+      if(typeof window.loadPathSeeker!=='function') throw new Error('Path Seeker portal is not ready. Please refresh the page once.');
+      await window.loadPathSeeker(user);
+    } catch(e) {
       document.getElementById('authLoginSection')?.classList.add('hidden');
       const portal=document.getElementById('rmaPathSeekerPortal');
       if(portal){ portal.classList.remove('hidden'); portal.innerHTML += '<div class="container"><div class="notice">Your account is signed in, but the project portal could not be loaded yet. Please contact RMA Design & Construction.</div></div>'; }
@@ -1239,21 +1299,8 @@ checkExistingSession();
   };
 
   /* ============================================================
-     2. COMBO PACKS
-     Combo prices are FINAL prices including GST.
-     Combo 1: Architectural + Structural + Estimation = ₹18,000/floor
-     Combo 2: Architectural + Municipality:
-       1 floor = ₹27,000 final
-       2 floors = ₹49,990 final
-       3 floors = ₹74,990 final
-     Departmental/government charges are NOT included in Combo 2.
+     2. SERVICE PRICING — NO COMBO PACKAGES
      ============================================================ */
-  const RMA2_COMBOS={
-    combo1:{id:'combo1',name:'Combo 1 — Complete Design Pack',services:['architectural','structural','estimation'],perFloor:18000},
-    combo2:{id:'combo2',name:'Combo 2 — Architectural + Municipality',services:['architectural','municipality'],prices:{1:27000,2:49990,3:74990}}
-  };
-  let rma2Combo='';
-
   function rma2Money(v){return '₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
   function rma2DiscountRate(amount){
     if(amount<=3000)return 0;
@@ -1264,109 +1311,45 @@ checkExistingSession();
     return 10;
   }
 
-  function rma2InjectCombos(){
-    const picks=document.querySelector('.service-picks');
-    if(!picks || document.getElementById('rmaComboBox')) return;
-    const box=document.createElement('div');
-    box.id='rmaComboBox';
-    box.className='rma-addon full';
-    box.innerHTML=`
-      <h3>⭐ RMA Combo Packs</h3>
-      <div class="hint">Choose a combo and the included services will be selected automatically. Combo price is locked and already includes GST.</div>
-      <div class="rma-combos">
-        <label class="rma-combo" id="rmaCombo1Label">
-          <input type="radio" name="rmaCombo" value="combo1">
-          <span><b>Combo 1 — Complete Design Pack</b><br><small>Architectural Planning + Structural Design + Estimation & BOQ<br><b>₹18,000 per floor, GST included</b></small></span>
-        </label>
-        <label class="rma-combo" id="rmaCombo2Label">
-          <input type="radio" name="rmaCombo" value="combo2">
-          <span><b>Combo 2 — Approval Drawing Pack</b><br><small>Architectural Planning + Municipality Approval Drawing<br><b>1 floor ₹27,000 • 2 floors ₹49,990 • 3 floors ₹74,990, GST included</b><br>Departmental/government charges extra.</small></span>
-        </label>
-      </div>
-      <div id="rmaComboMessage" class="rma-result hidden"></div>`;
-    picks.parentElement.insertBefore(box,picks.nextSibling);
-    box.querySelectorAll('input[name="rmaCombo"]').forEach(r=>r.addEventListener('change',()=>rma2SelectCombo(r.value)));
-  }
-
-  function rma2SelectCombo(combo){
-    rma2Combo=combo||'';
-    document.querySelectorAll('.rma-combo').forEach(x=>x.classList.remove('selected'));
-    document.getElementById(combo==='combo1'?'rmaCombo1Label':'rmaCombo2Label')?.classList.add('selected');
-    const c=RMA2_COMBOS[combo];
-    if(!c)return;
-    document.querySelectorAll('input[name="service"]').forEach(cb=>cb.checked=c.services.includes(cb.value));
-
-    /* Fill standard included-service choices. Client identity/project essentials remain untouched. */
-    const pt=document.getElementById('a_planType'); if(pt)pt.value='normal';
-    const el=document.getElementById('a_electrical'); if(el)el.value='0';
-    const pl=document.getElementById('a_plumbing'); if(pl)pl.value='0';
-    const ev=document.getElementById('a_elevation'); if(ev)ev.value='0';
-
-    const msg=document.getElementById('rmaComboMessage');
-    if(msg){msg.classList.remove('hidden');msg.innerHTML=combo==='combo1'
-      ? '<b>Combo 1 selected.</b> Architectural + Structural + Estimation are included. Price is locked at <b>₹18,000 per floor including GST</b>.'
-      : '<b>Combo 2 selected.</b> Architectural + Municipality Approval are included. Price is locked at <b>₹27,000 / ₹49,990 / ₹74,990</b> for 1 / 2 / 3 floors, including GST. Departmental charges are extra.';}
-    if(typeof refreshServiceDetails==='function')refreshServiceDetails();
-  }
-
-  /* Override the previous pricing function. */
   window.updateServicePrice=function(){
     const keys=typeof selectedServiceKeys==='function'?selectedServiceKeys():[];
     const floors=Number(document.getElementById('s_floors')?.value||1);
-    let lines=[],subtotal=0,total=0,discount=0,gst=0,locked=false;
+    let lines=[],subtotal=0,total=0,discount=0,gst=0;
 
-    if(rma2Combo==='combo1'){
-      const base=18000*floors;
-      total=base; locked=true;
-      lines.push(['Combo 1 — Complete Design Pack',base,'₹18,000 × '+floors+' floor(s), GST included']);
-      subtotal=base/1.18; gst=base-subtotal;
-    }else if(rma2Combo==='combo2'){
-      const base={1:27000,2:49990,3:74990}[floors]||0;
-      if(base){
-        total=base;locked=true;
-        lines.push(['Combo 2 — Architectural + Municipality',base,floors+' floor(s), GST included']);
-        subtotal=base/1.18;gst=base-subtotal;
-      }else{
-        lines.push(['Combo 2','To confirm','Combo is defined for 1–3 floors']);
-      }
-    }else{
-      if(keys.includes('architectural')){
-        const duplex=document.getElementById('a_planType')?.value==='duplex';
-        const v=duplex?RMA2_SERVICE_RATES.duplex:RMA2_SERVICE_RATES.architectural*floors;
-        subtotal+=v;lines.push(['Architectural Planning',v,duplex?'Duplex plan':'₹14,999 × '+floors+' floor(s)']);
-        const e=Number(document.getElementById('a_electrical')?.value||0);
-        const p=Number(document.getElementById('a_plumbing')?.value||0);
-        const elev=Number(document.getElementById('a_elevation')?.value||0);
-        if(e){subtotal+=e;lines.push(['Electrical Drawing',e,'₹2,499']);}
-        if(p){subtotal+=p;lines.push(['Plumbing Drawing',p,'₹2,499']);}
-        if(elev){const label=document.getElementById('a_elevation')?.options[document.getElementById('a_elevation').selectedIndex]?.text||'Elevation';subtotal+=elev;lines.push([label,elev,'']);}
-      }
-      if(keys.includes('structural')){const v=RMA2_SERVICE_RATES.structural*floors;subtotal+=v;lines.push(['Structural Design',v,'₹4,999 × '+floors]);}
-      if(keys.includes('municipality')){const v=RMA2_SERVICE_RATES.municipality*floors;subtotal+=v;lines.push(['Municipality / Approval',v,'₹14,999 × '+floors]);}
-      if(keys.includes('estimation')){const v=RMA2_SERVICE_RATES.estimationGround+Math.max(0,floors-1)*RMA2_SERVICE_RATES.estimationAdditional;subtotal+=v;lines.push(['Estimation & BOQ',v,'₹2,999 ground + ₹4,999/additional']);}
-      if(keys.includes('survey')){const area=Number(document.getElementById('sv_area')?.value||0);const v=area>1?RMA2_SERVICE_RATES.surveyAbove1Kanal:RMA2_SERVICE_RATES.survey1Kanal;subtotal+=v;lines.push(['Survey / Plotting',v,area>1?'> 1 kanal':'Up to 1 kanal']);}
-      discount=subtotal*rma2DiscountRate(subtotal)/100;
-      const taxable=Math.max(0,subtotal-discount);
-      gst=taxable*.18;
-      total=taxable+gst;
+    if(keys.includes('architectural')){
+      const duplex=document.getElementById('a_planType')?.value==='duplex';
+      const v=duplex?RMA2_SERVICE_RATES.duplex:RMA2_SERVICE_RATES.architectural*floors;
+      subtotal+=v;lines.push(['Architectural Planning',v,duplex?'Duplex plan':'₹14,999 × '+floors+' floor(s)']);
+      const e=Number(document.getElementById('a_electrical')?.value||0);
+      const p=Number(document.getElementById('a_plumbing')?.value||0);
+      const elev=Number(document.getElementById('a_elevation')?.value||0);
+      if(e){subtotal+=e;lines.push(['Electrical Drawing',e,'₹2,499']);}
+      if(p){subtotal+=p;lines.push(['Plumbing Drawing',p,'₹2,499']);}
+      if(elev){const label=document.getElementById('a_elevation')?.options[document.getElementById('a_elevation').selectedIndex]?.text||'Elevation';subtotal+=elev;lines.push([label,elev,'']);}
     }
+    if(keys.includes('structural')){const v=RMA2_SERVICE_RATES.structural*floors;subtotal+=v;lines.push(['Structural Design',v,'₹4,999 × '+floors]);}
+    if(keys.includes('municipality')){const v=RMA2_SERVICE_RATES.municipality*floors;subtotal+=v;lines.push(['Municipality / Approval',v,'₹14,999 × '+floors]);}
+    if(keys.includes('estimation')){const v=RMA2_SERVICE_RATES.estimationGround+Math.max(0,floors-1)*RMA2_SERVICE_RATES.estimationAdditional;subtotal+=v;lines.push(['Estimation & BOQ',v,'₹2,999 ground + ₹4,999/additional']);}
+    if(keys.includes('survey')){const area=Number(document.getElementById('sv_area')?.value||0);const v=area>1?RMA2_SERVICE_RATES.surveyAbove1Kanal:RMA2_SERVICE_RATES.survey1Kanal;subtotal+=v;lines.push(['Survey / Plotting',v,area>1?'> 1 kanal':'Up to 1 kanal']);}
+
+    discount=subtotal*rma2DiscountRate(subtotal)/100;
+    const taxable=Math.max(0,subtotal-discount);
+    gst=taxable*.18;
+    total=taxable+gst;
 
     const holder=document.getElementById('selectedServiceLines');
     if(holder)holder.innerHTML=lines.length?lines.map(x=>`<div class="line"><span>${x[0]}<br><small style="color:#aebdca">${x[2]}</small></span><strong>${typeof x[1]==='number'?rma2Money(x[1]):x[1]}</strong></div>`).join(''):'<div style="color:#cbd5df">Select a service to see its price.</div>';
     const baseEl=document.getElementById('serviceBaseSubtotal'),discEl=document.getElementById('serviceDiscount'),subEl=document.getElementById('serviceSubtotal'),gstEl=document.getElementById('serviceGST'),totEl=document.getElementById('serviceTotal');
-    if(baseEl)baseEl.textContent=rma2Money(locked?total:subtotal);
-    if(discEl)discEl.textContent=locked?'₹0 (Combo locked)':rma2Money(discount);
-    if(subEl)subEl.textContent=locked?rma2Money(subtotal):rma2Money(Math.max(0,subtotal-discount));
+    if(baseEl)baseEl.textContent=rma2Money(subtotal);
+    if(discEl)discEl.textContent=rma2Money(discount);
+    if(subEl)subEl.textContent=rma2Money(taxable);
     if(gstEl)gstEl.textContent=rma2Money(gst);
     if(totEl)totEl.textContent=rma2Money(total);
     const note=document.getElementById('serviceDiscountNote');
-    if(note)note.textContent=locked?'Combo price is locked and GST 18% is already included.':(rma2DiscountRate(subtotal)?rma2DiscountRate(subtotal)+'% service discount applied. GST 18% applies after discount.':'No discount up to ₹3,000. GST 18% applies.');
-    const auto=document.getElementById('autoDiscountLabel');if(auto)auto.textContent=locked?'Locked':'Slab';
+    if(note)note.textContent=rma2DiscountRate(subtotal)?rma2DiscountRate(subtotal)+'% service discount applied. GST 18% applies after discount.':'No discount up to ₹3,000. GST 18% applies.';
+    const auto=document.getElementById('autoDiscountLabel');if(auto)auto.textContent='Slab';
     document.getElementById('discountCode')?.closest('.group')?.classList.add('hidden');
   };
-
-  /* Keep combo selection visually in sync if floors are changed. */
-  document.getElementById('s_floors')?.addEventListener('change',()=>{if(rma2Combo)window.updateServicePrice();});
 
   /* ============================================================
      3. SITE VISIT ADDRESS HIERARCHY + PIN CODE
@@ -1597,7 +1580,7 @@ checkExistingSession();
 
   /* Inject the new UI after the existing DOM has loaded. */
   function rma2Init(){
-    rma2InjectCombos();rma2InjectAddress();window.updateServicePrice();window.updateVisitPrice();
+    rma2InjectAddress();window.updateServicePrice();window.updateVisitPrice();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',rma2Init);else rma2Init();
 })();
@@ -1738,6 +1721,7 @@ checkExistingSession();
 
   /* ---------- 3. Service combo packs ---------- */
   function addCombos(){
+    return;
     const servicePicks=document.querySelector('.service-picks');if(!servicePicks||document.getElementById('rmaComboPacks'))return;
     const box=document.createElement('div');box.id='rmaComboPacks';box.className='rma-v3-card';box.innerHTML=`<h3>⭐ Combo Packages</h3><p class="muted">Choose a package and the required services will be selected automatically.</p>
       <div class="rma-v3-grid">
@@ -1763,6 +1747,8 @@ checkExistingSession();
     const signin=document.getElementById('page-signin');if(!signin||document.getElementById('rmaPathSeekerPortal'))return;
     const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Drawings, project documents, site visits and project requests.</p></div><div class="rma-v3-client"><div class="panel"><span class="rma-v3-badge">ACTIVE CLIENT</span><h3 style="margin-top:10px">Path Seeker International School</h3><p class="muted">Your project documents and approved drawings will be displayed here.</p><div class="rma-v3-list"><div><b>Project</b><br>Path Seeker International School</div><div><b>Monthly Site Visits</b><br><span id="psVisitsUsed">Loading...</span> used this month • <span id="psVisitsRemaining">Loading...</span> available</div></div><button class="btn dark" style="margin-top:14px" onclick="showPage('sitevisit')">Request Site Visit</button></div><div class="panel"><h3>📐 Drawings & Documents</h3><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div></div><div class="panel" style="margin-top:18px"><h3>📅 Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
   }
+  window.addPathSeekerPortal = addPathSeekerPortal;
+
   async function loadPathSeeker(knownUser){
     const portal=document.getElementById('rmaPathSeekerPortal');if(!portal)return;
     const user=knownUser || (await supabaseClient.auth.getUser()).data?.user;if(!user)return;
@@ -1842,6 +1828,8 @@ checkExistingSession();
     }catch(e){console.warn('Path Seeker documents load failed',e);document.getElementById('psDocuments').innerHTML='<div class="muted">Documents could not be loaded. Please check the project-document access policy.</div>';}
   }
 
+  window.loadPathSeeker = loadPathSeeker;
+
   /* Add site-visit scope and monthly cap to the booking form. */
   function addVisitScope(){
     const f=document.getElementById('visitForm');if(!f||document.getElementById('rmaVisitScope'))return;
@@ -1864,11 +1852,14 @@ checkExistingSession();
 const oldSubmit=document.getElementById('visitForm');
   if(oldSubmit)oldSubmit.addEventListener('submit',function(){localStorage.setItem('rma_last_visit_scope',document.getElementById('rma_visit_scope')?.value||'');},true);
 
-  function initV3(){injectAllAddresses();addCombos();addVisitPayment();addVisitScope();addPathSeekerPortal();window.updateServicePrice?.();window.updateVisitPrice?.();loadPathSeeker();}
+  function initV3(){injectAllAddresses();addCombos();addVisitPayment();addVisitScope();if(typeof window.addPathSeekerPortal==='function')window.addPathSeekerPortal();window.updateServicePrice?.();window.updateVisitPrice?.();loadPathSeeker();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV3);else initV3();
   window.rmaV3Init=initV3;
 })();
 </script>
+
+
+
 
 </body>
 </html>
