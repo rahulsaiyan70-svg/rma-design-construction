@@ -508,7 +508,7 @@ section{padding:78px 0}
 <main id="page-sitevisit" class="page">
   <div class="page-head">
     <div class="container">
-      <div class="kicker">SEPARATE SITE VISIT BOOKING</div>
+      <div class="kicker">SITE VISIT BOOKING</div>
       <h1>Book My Site Visit</h1>
       <p>Use your current location or enter the project location. The website calculates the road distance from RMA Design & Construction and the applicable visit fee.</p>
     </div>
@@ -519,7 +519,7 @@ section{padding:78px 0}
       <div class="site-layout">
         <div class="form-panel">
           <h2>Visit Booking Form</h2>
-          <p class="form-note">This form is only for the site visit. Preferred date and time are intentionally kept here.</p>
+          <p class="form-note">Complete the form from your details through the project address, distance-based fee and secure Razorpay payment.</p>
           <form id="visitForm">
             <input type="hidden" id="v_address" name="project_address">
             <div class="group"><label>Full Name *</label><input id="v_name" required></div>
@@ -546,12 +546,11 @@ section{padding:78px 0}
         <thead><tr><th>Road Distance</th><th>Visit Fee</th></tr></thead>
         <tbody>
           <tr><td>0–10 km</td><td>₹1,500</td></tr>
-          <tr><td>&gt;10–15 km</td><td>₹2,000</td></tr>
-          <tr><td>&gt;15–20 km</td><td>₹2,500</td></tr>
-          <tr><td>&gt;20–25 km</td><td>₹3,500</td></tr>
-          <tr><td>&gt;25–35 km</td><td>₹5,000</td></tr>
-          <tr><td>&gt;35–50 km</td><td>₹7,500</td></tr>
-          <tr><td>&gt;50 km</td><td>₹10,000+ — special confirmation</td></tr>
+          <tr><td>&gt;10–20 km</td><td>₹2,000</td></tr>
+          <tr><td>&gt;20–40 km</td><td>₹2,500</td></tr>
+          <tr><td>&gt;40–50 km</td><td>₹3,500</td></tr>
+          <tr><td>&gt;50–75 km</td><td>₹4,000</td></tr>
+          <tr><td>&gt;75 km</td><td>₹5,000 — special confirmation may apply</td></tr>
           <tr><td>Outside J&amp;K / Out of State</td><td>Special per-day rate + applicable travel, accommodation and food expenses</td></tr>
         </tbody>
       </table>
@@ -2358,7 +2357,10 @@ window.RAZORPAY_KEY_ID=RAZORPAY_KEY_ID;
 (function(){
   'use strict';
   const BASE_PIN='180010';
-  const BASE_ADDRESS='21/2 Ambika Colony, By Pass Road, Kunjwani, Jammu, Jammu & Kashmir, 180010, India';
+  // Exact RMA Design & Construction office/base pin supplied by the owner.
+  const BASE_LAT=32.6712660;
+  const BASE_LNG=74.8848835;
+  const BASE_ADDRESS='RMA Design & Construction office — 32.6712660, 74.8848835';
   const ALLOWED=['Jammu & Kashmir','Punjab','Haryana','Chandigarh','Delhi'];
   const JK=['Jammu','Samba','Kathua','Udhampur','Reasi','Rajouri','Poonch','Doda','Kishtwar','Ramban','Srinagar','Budgam','Ganderbal','Pulwama','Shopian','Kulgam','Anantnag','Baramulla','Kupwara','Bandipora'];
   const TEHSILS={
@@ -2384,8 +2386,9 @@ window.RAZORPAY_KEY_ID=RAZORPAY_KEY_ID;
   }
   async function getBaseCoords(){
     if(baseCoords)return baseCoords;
-    try{baseCoords=await geocode(BASE_ADDRESS)}
-    catch(e){baseCoords=await geocode(BASE_PIN+', Kunjwani, Jammu, Jammu & Kashmir, India')}
+    // Do NOT geocode the RMA PIN/address. PIN geocoding returns a centroid and
+    // can move the origin several kilometres away from the actual office.
+    baseCoords={lat:BASE_LAT,lng:BASE_LNG};
     return baseCoords;
   }
   function haversine(a,b){const R=6371,rad=Math.PI/180,dLat=(b.lat-a.lat)*rad,dLon=(b.lng-a.lng)*rad;const x=Math.sin(dLat/2)**2+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
@@ -2451,8 +2454,18 @@ window.RAZORPAY_KEY_ID=RAZORPAY_KEY_ID;
       const s=document.getElementById('rma20_state'),di=document.getElementById('rma20_district');s.value=state;fillDistricts();
       if(state==='Jammu & Kashmir'&&JK.includes(po.District))di.value=po.District;else{di.innerHTML='<option value="Other">'+esc(po.District||'Other')+'</option>';di.value='Other';}fillTehsils();
       document.getElementById('rma20_locality').value=document.getElementById('rma20_locality').value||po.Name||'';compose();
-      const p=await geocode(pin+', '+po.Name+', '+po.District+', '+state+', India');visitDistanceV20=await roadDistanceV20(p.lat,p.lng);document.getElementById('v_lat').value=p.lat.toFixed(6);document.getElementById('v_lng').value=p.lng.toFixed(6);document.getElementById('rma20_coords').value=p.lat.toFixed(6)+', '+p.lng.toFixed(6);updatePrice();
-      showResult('<b>PIN verified:</b> '+esc(po.Name)+', '+esc(po.District)+', '+esc(state)+'<br><b>Road distance from RMA base PIN '+BASE_PIN+':</b> '+visitDistanceV20.toFixed(1)+' km.');
+      // PIN lookup fills the address fields first. Then geocode the completed
+      // project address when possible, falling back to the PIN locality.
+      compose();
+      let query=[document.getElementById('rma20_house')?.value.trim(),document.getElementById('rma20_landmark')?.value.trim(),document.getElementById('rma20_locality')?.value.trim(),po.Name,po.District,state,'India'].filter(Boolean).join(', ');
+      let p;
+      try{p=await geocode(query)}catch(e){p=await geocode(pin+', '+po.Name+', '+po.District+', '+state+', India')}
+      visitDistanceV20=await roadDistanceV20(p.lat,p.lng);
+      document.getElementById('v_lat').value=p.lat.toFixed(6);
+      document.getElementById('v_lng').value=p.lng.toFixed(6);
+      document.getElementById('rma20_coords').value=p.lat.toFixed(6)+', '+p.lng.toFixed(6);
+      updatePrice();
+      showResult('<b>PIN verified:</b> '+esc(po.Name)+', '+esc(po.District)+', '+esc(state)+'<br><b>Road distance from exact RMA office:</b> '+visitDistanceV20.toFixed(1)+' km.');
     }catch(e){visitDistanceV20=0;updatePrice();showResult(esc(e.message||'PIN could not be verified. Please use My Location.'),false)}
   }
   async function useGPSV20(){
