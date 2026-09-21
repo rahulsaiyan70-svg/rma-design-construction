@@ -1968,7 +1968,8 @@ checkExistingSession();
     }catch(e){
       console.error('Path Seeker site visit insert failed:',e);
       msg.className='notice error';msg.classList.remove('hidden');
-      msg.textContent='The request could not be saved. Please use Email RMA or WhatsApp RMA for the request.';
+      const detail=[e?.code,e?.message,e?.details,e?.hint].filter(Boolean).join(' | ');
+      msg.innerHTML='<b>The request could not be saved.</b><br><small>'+esc(detail||'Supabase did not return an error message. Please open the browser console for details.')+'</small>';
     }
   }
 
