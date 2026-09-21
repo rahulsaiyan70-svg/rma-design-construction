@@ -163,7 +163,7 @@ section{padding:78px 0}
       <li><button onclick="showPage('home')">Home</button></li>
       <li><button onclick="showPage('services')">Services</button></li>
       <li><button onclick="showPage('construction')">Construction</button></li>
-      <li><button onclick="showPage('sitevisit')">Book a Site Visit</button></li>
+      <li><button onclick="showPage('sitevisit')">Book My Site Visit</button></li>
       <li><button onclick="showPage('about')">About</button></li>
       <li><button onclick="showPage('contact')">Contact</button></li>
       <li><button onclick="showPage('signin')" id="signinNavBtn">Sign In</button></li>
@@ -181,7 +181,7 @@ section{padding:78px 0}
       <p>Professional architectural planning, structural design, municipality approval drawings, estimation, surveying and construction services.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:28px">
         <button class="btn gold" onclick="showPage('services')">Explore Services</button>
-        <button class="btn outline" onclick="showPage('sitevisit')">Book a Site Visit</button>
+        <button class="btn outline" onclick="showPage('sitevisit')">Book My Site Visit</button>
       </div>
     </div>
   </section>
@@ -200,7 +200,7 @@ section{padding:78px 0}
       <div class="heading"><span class="kicker">HOW IT WORKS</span><h2>Choose What You Need</h2><p>Site visit booking and professional service enquiry are now separate, so each form asks only the information relevant to that request.</p></div>
       <div class="info-grid">
         <div class="card">
-          <div class="icon">📍</div><h3>Book a Site Visit</h3>
+          <div class="icon">📍</div><h3>Book My Site Visit</h3>
           <p>Select the exact project location on the map, calculate road distance from the RMA base location, see the applicable visit fee and choose your preferred date and time.</p>
           <button class="btn dark" style="margin-top:18px" onclick="showPage('sitevisit')">Book Visit</button>
         </div>
@@ -248,7 +248,7 @@ section{padding:78px 0}
       <div class="form-layout">
         <div class="form-panel">
           <h2>Full Service Enquiry Form</h2>
-          <p class="form-note">No site-visit date or preferred visit time is asked here. Those are handled separately in <b>Book a Site Visit</b>.</p>
+          <p class="form-note">No site-visit date or preferred visit time is asked here. Those are handled separately in <b>Book My Site Visit</b>.</p>
 
           <form id="serviceForm">
             <div class="form-grid">
@@ -461,7 +461,7 @@ section{padding:78px 0}
   <div class="page-head">
     <div class="container">
       <div class="kicker">SEPARATE SITE VISIT BOOKING</div>
-      <h1>Book a Site Visit</h1>
+      <h1>Book My Site Visit</h1>
       <p>Use your current location or enter the project location. The website calculates the road distance from RMA Design & Construction and the applicable visit fee.</p>
     </div>
   </div>
@@ -1152,5 +1152,622 @@ updateServicePrice();
 
 checkExistingSession();
 </script>
+
+
+<!-- ============================================================
+     RMA ADD-ON v2 — PIN CODE ADDRESS + COMBO PACKS
+     This block is intentionally ADDITIVE. It overrides the relevant
+     pricing/location functions from the previous version without requiring
+     the earlier code to be deleted.
+     ============================================================ -->
+<style>
+.rma-addon{border:1px solid #dfe7e2;background:#f7fbf8;border-radius:10px;padding:18px;margin-bottom:16px}
+.rma-addon h3{margin-bottom:6px;color:#245b43}
+.rma-addon .hint{font-size:13px;color:#697586;margin-bottom:12px}
+.rma-addon-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rma-addon-grid .full{grid-column:1/-1}
+.rma-addon select,.rma-addon input{width:100%;border:1px solid #dfe4e8;border-radius:6px;padding:11px;background:#fff;color:#172231}
+.rma-addon label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}
+.rma-combos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.rma-combo{border:1px solid #dfe4e8;background:#fff;border-radius:9px;padding:13px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.rma-combo:hover{border-color:#3f8f68}
+.rma-combo.selected{border:2px solid #2e7d5b;background:#eef7f1}
+.rma-combo input{margin-top:4px}
+.rma-lock{background:#eaf7ef!important;color:#176b3a!important;font-weight:900}
+.rma-result{margin-top:12px;padding:11px;border-radius:7px;background:#e7f4ed;color:#176b3a;font-size:14px}
+@media(max-width:600px){.rma-addon-grid,.rma-combos{grid-template-columns:1fr}}
+</style>
+<script>
+(function(){
+  'use strict';
+
+  /* ============================================================
+     1. SERVICE RATES — ₹1 LESS THAN THE PREVIOUS RATES
+     ============================================================ */
+  const RMA2_SERVICE_RATES={
+    architectural:14999,
+    duplex:19999,
+    structural:4999,
+    municipality:14999,
+    estimationGround:2999,
+    estimationAdditional:4999,
+    survey1Kanal:4999,
+    surveyAbove1Kanal:9999,
+    electrical:2499,
+    plumbing:2499,
+    elevationSingle:5999,
+    elevationDouble:11999
+  };
+
+  /* ============================================================
+     2. COMBO PACKS
+     Combo prices are FINAL prices including GST.
+     Combo 1: Architectural + Structural + Estimation = ₹18,000/floor
+     Combo 2: Architectural + Municipality:
+       1 floor = ₹27,000 final
+       2 floors = ₹49,990 final
+       3 floors = ₹74,990 final
+     Departmental/government charges are NOT included in Combo 2.
+     ============================================================ */
+  const RMA2_COMBOS={
+    combo1:{id:'combo1',name:'Combo 1 — Complete Design Pack',services:['architectural','structural','estimation'],perFloor:18000},
+    combo2:{id:'combo2',name:'Combo 2 — Architectural + Municipality',services:['architectural','municipality'],prices:{1:27000,2:49990,3:74990}}
+  };
+  let rma2Combo='';
+
+  function rma2Money(v){return '₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
+  function rma2DiscountRate(amount){
+    if(amount<=3000)return 0;
+    if(amount<=5000)return 2;
+    if(amount<=10000)return 4;
+    if(amount<=20000)return 6;
+    if(amount<=30000)return 8;
+    return 10;
+  }
+
+  function rma2InjectCombos(){
+    const picks=document.querySelector('.service-picks');
+    if(!picks || document.getElementById('rmaComboBox')) return;
+    const box=document.createElement('div');
+    box.id='rmaComboBox';
+    box.className='rma-addon full';
+    box.innerHTML=`
+      <h3>⭐ RMA Combo Packs</h3>
+      <div class="hint">Choose a combo and the included services will be selected automatically. Combo price is locked and already includes GST.</div>
+      <div class="rma-combos">
+        <label class="rma-combo" id="rmaCombo1Label">
+          <input type="radio" name="rmaCombo" value="combo1">
+          <span><b>Combo 1 — Complete Design Pack</b><br><small>Architectural Planning + Structural Design + Estimation & BOQ<br><b>₹18,000 per floor, GST included</b></small></span>
+        </label>
+        <label class="rma-combo" id="rmaCombo2Label">
+          <input type="radio" name="rmaCombo" value="combo2">
+          <span><b>Combo 2 — Approval Drawing Pack</b><br><small>Architectural Planning + Municipality Approval Drawing<br><b>1 floor ₹27,000 • 2 floors ₹49,990 • 3 floors ₹74,990, GST included</b><br>Departmental/government charges extra.</small></span>
+        </label>
+      </div>
+      <div id="rmaComboMessage" class="rma-result hidden"></div>`;
+    picks.parentElement.insertBefore(box,picks.nextSibling);
+    box.querySelectorAll('input[name="rmaCombo"]').forEach(r=>r.addEventListener('change',()=>rma2SelectCombo(r.value)));
+  }
+
+  function rma2SelectCombo(combo){
+    rma2Combo=combo||'';
+    document.querySelectorAll('.rma-combo').forEach(x=>x.classList.remove('selected'));
+    document.getElementById(combo==='combo1'?'rmaCombo1Label':'rmaCombo2Label')?.classList.add('selected');
+    const c=RMA2_COMBOS[combo];
+    if(!c)return;
+    document.querySelectorAll('input[name="service"]').forEach(cb=>cb.checked=c.services.includes(cb.value));
+
+    /* Fill standard included-service choices. Client identity/project essentials remain untouched. */
+    const pt=document.getElementById('a_planType'); if(pt)pt.value='normal';
+    const el=document.getElementById('a_electrical'); if(el)el.value='0';
+    const pl=document.getElementById('a_plumbing'); if(pl)pl.value='0';
+    const ev=document.getElementById('a_elevation'); if(ev)ev.value='0';
+
+    const msg=document.getElementById('rmaComboMessage');
+    if(msg){msg.classList.remove('hidden');msg.innerHTML=combo==='combo1'
+      ? '<b>Combo 1 selected.</b> Architectural + Structural + Estimation are included. Price is locked at <b>₹18,000 per floor including GST</b>.'
+      : '<b>Combo 2 selected.</b> Architectural + Municipality Approval are included. Price is locked at <b>₹27,000 / ₹49,990 / ₹74,990</b> for 1 / 2 / 3 floors, including GST. Departmental charges are extra.';}
+    if(typeof refreshServiceDetails==='function')refreshServiceDetails();
+  }
+
+  /* Override the previous pricing function. */
+  window.updateServicePrice=function(){
+    const keys=typeof selectedServiceKeys==='function'?selectedServiceKeys():[];
+    const floors=Number(document.getElementById('s_floors')?.value||1);
+    let lines=[],subtotal=0,total=0,discount=0,gst=0,locked=false;
+
+    if(rma2Combo==='combo1'){
+      const base=18000*floors;
+      total=base; locked=true;
+      lines.push(['Combo 1 — Complete Design Pack',base,'₹18,000 × '+floors+' floor(s), GST included']);
+      subtotal=base/1.18; gst=base-subtotal;
+    }else if(rma2Combo==='combo2'){
+      const base={1:27000,2:49990,3:74990}[floors]||0;
+      if(base){
+        total=base;locked=true;
+        lines.push(['Combo 2 — Architectural + Municipality',base,floors+' floor(s), GST included']);
+        subtotal=base/1.18;gst=base-subtotal;
+      }else{
+        lines.push(['Combo 2','To confirm','Combo is defined for 1–3 floors']);
+      }
+    }else{
+      if(keys.includes('architectural')){
+        const duplex=document.getElementById('a_planType')?.value==='duplex';
+        const v=duplex?RMA2_SERVICE_RATES.duplex:RMA2_SERVICE_RATES.architectural*floors;
+        subtotal+=v;lines.push(['Architectural Planning',v,duplex?'Duplex plan':'₹14,999 × '+floors+' floor(s)']);
+        const e=Number(document.getElementById('a_electrical')?.value||0);
+        const p=Number(document.getElementById('a_plumbing')?.value||0);
+        const elev=Number(document.getElementById('a_elevation')?.value||0);
+        if(e){subtotal+=e;lines.push(['Electrical Drawing',e,'₹2,499']);}
+        if(p){subtotal+=p;lines.push(['Plumbing Drawing',p,'₹2,499']);}
+        if(elev){const label=document.getElementById('a_elevation')?.options[document.getElementById('a_elevation').selectedIndex]?.text||'Elevation';subtotal+=elev;lines.push([label,elev,'']);}
+      }
+      if(keys.includes('structural')){const v=RMA2_SERVICE_RATES.structural*floors;subtotal+=v;lines.push(['Structural Design',v,'₹4,999 × '+floors]);}
+      if(keys.includes('municipality')){const v=RMA2_SERVICE_RATES.municipality*floors;subtotal+=v;lines.push(['Municipality / Approval',v,'₹14,999 × '+floors]);}
+      if(keys.includes('estimation')){const v=RMA2_SERVICE_RATES.estimationGround+Math.max(0,floors-1)*RMA2_SERVICE_RATES.estimationAdditional;subtotal+=v;lines.push(['Estimation & BOQ',v,'₹2,999 ground + ₹4,999/additional']);}
+      if(keys.includes('survey')){const area=Number(document.getElementById('sv_area')?.value||0);const v=area>1?RMA2_SERVICE_RATES.surveyAbove1Kanal:RMA2_SERVICE_RATES.survey1Kanal;subtotal+=v;lines.push(['Survey / Plotting',v,area>1?'> 1 kanal':'Up to 1 kanal']);}
+      discount=subtotal*rma2DiscountRate(subtotal)/100;
+      const taxable=Math.max(0,subtotal-discount);
+      gst=taxable*.18;
+      total=taxable+gst;
+    }
+
+    const holder=document.getElementById('selectedServiceLines');
+    if(holder)holder.innerHTML=lines.length?lines.map(x=>`<div class="line"><span>${x[0]}<br><small style="color:#aebdca">${x[2]}</small></span><strong>${typeof x[1]==='number'?rma2Money(x[1]):x[1]}</strong></div>`).join(''):'<div style="color:#cbd5df">Select a service to see its price.</div>';
+    const baseEl=document.getElementById('serviceBaseSubtotal'),discEl=document.getElementById('serviceDiscount'),subEl=document.getElementById('serviceSubtotal'),gstEl=document.getElementById('serviceGST'),totEl=document.getElementById('serviceTotal');
+    if(baseEl)baseEl.textContent=rma2Money(locked?total:subtotal);
+    if(discEl)discEl.textContent=locked?'₹0 (Combo locked)':rma2Money(discount);
+    if(subEl)subEl.textContent=locked?rma2Money(subtotal):rma2Money(Math.max(0,subtotal-discount));
+    if(gstEl)gstEl.textContent=rma2Money(gst);
+    if(totEl)totEl.textContent=rma2Money(total);
+    const note=document.getElementById('serviceDiscountNote');
+    if(note)note.textContent=locked?'Combo price is locked and GST 18% is already included.':(rma2DiscountRate(subtotal)?rma2DiscountRate(subtotal)+'% service discount applied. GST 18% applies after discount.':'No discount up to ₹3,000. GST 18% applies.');
+    const auto=document.getElementById('autoDiscountLabel');if(auto)auto.textContent=locked?'Locked':'Slab';
+    document.getElementById('discountCode')?.closest('.group')?.classList.add('hidden');
+  };
+
+  /* Keep combo selection visually in sync if floors are changed. */
+  document.getElementById('s_floors')?.addEventListener('change',()=>{if(rma2Combo)window.updateServicePrice();});
+
+  /* ============================================================
+     3. SITE VISIT ADDRESS HIERARCHY + PIN CODE
+     ============================================================ */
+  const JKR_DISTRICTS=['Anantnag','Bandipora','Baramulla','Budgam','Doda','Ganderbal','Jammu','Kathua','Kishtwar','Kulgam','Kupwara','Poonch','Pulwama','Rajouri','Ramban','Reasi','Samba','Shopian','Srinagar','Udhampur'];
+  const JKR_TEHSILS={
+    'Jammu':['Jammu','Bahu','Bhalwal','Dansal','Marh','Maira Mandrian','Ranbir Singh Pura','R.S. Pura','Satwari','Bishnah','Khour','Akhnoor'],
+    'Samba':['Samba','Vijaypur','Ramgarh','Ghagwal','Purmandal'],
+    'Kathua':['Kathua','Hiranagar','Billawar','Basohli','Bani','Marheen','Mahanpur'],
+    'Udhampur':['Udhampur','Chenani','Ramnagar','Majalta','Tikri'],
+    'Reasi':['Reasi','Katra','Pouni','Mahore','Arnas'],
+    'Rajouri':['Rajouri','Nowshera','Sunderbani','Kalakote','Thanamandi','Koteranka','Manjakote'],
+    'Poonch':['Poonch','Mandi','Surankote','Mendhar','Buffliaz'],
+    'Ramban':['Ramban','Banihal','Gool','Khari'],
+    'Doda':['Doda','Bhaderwah','Thathri','Gandoh'],
+    'Kishtwar':['Kishtwar','Chatroo','Paddar','Dachhan'],
+    'Srinagar':['Srinagar','Eidgah','Khanyar','Pantha Chowk'],
+    'Budgam':['Budgam','Beerwah','Chadoora','Khansahib','Magam'],
+    'Ganderbal':['Ganderbal','Kangan','Lar','Wakoora'],
+    'Baramulla':['Baramulla','Sopore','Pattan','Uri','Tangmarg','Boniyar','Kunzer'],
+    'Kupwara':['Kupwara','Handwara','Langate','Sogam','Trehgam'],
+    'Bandipora':['Bandipora','Gurez','Sumbal','Hajin'],
+    'Anantnag':['Anantnag','Bijbehara','Pahalgam','Kokernag','Dooru','Shangus'],
+    'Kulgam':['Kulgam','Qazigund','D.H. Pora','Yaripora'],
+    'Pulwama':['Pulwama','Awantipora','Pampore','Tral','Kakapora'],
+    'Shopian':['Shopian','Zainapora','Keller']
+  };
+  const RMA2_ALLOWED_STATES=['Jammu & Kashmir','Punjab','Haryana','Chandigarh','Delhi'];
+  let rma2PinToken=0;
+
+  function rma2InjectAddress(){
+    const holder=document.getElementById('v_address')?.parentElement;
+    if(!holder || document.getElementById('rmaAddressBox'))return;
+    const old=document.getElementById('v_address');
+    const box=document.createElement('div');box.id='rmaAddressBox';box.className='rma-addon';
+    box.innerHTML=`
+      <h3>🏠 Project Address</h3>
+      <div class="hint">India is fixed. Enter the project address, or use your location/search/PIN code. PIN-code distance is calculated from RMA base PIN <b>181010</b>.</div>
+      <div class="rma-addon-grid">
+        <div><label>Country</label><input value="India" readonly class="rma-lock"></div>
+        <div><label>House / Plot No. *</label><input id="rma_house" placeholder="House No., Plot No., Shop No." required></div>
+        <div class="full"><label>Street / Locality / Area *</label><input id="rma_locality" placeholder="Street, colony, village, locality" required></div>
+        <div><label>State / UT *</label><select id="rma_state" required><option value="">Select State / UT</option>${RMA2_ALLOWED_STATES.map(s=>`<option>${s}</option>`).join('')}</select></div>
+        <div><label>District *</label><select id="rma_district" required disabled><option value="">Select state first</option></select></div>
+        <div><label>Sub-District / Tehsil</label><select id="rma_tehsil" disabled><option value="">Select district first</option></select></div>
+        <div><label>PIN Code *</label><input id="rma_pin" inputmode="numeric" maxlength="6" placeholder="6-digit PIN" required></div>
+      </div>
+      <div id="rmaPinResult" class="rma-result hidden"></div>`;
+    holder.insertBefore(box,old);
+    old.readOnly=true;old.placeholder='Complete address will be generated from the fields above';
+
+    document.getElementById('rma_state').addEventListener('change',rma2StateChange);
+    document.getElementById('rma_district').addEventListener('change',rma2DistrictChange);
+    document.getElementById('rma_pin').addEventListener('input',()=>{
+      const pin=document.getElementById('rma_pin').value.replace(/\D/g,'').slice(0,6);
+      document.getElementById('rma_pin').value=pin;
+      if(pin.length===6)rma2ResolvePin(pin);
+    });
+    ['rma_house','rma_locality'].forEach(id=>document.getElementById(id).addEventListener('input',rma2ComposeAddress));
+  }
+  function rma2StateChange(){
+    const state=document.getElementById('rma_state').value,d=document.getElementById('rma_district'),t=document.getElementById('rma_tehsil');
+    d.innerHTML='<option value="">Select district</option>';
+    t.innerHTML='<option value="">Select sub-district / tehsil</option>';
+    d.disabled=!state;t.disabled=true;
+    const list=state==='Jammu & Kashmir'?JKR_DISTRICTS:[];
+    if(list.length)d.innerHTML+='<option>'+list.join('</option><option>')+'</option>';
+    else d.innerHTML+='<option value="Other">Enter district from PIN result</option>';
+    rma2ComposeAddress();
+  }
+  function rma2DistrictChange(){
+    const state=document.getElementById('rma_state').value,district=document.getElementById('rma_district').value,t=document.getElementById('rma_tehsil');
+    t.innerHTML='<option value="">Select sub-district / tehsil</option>';
+    const list=state==='Jammu & Kashmir'?(JKR_TEHSILS[district]||[]):[];
+    if(list.length)t.innerHTML+='<option>'+list.join('</option><option>')+'</option>';
+    else t.innerHTML+='<option value="Other">Other / Not required</option>';
+    t.disabled=false;rma2ComposeAddress();
+  }
+  function rma2ComposeAddress(){
+    const parts=[];
+    const house=document.getElementById('rma_house')?.value.trim(),loc=document.getElementById('rma_locality')?.value.trim(),state=document.getElementById('rma_state')?.value,d=document.getElementById('rma_district')?.value,t=document.getElementById('rma_tehsil')?.value,pin=document.getElementById('rma_pin')?.value.trim();
+    if(house)parts.push('House/Plot '+house);if(loc)parts.push(loc);if(t&&t!=='Other')parts.push(t);if(d&&d!=='Other')parts.push(d);if(state)parts.push(state);if(pin)parts.push(pin);parts.push('India');
+    const old=document.getElementById('v_address');if(old)old.value=parts.join(', ');
+  }
+
+  async function rma2ResolvePin(pin){
+    const token=++rma2PinToken;
+    const result=document.getElementById('rmaPinResult');
+    if(result){result.classList.remove('hidden');result.textContent='Checking PIN code and locating the area...';}
+    try{
+      /* India Post public endpoint provides the postal area, district and state. */
+      const r=await fetch('https://api.postalpincode.in/pincode/'+pin);
+      const data=await r.json();
+      if(token!==rma2PinToken)return;
+      const row=data?.[0];
+      if(!row || row.Status!=='Success' || !row.PostOffice?.length)throw new Error('PIN not found');
+      const po=row.PostOffice[0];
+      const state=po.State==='Jammu and Kashmir'?'Jammu & Kashmir':po.State;
+      if(!RMA2_ALLOWED_STATES.includes(state))throw new Error('This PIN is outside the service states selected by RMA.');
+      const st=document.getElementById('rma_state'),di=document.getElementById('rma_district'),te=document.getElementById('rma_tehsil');
+      st.value=state;st.dispatchEvent(new Event('change'));
+      if(state==='Jammu & Kashmir' && JKR_DISTRICTS.includes(po.District))di.value=po.District;
+      else{di.innerHTML='<option value="Other">'+(po.District||'District from PIN')+'</option>';di.value='Other';}
+      di.dispatchEvent(new Event('change'));
+      rma2ComposeAddress();
+      if(result)result.innerHTML='<b>PIN verified:</b> '+(po.Name||'Postal area')+', '+(po.District||'')+', '+state+'. Now calculating road distance from RMA PIN <b>181010</b>...';
+      await rma2DistanceFromPin(pin,po.Name||'Postal area',po.District||'',state);
+    }catch(e){
+      if(result){result.className='rma-result';result.textContent='PIN could not be verified automatically. Please check the 6-digit PIN and complete the address manually.';}
+    }
+  }
+
+  async function rma2DistanceFromPin(pin,poName,district,state){
+    try{
+      /* Use Nominatim only to convert the PIN postal areas into coordinates;
+         OSRM then calculates driving/road distance. */
+      const base=await rma2Geocode('181010, Jammu, Jammu & Kashmir, India');
+      const dest=await rma2Geocode(pin+', '+poName+', '+district+', '+state+', India');
+      const route=await fetch('https://router.project-osrm.org/route/v1/driving/'+base.lng+','+base.lat+';'+dest.lng+','+dest.lat+'?overview=false');
+      const rd=await route.json();
+      if(rd.code!=='Ok'||!rd.routes?.[0])throw new Error('Route not found');
+      const km=rd.routes[0].distance/1000;
+      visitDistance=km;
+      const msg=document.getElementById('rmaPinResult');
+      if(msg)msg.innerHTML='<b>PIN verified:</b> '+poName+', '+district+', '+state+'.<br><b>Approx. road distance from RMA base PIN 181010:</b> '+km.toFixed(1)+' km.';
+      if(typeof updateVisitPrice==='function')updateVisitPrice();
+    }catch(e){
+      const msg=document.getElementById('rmaPinResult');
+      if(msg)msg.innerHTML='<b>PIN verified.</b> Road distance could not be calculated automatically right now. You can use <b>Search</b> or <b>Use My Location</b> for exact coordinates.';
+    }
+  }
+  async function rma2Geocode(q){
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}});
+    const d=await r.json();if(!d.length)throw new Error('Not found');
+    return {lat:Number(d[0].lat),lng:Number(d[0].lon)};
+  }
+
+  /* Override site visit fee: same service discount slabs, applied above ₹3,000 before GST. */
+  window.visitFee=function(distance){
+    if(distance<=0)return 0;
+    let base=10000;
+    if(distance<=10)base=1500;
+    else if(distance<=15)base=2000;
+    else if(distance<=20)base=2500;
+    else if(distance<=25)base=3500;
+    else if(distance<=35)base=5000;
+    else if(distance<=50)base=7500;
+    const pct=rma2DiscountRate(base);
+    return base*(1-pct/100);
+  };
+  window.updateVisitPrice=function(){
+    const distance=Number(visitDistance||0);
+    let base=0;
+    if(distance>0){
+      if(distance<=10)base=1500;else if(distance<=15)base=2000;else if(distance<=20)base=2500;else if(distance<=25)base=3500;else if(distance<=35)base=5000;else if(distance<=50)base=7500;else base=10000;
+    }
+    const pct=rma2DiscountRate(base),discount=base*pct/100,fee=Math.max(0,base-discount),gst=fee*.18,total=fee+gst;
+    document.getElementById('v_distance').textContent=distance?distance.toFixed(1)+' km':'-- km';
+    document.getElementById('v_fee').textContent=rma2Money(fee);
+    document.getElementById('v_gst').textContent=rma2Money(gst);
+    document.getElementById('v_total').textContent=rma2Money(total);
+    let d=document.getElementById('rmaVisitDiscountLine');
+    if(!d){d=document.createElement('div');d.id='rmaVisitDiscountLine';d.className='line';const parent=document.getElementById('v_fee')?.closest('.visit-price');if(parent)parent.insertBefore(d,document.getElementById('v_gst').closest('.line'));}
+    if(d)d.innerHTML='<span>Discount</span><strong>'+rma2Money(discount)+(pct?' ('+pct+'%)':'')+'</strong>';
+  };
+
+  /* Replace the old search with a combined search/address workflow. */
+  const oldVisitSearch=window.visitSearchLocation;
+  window.visitSearchLocation=async function(){
+    const q=document.getElementById('visitSearch')?.value.trim();
+    if(!q){toast('Enter the project location first.');return;}
+    try{
+      const p=await searchGeo(q);
+      await setVisitLocation(p.lat,p.lng);
+      const res=document.getElementById('rmaPinResult');if(res){res.classList.remove('hidden');res.innerHTML='<b>Location found.</b> Road distance calculated from RMA base.';}
+    }catch(e){toast('Location not found. Try house/locality, district, PIN code or a fuller address.');}
+  };
+
+  /* When GPS/search is used, populate the address hierarchy as far as possible. */
+  const oldSetVisitLocation=window.setVisitLocation;
+  window.setVisitLocation=async function(lat,lng){
+    const ok=await oldSetVisitLocation(lat,lng);
+    if(ok){
+      try{
+        const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&zoom=18&addressdetails=1',{headers:{'Accept':'application/json'}});
+        const d=await r.json(),a=d.address||{};
+        const st=a.state==='Jammu and Kashmir'?'Jammu & Kashmir':a.state;
+        if(st && RMA2_ALLOWED_STATES.includes(st)){
+          document.getElementById('rma_state').value=st;document.getElementById('rma_state').dispatchEvent(new Event('change'));
+          const di=document.getElementById('rma_district');if(di){di.value=a.state_district||a.county||'';di.dispatchEvent(new Event('change'));}
+        }
+        const pc=(a.postcode||'').replace(/\D/g,'').slice(0,6);if(pc)document.getElementById('rma_pin').value=pc;
+        const loc=a.suburb||a.neighbourhood||a.village||a.town||a.city||'';if(loc)document.getElementById('rma_locality').value=loc;
+        rma2ComposeAddress();
+      }catch(e){}
+    }
+    return ok;
+  };
+
+  /* Rebuild the site-visit booking payload so the complete structured address is saved. */
+  const visitForm=document.getElementById('visitForm');
+  if(visitForm){
+    visitForm.addEventListener('submit',function(e){
+      rma2ComposeAddress();
+      const house=document.getElementById('rma_house')?.value.trim()||'';
+      const locality=document.getElementById('rma_locality')?.value.trim()||'';
+      const state=document.getElementById('rma_state')?.value||'';
+      const district=document.getElementById('rma_district')?.value||'';
+      const pin=document.getElementById('rma_pin')?.value.trim()||'';
+      if(!house||!locality||!state||!district||!/^[0-9]{6}$/.test(pin)){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const box=document.getElementById('visitMessage');
+        if(box){box.className='notice error';box.classList.remove('hidden');box.textContent='Please complete House/Plot No., Locality/Area, State, District and the 6-digit PIN code before booking.';}
+        return;
+      }
+      const oldAddress=document.getElementById('v_address')?.value||'';
+      const data={
+        house_no:document.getElementById('rma_house')?.value||'',
+        locality:document.getElementById('rma_locality')?.value||'',
+        country:'India',state:document.getElementById('rma_state')?.value||'',district:document.getElementById('rma_district')?.value||'',
+        sub_district:document.getElementById('rma_tehsil')?.value||'',pin_code:document.getElementById('rma_pin')?.value||'',
+        complete_address:oldAddress,base_pin:'181010',distance_km:Number(visitDistance||0)
+      };
+      localStorage.setItem('rma_last_visit_address',JSON.stringify(data));
+    },true);
+  }
+
+  /* Inject the new UI after the existing DOM has loaded. */
+  function rma2Init(){
+    rma2InjectCombos();rma2InjectAddress();window.updateServicePrice();window.updateVisitPrice();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',rma2Init);else rma2Init();
+})();
+</script>
+
+
+<!-- ============================================================
+ RMA V3 ADD-ON: ADDRESS LANDMARK + SITE-VISIT RAZORPAY + CLIENT PORTAL
+ This block is intentionally appended so the previous website code remains intact.
+ ============================================================ -->
+<style>
+.rma-v3-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px;margin:15px 0}
+.rma-v3-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
+.rma-v3-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.rma-v3-badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#eaf7ef;color:#176b3a;font-size:12px;font-weight:800}
+.rma-v3-lock{background:#f2f5f3;border-color:#cbd8d0}
+.rma-v3-combo{border:2px solid #3f8f68;background:#f4fbf6}
+.rma-v3-combo button{margin-top:10px}
+.rma-v3-pay{background:#f7fbf8;border:1px solid #cfe2d6;border-radius:9px;padding:15px;margin-top:15px}
+.rma-v3-client{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.rma-v3-list{display:grid;gap:9px;margin-top:10px}
+.rma-v3-list div{padding:11px;border:1px solid var(--line);border-radius:7px;background:#fbfcfd}
+@media(max-width:700px){.rma-v3-grid,.rma-v3-grid-3,.rma-v3-client{grid-template-columns:1fr}}
+</style>
+<script>
+(function(){
+  'use strict';
+
+  /* ---------- 1. Universal structured address ---------- */
+  const ALLOWED=['Jammu & Kashmir','Punjab','Haryana','Chandigarh','Delhi'];
+  const JK_DISTRICTS=['Jammu','Samba','Kathua','Udhampur','Reasi','Rajouri','Poonch','Doda','Kishtwar','Ramban','Srinagar','Budgam','Ganderbal','Pulwama','Shopian','Kulgam','Anantnag','Baramulla','Kupwara','Bandipora'];
+  const JK_TEHSILS={
+    'Jammu':['Jammu','Bahu','Bhalwal','Bishnah','Dansal','Kharah Balli','Marh','R.S. Pura','Suchetgarh','Akhnour'],
+    'Samba':['Samba','Vijaypur','Bari Brahmana','Ramgarh','Purmandal'],
+    'Kathua':['Kathua','Hiranagar','Billawar','Basohli','Bani','Bashohli'],
+    'Udhampur':['Udhampur','Chenani','Ramnagar','Majalta'],
+    'Reasi':['Reasi','Katra','Arnas','Pouni','Mahore'],
+    'Rajouri':['Rajouri','Nowshera','Sunderbani','Kalakote','Thanamandi','Manjakote'],
+    'Poonch':['Poonch','Mandi','Mendhar','Surankote'],
+    'Doda':['Doda','Bhaderwah','Gandoh'],
+    'Kishtwar':['Kishtwar','Chatroo','Paddar'],
+    'Ramban':['Ramban','Banihal','Gool','Ramsoo'],
+    'Srinagar':['Srinagar','Pantha Chowk'],
+    'Budgam':['Budgam','Beerwah','Khansahib','Magam'],
+    'Ganderbal':['Ganderbal','Kangan'],
+    'Pulwama':['Pulwama','Pampore','Awantipora','Tral'],
+    'Shopian':['Shopian','Zainapora'],
+    'Kulgam':['Kulgam','D.H. Pora'],
+    'Anantnag':['Anantnag','Bijbehara','Dooru','Kokernag','Pahalgam'],
+    'Baramulla':['Baramulla','Sopore','Pattan','Uri','Tangmarg'],
+    'Kupwara':['Kupwara','Handwara','Trehgam'],
+    'Bandipora':['Bandipora','Gurez','Sumbal']
+  };
+
+  function esc(x){return String(x??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
+  function v3Money(n){return '₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
+  function v3DiscountRate(n){if(n<=3000)return 0;if(n<=5000)return 2;if(n<=10000)return 4;if(n<=20000)return 6;if(n<=30000)return 8;return 10;}
+
+  function addressBox(prefix,oldAddressId){
+    const wrap=document.createElement('div');wrap.className='rma-v3-card';wrap.id=prefix+'_structuredAddress';
+    wrap.innerHTML=`<h3 style="margin-bottom:6px">📍 Project Address</h3>
+      <p class="muted" style="margin-bottom:14px">India is fixed. Enter the house/plot number, landmark and locality. You can also use PIN code, Search or My Location.</p>
+      <div class="rma-v3-grid">
+        <div class="group"><label>Country</label><input value="India" readonly class="rma-v3-lock"></div>
+        <div class="group"><label>House / Plot No. *</label><input id="${prefix}_house" placeholder="House No., Plot No. or Building No."></div>
+      </div>
+      <div class="rma-v3-grid">
+        <div class="group"><label>Landmark *</label><input id="${prefix}_landmark" placeholder="Near school, temple, market, road, etc."></div>
+        <div class="group"><label>Locality / Area *</label><input id="${prefix}_locality" placeholder="Colony, village, sector, mohalla, etc."></div>
+      </div>
+      <div class="rma-v3-grid-3">
+        <div class="group"><label>State / UT *</label><select id="${prefix}_state"><option value="">Select state / UT</option>${ALLOWED.map(x=>'<option>'+x+'</option>').join('')}</select></div>
+        <div class="group"><label>District *</label><select id="${prefix}_district" disabled><option value="">Select district</option></select></div>
+        <div class="group"><label>Sub-district / Tehsil</label><select id="${prefix}_tehsil" disabled><option value="">Select sub-district / tehsil</option></select></div>
+      </div>
+      <div class="rma-v3-grid">
+        <div class="group"><label>PIN Code *</label><input id="${prefix}_pin" inputmode="numeric" maxlength="6" placeholder="6-digit PIN code"></div>
+        <div class="group"><label>Address Search</label><div style="display:flex;gap:8px"><input id="${prefix}_search" placeholder="Search address / locality / PIN" style="flex:1"><button type="button" class="btn outline" id="${prefix}_searchBtn">Search</button></div></div>
+      </div>
+      <div class="auth-actions"><button type="button" class="btn dark" id="${prefix}_gps">Use My Location</button><button type="button" class="btn outline" id="${prefix}_pinBtn">Verify PIN & Calculate Distance</button></div>
+      <div id="${prefix}_result" class="notice info hidden"></div>`;
+    return wrap;
+  }
+
+  async function geocode(q){
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q='+encodeURIComponent(q),{headers:{Accept:'application/json'}});
+    const d=await r.json();if(!d.length)throw Error('Location not found');return {lat:+d[0].lat,lng:+d[0].lon,display:d[0].display_name};
+  }
+  async function routeFromBase(lat,lng){
+    const r=await fetch('https://router.project-osrm.org/route/v1/driving/74.8570,32.7266;'+lng+','+lat+'?overview=false');
+    const d=await r.json();if(d.code!=='Ok'||!d.routes?.[0])throw Error('Route unavailable');return d.routes[0].distance/1000;
+  }
+  async function verifyPin(prefix){
+    const pin=document.getElementById(prefix+'_pin')?.value.trim();const out=document.getElementById(prefix+'_result');
+    if(!/^[0-9]{6}$/.test(pin)){out.classList.remove('hidden');out.textContent='Please enter a valid 6-digit PIN code.';return;}
+    out.classList.remove('hidden');out.textContent='Checking PIN code...';
+    try{
+      const r=await fetch('https://api.postalpincode.in/pincode/'+pin),d=await r.json(),row=d?.[0];
+      if(!row||row.Status!=='Success'||!row.PostOffice?.length)throw Error('PIN not found');
+      const po=row.PostOffice[0],state=po.State==='Jammu and Kashmir'?'Jammu & Kashmir':po.State;
+      if(!ALLOWED.includes(state))throw Error('PIN is outside RMA service states');
+      const st=document.getElementById(prefix+'_state'),di=document.getElementById(prefix+'_district'),te=document.getElementById(prefix+'_tehsil');
+      st.value=state;st.dispatchEvent(new Event('change'));if(state==='Jammu & Kashmir'&&JK_DISTRICTS.includes(po.District))di.value=po.District;else di.value='Other';di.dispatchEvent(new Event('change'));
+      const dist=await routeFromBase(...Object.values(await geocode(pin+', India')) .slice(0,2));
+      out.innerHTML='<b>PIN verified:</b> '+esc(po.Name)+', '+esc(po.District)+', '+esc(state)+'<br><b>Approx. road distance from RMA PIN 181010:</b> '+dist.toFixed(1)+' km.';
+      out.dataset.distance=dist;compose(prefix,oldAddressId);
+      if(prefix==='v')window.visitDistance=dist;if(typeof window.updateVisitPrice==='function')window.updateVisitPrice();
+    }catch(e){out.textContent='PIN could not be verified automatically. Complete the address manually or use Search / My Location.';}
+  }
+  function compose(prefix,oldId){
+    const get=id=>document.getElementById(prefix+'_'+id)?.value.trim()||'';
+    const parts=[get('house'),get('landmark'),get('locality'),get('tehsil'),get('district'),get('state'),get('pin'),'India'].filter(Boolean);
+    const old=document.getElementById(oldId);if(old)old.value=parts.join(', ');
+  }
+  function setupAddress(prefix,oldId){
+    const state=document.getElementById(prefix+'_state'),district=document.getElementById(prefix+'_district'),tehsil=document.getElementById(prefix+'_tehsil');
+    state.onchange=()=>{district.innerHTML='<option value="">Select district</option>';tehsil.innerHTML='<option value="">Select sub-district / tehsil</option>';tehsil.disabled=true;if(state.value==='Jammu & Kashmir'){district.innerHTML+='<option>'+JK_DISTRICTS.join('</option><option>')+'</option>';}else{district.innerHTML+='<option>Other</option>';}district.disabled=false;compose(prefix,oldId);};
+    district.onchange=()=>{tehsil.innerHTML='<option value="">Select sub-district / tehsil</option>';const a=JK_TEHSILS[district.value]||[];if(a.length)tehsil.innerHTML+='<option>'+a.join('</option><option>')+'</option>';else tehsil.innerHTML+='<option>Other / Not required</option>';tehsil.disabled=false;compose(prefix,oldId);};
+    ['house','landmark','locality','pin','tehsil'].forEach(k=>document.getElementById(prefix+'_'+k)?.addEventListener('input',()=>compose(prefix,oldId)));
+    document.getElementById(prefix+'_pinBtn').onclick=()=>verifyPin(prefix);
+    document.getElementById(prefix+'_searchBtn').onclick=async()=>{const q=document.getElementById(prefix+'_search').value.trim();if(!q)return;try{const p=await geocode(q);await setGPS(prefix,p.lat,p.lng,p.display,oldId);}catch(e){alert('Address not found.');}};
+    document.getElementById(prefix+'_gps').onclick=()=>{if(!navigator.geolocation)return alert('Location is not supported by this browser.');navigator.geolocation.getCurrentPosition(p=>setGPS(prefix,p.coords.latitude,p.coords.longitude,'',oldId),()=>alert('Location permission was denied.'));};
+  }
+  async function setGPS(prefix,lat,lng,display,oldId){
+    try{const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&zoom=18&addressdetails=1',{headers:{Accept:'application/json'}}),d=await r.json(),a=d.address||{};const st=a.state==='Jammu and Kashmir'?'Jammu & Kashmir':a.state;if(st&&ALLOWED.includes(st)){document.getElementById(prefix+'_state').value=st;document.getElementById(prefix+'_state').dispatchEvent(new Event('change'));const di=document.getElementById(prefix+'_district');di.value=a.state_district||a.county||'';di.dispatchEvent(new Event('change'));}document.getElementById(prefix+'_locality').value=a.suburb||a.neighbourhood||a.village||a.town||a.city||'';document.getElementById(prefix+'_pin').value=(a.postcode||'').replace(/\D/g,'').slice(0,6);compose(prefix,oldId);const dist=await routeFromBase(lat,lng);if(prefix==='v')window.visitDistance=dist;const o=document.getElementById(prefix+'_result');o.classList.remove('hidden');o.innerHTML='<b>Location detected.</b> Approx. road distance from RMA base PIN 181010: <b>'+dist.toFixed(1)+' km</b>';if(typeof window.updateVisitPrice==='function')window.updateVisitPrice();}catch(e){compose(prefix,oldId);}}
+
+  /* ---------- 2. Put the structured address into Services, Construction and Site Visit ---------- */
+  function injectAddress(prefix,form,oldId){
+    if(!form||document.getElementById(prefix+'_structuredAddress'))return;
+    if(prefix==='s' && !document.getElementById('s_project_address')){const h=document.createElement('input');h.type='hidden';h.id='s_project_address';h.name='project_address';form.appendChild(h);oldId='s_project_address';}
+    const box=addressBox(prefix,oldId);form.insertBefore(box,form.querySelector('.group')||form.firstChild);setupAddress(prefix,oldId);
+  }
+  function injectAllAddresses(){
+    const sf=document.getElementById('serviceForm');if(sf)injectAddress('s',sf,'s_message');
+    const cf=document.getElementById('constructionForm');if(cf)injectAddress('c',cf,'c_address2');
+    const vf=document.getElementById('visitForm');if(vf)injectAddress('v',vf,'v_address');
+  }
+
+  /* ---------- 3. Service combo packs ---------- */
+  function addCombos(){
+    const servicePicks=document.querySelector('.service-picks');if(!servicePicks||document.getElementById('rmaComboPacks'))return;
+    const box=document.createElement('div');box.id='rmaComboPacks';box.className='rma-v3-card';box.innerHTML=`<h3>⭐ Combo Packages</h3><p class="muted">Choose a package and the required services will be selected automatically.</p>
+      <div class="rma-v3-grid">
+       <div class="rma-v3-card rma-v3-combo"><span class="rma-v3-badge">COMBO 1</span><h3>Architectural + Structural + Estimation</h3><p>One floor • complete package</p><strong style="font-size:23px;color:var(--navy)">₹18,000 <small>including GST</small></strong><br><button type="button" class="btn dark" id="rmaCombo1">Select Combo 1</button></div>
+       <div class="rma-v3-card rma-v3-combo"><span class="rma-v3-badge">COMBO 2</span><h3>Architectural + Municipality Approval Drawing</h3><p id="rmaCombo2Text">1 floor ₹27,000 • 2 floors ₹49,990 • 3 floors ₹74,990</p><strong style="font-size:18px;color:var(--navy)">GST included • Departmental charges extra</strong><br><button type="button" class="btn dark" id="rmaCombo2">Select Combo 2</button></div>
+      </div><div id="rmaComboMsg" class="notice info hidden"></div>`;
+    servicePicks.parentElement.parentElement.insertBefore(box,servicePicks.parentElement);
+    const set=(combo)=>{document.querySelectorAll('input[name="service"]').forEach(x=>x.checked=false);const a=document.querySelector('input[name="service"][value="architectural"]'),s=document.querySelector('input[name="service"][value="structural"]'),e=document.querySelector('input[name="service"][value="estimation"]'),m=document.querySelector('input[name="service"][value="municipality"]');a.checked=true;if(combo===1){s.checked=true;e.checked=true;}else m.checked=true;window.rmaSelectedCombo=combo;window.updateServicePrice();document.getElementById('rmaComboMsg').classList.remove('hidden');document.getElementById('rmaComboMsg').textContent=combo===1?'Combo 1 selected. One-floor package price is locked at ₹18,000 including GST.':'Combo 2 selected. Price is automatically based on the number of floors.';};
+    document.getElementById('rmaCombo1').onclick=()=>set(1);document.getElementById('rmaCombo2').onclick=()=>set(2);
+  }
+  const oldUpdateServicePrice=window.updateServicePrice;
+  window.updateServicePrice=function(){oldUpdateServicePrice();const combo=window.rmaSelectedCombo;const floors=Number(document.getElementById('s_floors')?.value||1);if(!combo)return;let total=combo===1?18000:(floors===1?27000:floors===2?49990:74990);document.getElementById('serviceBaseSubtotal').textContent=v3Money(total);document.getElementById('serviceDiscount').textContent='₹0';document.getElementById('serviceSubtotal').textContent=v3Money(total/1.18);document.getElementById('serviceGST').textContent=v3Money(total-total/1.18);document.getElementById('serviceTotal').textContent=v3Money(total);const n=document.getElementById('serviceDiscountNote');if(n)n.textContent='Combo package price locked; GST included. Departmental approval charges, where applicable, are extra.';const lines=document.getElementById('selectedServiceLines');if(lines)lines.innerHTML='<div class="line"><span>'+esc(combo===1?'Combo 1: Architectural + Structural + Estimation':'Combo 2: Architectural + Municipality Approval')+'<br><small style="color:#aebdca">GST included</small></span><strong>'+v3Money(total)+'</strong></div>';};
+
+  /* ---------- 4. Site visit Razorpay ---------- */
+  function addVisitPayment(){
+    const vp=document.querySelector('#visitForm .visit-price');if(!vp||document.getElementById('rmaVisitPayment'))return;
+    const b=document.createElement('div');b.id='rmaVisitPayment';b.className='rma-v3-pay';b.innerHTML='<h3>💳 Pay Site Visit Fee with Razorpay</h3><p class="muted">After your location and visit charge are calculated, you can pay online.</p><button type="button" class="btn gold full" id="rmaVisitPayBtn">Pay with Razorpay</button><div id="rmaVisitPayMsg" class="notice hidden"></div>';vp.appendChild(b);
+    document.getElementById('rmaVisitPayBtn').onclick=()=>{const msg=document.getElementById('rmaVisitPayMsg'),amt=(document.getElementById('v_total')?.textContent||'').replace(/[^0-9.]/g,'');if(!amt||Number(amt)<=0){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Please complete the project location first so the site-visit charge can be calculated.';return;}const key=window.RAZORPAY_KEY_ID||'';if(!key){msg.className='notice info';msg.classList.remove('hidden');msg.textContent='Razorpay checkout is connected to this button. Add your Razorpay Key ID and secure server-side Order API to activate live payments.';return;}if(!window.Razorpay){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Razorpay could not be loaded.';return;}new window.Razorpay({key:key,amount:Math.round(Number(amt)*100),currency:'INR',name:'RMA Design & Construction',description:'Site Visit Fee',prefill:{name:document.getElementById('v_name')?.value||'',email:document.getElementById('v_email')?.value||'',contact:document.getElementById('v_mobile')?.value||''},theme:{color:'#2e7d5b'},handler:r=>{msg.className='notice success';msg.classList.remove('hidden');msg.textContent='Payment initiated. Payment ID: '+r.razorpay_payment_id;}}).open();};
+  }
+
+  /* ---------- 5. Path Seeker International School client account ---------- */
+  function addPathSeekerPortal(){
+    const signin=document.getElementById('page-signin');if(!signin||document.getElementById('rmaPathSeekerPortal'))return;
+    const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Drawings, project documents, site visits and project requests.</p></div><div class="rma-v3-client"><div class="panel"><span class="rma-v3-badge">ACTIVE CLIENT</span><h3 style="margin-top:10px">Path Seeker International School</h3><p class="muted">Your project documents and approved drawings will be displayed here.</p><div class="rma-v3-list"><div><b>Project</b><br>Path Seeker International School</div><div><b>Monthly Site Visits</b><br><span id="psVisitsUsed">Loading...</span> used this month • <span id="psVisitsRemaining">Loading...</span> available</div></div><button class="btn dark" style="margin-top:14px" onclick="showPage('sitevisit')">Request Site Visit</button></div><div class="panel"><h3>📐 Drawings & Documents</h3><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div></div><div class="panel" style="margin-top:18px"><h3>📅 Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
+  }
+  async function loadPathSeeker(){
+    const portal=document.getElementById('rmaPathSeekerPortal');if(!portal)return;
+    const {data}=await supabaseClient.auth.getUser();const user=data?.user;if(!user)return;
+    const profile=await supabaseClient.from('profiles').select('*').eq('id',user.id).maybeSingle();const name=(profile.data?.full_name||'').toLowerCase();const email=(user.email||'').toLowerCase();
+    const isPS=name.includes('path seeker')||name.includes('pathseeker')||email.includes('pathseeker')||email.includes('path.seeker');
+    if(!isPS)return;
+    portal.classList.remove('hidden');document.getElementById('authLoginSection')?.classList.add('hidden');
+    const monthStart=new Date();monthStart.setDate(1);monthStart.setHours(0,0,0,0);const iso=monthStart.toISOString();
+    try{
+      const q=await supabaseClient.from('bookings').select('*').gte('created_at',iso).or('client_name.ilike.%Path Seeker%,service_type.ilike.%Site Visit%').order('created_at',{ascending:false});
+      const rows=(q.data||[]).filter(x=>(x.client_name||'').toLowerCase().includes('path seeker'));
+      const used=rows.length,remain=Math.max(0,3-used);document.getElementById('psVisitsUsed').textContent=used;document.getElementById('psVisitsRemaining').textContent=remain;
+      document.getElementById('psVisitHistory').innerHTML=rows.length?rows.map(x=>'<div><b>'+esc(x.project_address||'Site Visit')+'</b><br><small>'+new Date(x.created_at).toLocaleDateString('en-IN')+' • '+esc(x.status||'Booked')+'</small><br><small>Scope: '+esc(x.visit_scope||'Project inspection / site consultation')+'</small></div>').join(''):'<div class="muted">No site visits recorded this month.</div>';
+    }catch(e){document.getElementById('psVisitsUsed').textContent='—';document.getElementById('psVisitsRemaining').textContent='3';}
+    try{const d=await supabaseClient.from('project_documents').select('*').order('created_at',{ascending:false}).limit(50);const docs=d.data||[];document.getElementById('psDocuments').innerHTML=docs.length?docs.map(x=>'<div><b>'+esc(x.title||x.document_name||'Project Document')+'</b><br><small>'+esc(x.document_type||x.category||'Drawing / Document')+'</small>'+(x.file_url||x.public_url?'<br><a class="btn outline" href="'+esc(x.file_url||x.public_url)+'" target="_blank">Open Document</a>':'')+'</div>').join(''):'<div class="muted">Documents will appear after RMA uploads them.</div>';}catch(e){}
+  }
+
+  /* Add site-visit scope and monthly cap to the booking form. */
+  function addVisitScope(){
+    const f=document.getElementById('visitForm');if(!f||document.getElementById('rmaVisitScope'))return;
+    const box=document.createElement('div');box.id='rmaVisitScope';box.className='rma-v3-card';box.innerHTML='<h3>📋 Scope of Site Visit</h3><div class="group"><label>Visit Scope *</label><select id="rma_visit_scope"><option>Project progress / construction inspection</option><option>Architectural planning discussion</option><option>Structural inspection / technical consultation</option><option>Measurement / site verification</option><option>Drawing / design coordination</option><option>Other</option></select></div><div class="notice info">For Path Seeker International School, the client portal provides up to <b>three complimentary site visits per month</b>, subject to the project agreement. Other clients are charged according to the site-visit calculation.</div>';f.insertBefore(box,f.querySelector('button[type="submit"]')||f.lastChild);
+    f.addEventListener('submit',async function(e){
+      const user=(await supabaseClient.auth.getUser()).data?.user;const scope=document.getElementById('rma_visit_scope')?.value||'';localStorage.setItem('rma_last_visit_scope',scope);
+      if(user){const p=await supabaseClient.from('profiles').select('*').eq('id',user.id).maybeSingle();const txt=((p.data?.full_name||'')+' '+(user.email||'')).toLowerCase();if(txt.includes('path seeker')||txt.includes('pathseeker')){const start=new Date();start.setDate(1);start.setHours(0,0,0,0);try{const q=await supabaseClient.from('bookings').select('id').gte('created_at',start.toISOString()).ilike('client_name','%Path Seeker%');if((q.data||[]).length>=3){e.preventDefault();e.stopImmediatePropagation();const m=document.getElementById('visitMessage');m.className='notice error';m.classList.remove('hidden');m.textContent='This month’s complimentary site-visit allowance has already been used. Please contact RMA for the next visit.';return;}}catch(err){}}
+      }
+    },true);
+  }
+
+  /* Ensure submitted visit record contains the scope. */
+  
+  const serviceFormV3=document.getElementById('serviceForm');
+  if(serviceFormV3)serviceFormV3.addEventListener('submit',function(){
+    const addr=document.getElementById('s_project_address')?.value||'';
+    const saved=JSON.parse(localStorage.getItem('rma_last_service_request')||'{}');saved.project_address=addr;localStorage.setItem('rma_last_service_request',JSON.stringify(saved));
+  },true);
+
+const oldSubmit=document.getElementById('visitForm');
+  if(oldSubmit)oldSubmit.addEventListener('submit',function(){localStorage.setItem('rma_last_visit_scope',document.getElementById('rma_visit_scope')?.value||'');},true);
+
+  function initV3(){injectAllAddresses();addCombos();addVisitPayment();addVisitScope();addPathSeekerPortal();window.updateServicePrice?.();window.updateVisitPrice?.();loadPathSeeker();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV3);else initV3();
+  window.rmaV3Init=initV3;
+})();
+</script>
+
 </body>
 </html>
