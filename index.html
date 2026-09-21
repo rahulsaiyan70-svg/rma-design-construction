@@ -12,37 +12,37 @@
 
 <style>
 :root{
-  --navy:#0b1b2b; --navy2:#122c43; --gold:#c7a15a; --cream:#f5f1e8;
+  --navy:#245b43; --navy2:#2f7658; --gold:#3f8f68; --cream:#eef7f1;
   --white:#fff; --ink:#172231; --muted:#697586; --line:#e2e6eb;
-  --green:#18864b; --red:#b42318; --blue:#2453a6;
+  --green:#2e7d5b; --red:#b42318; --blue:#2e7d5b;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:Inter,Arial,Helvetica,sans-serif;background:#f7f8fa;color:var(--ink);line-height:1.55}
+body{font-family:Inter,Arial,Helvetica,sans-serif;background:#f6faf7;color:var(--ink);line-height:1.55}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
 .container{width:min(1180px,92%);margin:auto}
-.topbar{background:#07131f;color:#dce5ee;font-size:13px;padding:7px 0}
+.topbar{background:#173f2f;color:#e5f0ea;font-size:13px;padding:7px 0}
 .topbar .container{display:flex;justify-content:space-between;gap:15px}
-.nav{position:sticky;top:0;z-index:1000;background:var(--navy);color:#fff;box-shadow:0 4px 20px #0002}
+.nav{position:sticky;top:0;z-index:1000;background:#fff;color:var(--ink);box-shadow:0 4px 20px #245b4320}
 .navin{height:76px;display:flex;align-items:center;justify-content:space-between}
 .logo{font-weight:900;letter-spacing:.5px;font-size:22px}
 .logo span{color:var(--gold)}
 .navlinks{display:flex;gap:25px;list-style:none}
-.navlinks button{border:0;background:none;color:#fff;font-weight:600}
+.navlinks button{border:0;background:none;color:var(--ink);font-weight:600}
 .navlinks button:hover{color:var(--gold)}
-.menu{display:none;background:none;border:0;color:#fff;font-size:28px}
+.menu{display:none;background:none;border:0;color:var(--navy);font-size:28px}
 .page{display:none}
 .page.active{display:block}
-.hero{min-height:620px;color:#fff;display:flex;align-items:center;background:
-linear-gradient(90deg,#081522ee,#081522aa,#081522cc),
+.hero{min-height:620px;color:#173f2f;display:flex;align-items:center;background:
+linear-gradient(90deg,#eef7f1e8,#eef7f1b8,#eef7f1a8),
 url("https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1800&q=80") center/cover}
 .hero .copy{max-width:760px;padding:90px 0}
 .kicker{color:var(--gold);font-weight:800;letter-spacing:3px;font-size:13px}
 .hero h1{font-size:62px;line-height:1.02;margin:16px 0}
-.hero p{font-size:19px;color:#e6edf4;max-width:670px}
+.hero p{font-size:19px;color:#244337;max-width:670px}
 .btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:6px;padding:12px 20px;font-weight:800;text-decoration:none}
-.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.gold{background:var(--gold);color:#ffffff}
 .btn.dark{background:var(--navy);color:#fff}
 .btn.outline{background:#fff;border:1px solid var(--line);color:var(--navy)}
 .btn.full{width:100%}
@@ -71,9 +71,9 @@ section{padding:78px 0}
 .panel h3{margin-bottom:10px}
 .panel p,.panel li{color:var(--muted)}
 .panel ul{padding-left:20px}
-.page-head{background:var(--navy);color:#fff;padding:55px 0}
+.page-head{background:var(--cream);color:var(--ink);padding:55px 0}
 .page-head h1{font-size:42px}
-.page-head p{color:#cbd5df;margin-top:8px}
+.page-head p{color:#567267;margin-top:8px}
 .backrow{margin:22px 0}
 .backrow button{background:none;border:0;color:var(--blue);font-weight:800}
 .form-layout{display:grid;grid-template-columns:1fr 360px;gap:25px;align-items:start}
@@ -104,21 +104,21 @@ section{padding:78px 0}
 .notice{padding:12px;border-radius:7px;margin-top:12px;font-size:14px}
 .success{background:#eaf7ef;color:#176b3a}
 .error{background:#fdecec;color:var(--red)}
-.info{background:#eef4ff;color:var(--blue)}
+.info{background:#e7f4ed;color:var(--blue)}
 .hidden{display:none!important}
-.auth-shell{max-width:520px;margin:35px auto}.auth-tabs{display:flex;gap:8px;margin-bottom:18px}.auth-tab{flex:1;padding:12px;border:1px solid var(--line);background:#fff;border-radius:7px;font-weight:800}.auth-tab.active{background:var(--navy);color:#fff}.portal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:20px}.portal-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px}.portal-card h3{margin-bottom:8px}.doc-list{display:grid;gap:10px;margin-top:12px}.doc-item{border:1px solid var(--line);padding:12px;border-radius:8px;display:flex;justify-content:space-between;gap:12px;align-items:center}.auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}.role-badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#eef4ff;color:var(--blue);font-size:12px;font-weight:800}@media(max-width:800px){.portal-grid{grid-template-columns:1fr}}
+.auth-shell{max-width:520px;margin:35px auto}.auth-tabs{display:flex;gap:8px;margin-bottom:18px}.auth-tab{flex:1;padding:12px;border:1px solid var(--line);background:#fff;border-radius:7px;font-weight:800}.auth-tab.active{background:var(--navy);color:#fff}.portal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:20px}.portal-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px}.portal-card h3{margin-bottom:8px}.doc-list{display:grid;gap:10px;margin-top:12px}.doc-item{border:1px solid var(--line);padding:12px;border-radius:8px;display:flex;justify-content:space-between;gap:12px;align-items:center}.auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}.role-badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#e7f4ed;color:var(--blue);font-size:12px;font-weight:800}@media(max-width:800px){.portal-grid{grid-template-columns:1fr}}
 
 .site-layout{display:grid;grid-template-columns:1fr 420px;gap:25px;align-items:start}
 .map-card{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .map-head{background:var(--navy);color:#fff;padding:18px}
-.map-head p{color:#cbd5df;font-size:13px}
+.map-head p{color:#567267;font-size:13px}
 .map-tools{padding:14px;border-bottom:1px solid var(--line)}
 .map-tools input{width:100%;padding:11px;border:1px solid var(--line);border-radius:6px;margin-bottom:9px}
 .toolrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .toolrow button{border:1px solid var(--line);background:#f5f7f9;border-radius:6px;padding:10px;font-weight:800}
 #map{height:490px}
 #visitMap{height:490px;min-height:490px;cursor:crosshair}
-.google-map-box{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}.google-map-box iframe{display:block;width:100%;height:320px;border:0}.location-data{padding:16px}
+.location-data{padding:16px}
 .location-data label{display:block;font-size:12px;color:var(--muted);font-weight:800}
 .location-data input{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;margin:4px 0 10px;background:#fafbfc}
 .visit-price{background:var(--cream);border-radius:8px;padding:14px}
@@ -127,9 +127,9 @@ section{padding:78px 0}
 .profile{display:grid;grid-template-columns:390px 1fr;gap:55px;align-items:center;background:var(--navy);color:#fff}
 .profile img{width:100%;height:460px;object-fit:cover;border-radius:10px;display:block}
 .profile h2{font-size:42px;margin:8px 0 18px}
-.profile p{color:#d7e0e8;margin-bottom:15px}
+.profile p{color:#dcebe3;margin-bottom:15px}
 .goldtext{color:var(--gold);font-weight:900}
-.footer{background:#07131f;color:#cbd5df;padding:45px 0 20px}
+.footer{background:#173f2f;color:#567267;padding:45px 0 20px}
 .footergrid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:35px}
 .footer h3{color:#fff;margin-bottom:10px}
 .footbottom{border-top:1px solid #ffffff18;margin-top:30px;padding-top:17px;text-align:center;font-size:13px}
@@ -352,22 +352,22 @@ section{padding:78px 0}
 
         <aside class="pricebox">
           <h3>Your Selected Services</h3>
-          <div id="selectedServiceLines"><div class="muted" style="color:#cbd5df">Select a service to see its price.</div></div>
+          <div id="selectedServiceLines"><div class="muted" style="color:#567267">Select a service to see its price.</div></div>
           <div class="line"><span>Base Subtotal</span><strong id="serviceBaseSubtotal">₹0</strong></div>
           <div class="line"><span>Discount</span><strong id="serviceDiscount">₹0</strong></div>
           <div class="line"><span>Taxable Subtotal</span><strong id="serviceSubtotal">₹0</strong></div>
           <div class="line"><span>GST 18%</span><strong id="serviceGST">₹0</strong></div>
-          <div class="line"><span>10% Discount</span><strong id="autoDiscountLabel">10%</strong></div>
           <div class="group" style="margin-top:12px">
-            <label style="color:#fff">10% Discount</label>
-            <div class="notice info" style="margin:0">A 10% discount is automatically applied to eligible services.</div>
-          </div>
-          <div class="group" style="margin-top:10px">
-            <label style="color:#fff">Special Discount</label>
-            <div style="display:flex;gap:8px"><input id="discountCode" placeholder="Enter special discount code" style="flex:1"><button type="button" class="btn gold" onclick="applyDiscountCode()">Apply</button></div>
-            <small id="discountMessage" style="display:block;margin-top:6px;color:#cbd5df">Special discount codes may provide an additional 5% or 10% discount.</small>
+            <label style="color:#fff">Service Discount</label>
+            <div id="serviceDiscountNote" class="notice info" style="margin:0">No discount up to ₹3,000. Discount is calculated automatically for higher service amounts.</div>
           </div>
           <div class="line total"><span>Total</span><span id="serviceTotal">₹0</span></div>
+          <div class="payment-card" style="margin-top:16px">
+            <h3>💳 Pay Online with Razorpay</h3>
+            <p class="muted">After reviewing your service charges, you can pay securely online through Razorpay.</p>
+            <button type="button" id="razorpayServiceBtn" class="btn gold full" onclick="payServiceWithRazorpay()">Pay with Razorpay</button>
+            <div id="razorpayMessage" class="notice hidden" style="margin-top:10px"></div>
+          </div>
         </aside>
       </div>
     </div>
@@ -435,7 +435,7 @@ section{padding:78px 0}
             </div>
             <div class="group"><label>Construction Site / Plot Address</label><textarea id="c_address2" placeholder="Enter project location / address"></textarea></div>
             <div class="group"><label>Construction Requirements</label><textarea id="c_other2" placeholder="Structure, masonry, plaster, flooring, electrical, plumbing, finishing, timeline or other requirements"></textarea></div>
-            <div class="group"><label>Special Discount Code</label><input id="c_discount2" placeholder="Optional special discount code" oninput="updateConstructionPrice()"></div>
+            <div class="notice info">Construction charges have no automatic discount. GST 18% applies to the construction amount.</div>
             <div id="constructionMessage" class="notice hidden"></div>
             <button type="submit" class="btn dark full">Submit Construction Request</button>
           </form>
@@ -449,7 +449,7 @@ section{padding:78px 0}
           <div class="line"><span>Discount</span><strong id="c_summaryDiscount">₹0</strong></div>
           <div class="line"><span>GST 18%</span><strong id="c_summaryGST">₹0</strong></div>
           <div class="line total"><span>Total</span><span id="c_summaryTotal">₹0</span></div>
-          <div id="c_summaryNote" style="font-size:12px;color:#cbd5df;margin-top:10px"></div>
+          <div id="c_summaryNote" style="font-size:12px;color:#567267;margin-top:10px"></div>
         </aside>
       </div>
     </div>
@@ -462,7 +462,7 @@ section{padding:78px 0}
     <div class="container">
       <div class="kicker">SEPARATE SITE VISIT BOOKING</div>
       <h1>Book a Site Visit</h1>
-      <p>Choose the project location first. The website calculates the road distance and applicable visit fee.</p>
+      <p>Use your current location or enter the project location. The website calculates the road distance from RMA Design & Construction and the applicable visit fee.</p>
     </div>
   </div>
 
@@ -470,7 +470,7 @@ section{padding:78px 0}
     <div class="container">
       <div class="site-layout">
         <div class="map-card">
-          <div class="map-head"><h3>📍 Project Location</h3><p>Search the project address, use your current location, or click/drag the marker.</p></div>
+          <div class="map-head"><h3>📍 Project Location</h3><p>Use GPS for the project location, or enter the project coordinates manually. Google Maps is not required.</p></div>
           <div class="map-tools">
             <input id="visitSearch" placeholder="Search project location...">
             <div class="toolrow">
@@ -478,19 +478,24 @@ section{padding:78px 0}
               <button type="button" onclick="visitCurrentLocation()">📍 Use My Location</button>
             </div>
           </div>
-          <div id="visitMap"></div>
-          <div class="google-map-box"><div class="map-head"><h3>🗺️ Google Maps</h3><p>The selected project location will appear here.</p></div><iframe id="googleMapFrame" title="Project location on Google Maps" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=32.7266,74.8570&z=12&output=embed"></iframe></div>
           <div class="location-data">
-            <label>Project Address</label><input id="v_address" readonly>
-            <label>Latitude</label><input id="v_lat" readonly>
-            <label>Longitude</label><input id="v_lng" readonly>
+            <div class="notice info"><b>GPS location</b><br>This website uses your device GPS directly. No Google Maps is required. For iPhone, allow location access when Safari asks.</div>
+            <div class="notice info" style="margin-bottom:14px"><b>Location Coordinates</b><br>Tap <b>Use My Location</b> to automatically get the project latitude and longitude. You can also enter coordinates manually.</div>
+            <label>Project Address</label><input id="v_address" readonly placeholder="Address will appear after location is selected">
+            <div class="form-grid">
+              <div class="group"><label>Latitude</label><input id="v_lat" inputmode="decimal" placeholder="e.g. 32.726600"></div>
+              <div class="group"><label>Longitude</label><input id="v_lng" inputmode="decimal" placeholder="e.g. 74.857000"></div>
+            </div>
+            <div class="toolrow" style="margin-top:10px">
+              <button type="button" class="btn dark" onclick="visitCurrentLocation()">📍 Use My Location</button>
+              <button type="button" class="btn" onclick="useManualCoordinates()">✓ Use Coordinates</button>
+            </div>
             <div class="visit-price">
               <div class="line"><span>Road Distance</span><strong id="v_distance">-- km</strong></div>
               <div class="line"><span>Visit Fee</span><strong id="v_fee">₹0</strong></div>
               <div class="line"><span>GST 18%</span><strong id="v_gst">₹0</strong></div>
               <div class="line total"><span>Total</span><strong id="v_total">₹0</strong></div>
             </div>
-            <div style="margin-top:12px"><a id="v_google" class="small-link" href="#" target="_blank" rel="noopener">Open selected point in Google Maps</a></div>
           </div>
         </div>
 
@@ -606,6 +611,7 @@ section{padding:78px 0}
 
 <div id="toast" class="toast"></div>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
@@ -633,7 +639,7 @@ const visitSlabs = [
   {min:35,max:50,fee:7500}
 ];
 
-let serviceMap, serviceMarker, visitMap, visitMarker;
+let serviceMap, serviceMarker;
 let serviceLocation = {lat:RMA_LAT,lng:RMA_LNG};
 let visitLocation = {lat:RMA_LAT,lng:RMA_LNG};
 let visitDistance = 0;
@@ -715,9 +721,6 @@ function showPage(name){
   }
   if(name==="construction"){
     setTimeout(()=>updateConstructionPrice(),50);
-  }
-  if(name==="sitevisit"){
-    setTimeout(()=>{ if(visitMap){ visitMap.invalidateSize(); visitMarker?.openPopup(); } },150);
   }
   if(name==="signin"){ setTimeout(()=>checkExistingSession(),80); }
 }
@@ -838,22 +841,37 @@ function updateServicePrice(){
     subtotal+=v; lines.push(["Survey / Plotting",v,area>1?"> 1 kanal":"Up to 1 kanal"]);
   }
 
-  const autoPct=10;
-  const code=(document.getElementById("discountCode")?.value||"").trim().toUpperCase().replace(/\s+/g, " ");
-  const codeMap={"RMA SPECIAL 5":5,"RMASPECIAL5":5,"RMA SPECIAL 10":10,"RMASPECIAL10":10};
-  const specialPct=codeMap[code]||0;
-  const autoDiscount=subtotal*autoPct/100;
-  const afterAuto=Math.max(0,subtotal-autoDiscount);
-  const specialDiscount=afterAuto*specialPct/100;
-  const totalDiscount=autoDiscount+specialDiscount;
+  // Service discount slabs — applied to service subtotal before GST.
+  // ₹0–₹3,000: 0%
+  // ₹3,001–₹5,000: 2%
+  // ₹5,001–₹10,000: 4%
+  // ₹10,001–₹20,000: 6%
+  // ₹20,001–₹30,000: 8%
+  // Above ₹30,000: 10%
+  function serviceDiscountRate(amount){
+    if(amount <= 3000) return 0;
+    if(amount <= 5000) return 2;
+    if(amount <= 10000) return 4;
+    if(amount <= 20000) return 6;
+    if(amount <= 30000) return 8;
+    return 10;
+  }
+  const discountPct=serviceDiscountRate(subtotal);
+  const totalDiscount=subtotal*discountPct/100;
   const discountedSubtotal=Math.max(0,subtotal-totalDiscount);
   const gst=discountedSubtotal*0.18;
   const total=discountedSubtotal+gst;
-  const ad=document.getElementById("autoDiscountLabel"); if(ad) ad.textContent="10%";
-  const dm=document.getElementById("discountMessage"); if(dm) dm.textContent=specialPct?"10% discount applied + additional "+specialPct+"% special discount.":"10% discount applied. A special code can add an extra 5% or 10%.";
+  const note=document.getElementById("serviceDiscountNote");
+  if(note){
+    note.textContent = discountPct===0
+      ? "No discount up to ₹3,000. GST 18% applies."
+      : discountPct===10
+        ? "10% service discount applied for amounts above ₹30,000. GST 18% applies after discount."
+        : discountPct+"% service discount applied. GST 18% applies after discount.";
+  }
   const holder=document.getElementById("selectedServiceLines");
   if(!lines.length){
-    holder.innerHTML='<div style="color:#cbd5df">Select a service to see its price.</div>';
+    holder.innerHTML='<div style="color:#567267">Select a service to see its price.</div>';
   }else{
     holder.innerHTML=lines.map(x=>{
       const value=x[1]===null ? "To confirm" : money(x[1]);
@@ -866,7 +884,6 @@ function updateServicePrice(){
   document.getElementById("serviceGST").textContent=money(gst);
   document.getElementById("serviceTotal").textContent=money(total);
 }
-function applyDiscountCode(){ updateServicePrice(); }
 function money(v){return "₹"+Number(v||0).toLocaleString("en-IN",{maximumFractionDigits:2})}
 
 /* ---------- separate construction quotation ---------- */
@@ -883,9 +900,9 @@ function constructionLabourTotal(type, area, floors){
   return total;
 }
 function getConstructionDiscount(){
-  const code=(document.getElementById("c_discount2")?.value||"").trim().toUpperCase().replace(/\s+/g, " ");
-  const map={"RMA SPECIAL 5":5,"RMASPECIAL5":5,"RMA SPECIAL 10":10,"RMASPECIAL10":10};
-  return {code,pct:map[code]||0};
+  // Construction has no automatic discount. If a future manual discount is
+  // authorised, keep it capped at 2%.
+  return {code:"",pct:0};
 }
 function updateConstructionPrice(){
   const type=document.getElementById("c_building2")?.value||"Residential";
@@ -906,11 +923,10 @@ function updateConstructionPrice(){
     if(labour===null){ base=0; note="Commercial labour-only quotation will be confirmed separately."; }
     else { base=labour; rateText=floors===1?"₹300/sq.ft.":"₹300 ground + ₹350/floor above"; note="Residential labour-only calculation: Ground ₹300/sq.ft.; First/Second ₹350/sq.ft."; }
   }
+  // No automatic discount on construction. (Any separately authorised
+  // construction discount must not exceed 2%; it is not offered in this UI.)
   const d=getConstructionDiscount();
-  const autoDiscount=base*0.10;
-  const afterAuto=Math.max(0,base-autoDiscount);
-  const specialDiscount=afterAuto*d.pct/100;
-  const discount=autoDiscount+specialDiscount;
+  const discount=0;
   const taxable=Math.max(0,base-discount);
   const gst=taxable*0.18;
   const total=taxable+gst;
@@ -918,10 +934,10 @@ function updateConstructionPrice(){
   document.getElementById("c_summaryArea").textContent=totalArea.toLocaleString("en-IN")+" sq.ft.";
   document.getElementById("c_summaryRate").textContent=rateText;
   document.getElementById("c_summaryBase").textContent=money(base);
-  document.getElementById("c_summaryDiscount").textContent=money(discount)+" (10% discount"+(d.pct?" + "+d.pct+"% special":"")+")";
+  document.getElementById("c_summaryDiscount").textContent=money(discount)+" (No construction discount)";
   document.getElementById("c_summaryGST").textContent=money(gst);
   document.getElementById("c_summaryTotal").textContent=money(total);
-  document.getElementById("c_summaryNote").textContent=note+(d.pct?" Special discount applied.":" 10% discount applied.");
+  document.getElementById("c_summaryNote").textContent=note+" No construction discount applied. GST 18% applies.";
 }
 document.getElementById("constructionForm")?.addEventListener("submit",function(e){
   e.preventDefault();
@@ -930,10 +946,26 @@ document.getElementById("constructionForm")?.addEventListener("submit",function(
   if(!/^[0-9]{10}$/.test(mobile)){box.className="notice error";box.classList.remove("hidden");box.textContent="Please enter a valid 10-digit mobile number.";return;}
   updateConstructionPrice();
   const requestId="RMA-C-"+Date.now().toString().slice(-9);
-  const payload={request_id:requestId,client_name:document.getElementById("c_name2").value.trim(),mobile,email:document.getElementById("c_email2").value.trim()||null,building_type:document.getElementById("c_building2").value,floors:Number(document.getElementById("c_floors2").value),built_up_area_per_floor:Number(document.getElementById("c_area2").value||0),basis:document.getElementById("c_basis2").value,stage:document.getElementById("c_rate2").value,site_address:document.getElementById("c_address2").value.trim(),requirements:document.getElementById("c_other2").value.trim(),discount_code:document.getElementById("c_discount2").value.trim().toUpperCase()||null};
+  const payload={request_id:requestId,client_name:document.getElementById("c_name2").value.trim(),mobile,email:document.getElementById("c_email2").value.trim()||null,building_type:document.getElementById("c_building2").value,floors:Number(document.getElementById("c_floors2").value),built_up_area_per_floor:Number(document.getElementById("c_area2").value||0),basis:document.getElementById("c_basis2").value,stage:document.getElementById("c_rate2").value,site_address:document.getElementById("c_address2").value.trim(),requirements:document.getElementById("c_other2").value.trim() ,discount_code:null};
   localStorage.setItem("rma_last_construction_request",JSON.stringify(payload));
   box.className="notice success";box.classList.remove("hidden");box.innerHTML="<b>Construction request prepared successfully.</b><br>Your Request ID is <b>"+requestId+"</b>.<br>The quotation is shown on the right.";
 });
+
+/* ---------- Razorpay online payment ---------- */
+/* Add your Razorpay Key ID here after creating your Razorpay account.
+   A production payment must use a server-created Razorpay Order and server-side signature verification. */
+const RAZORPAY_KEY_ID = "";
+function payServiceWithRazorpay(){
+  const box=document.getElementById("razorpayMessage");
+  const amountText=document.getElementById("serviceTotal")?.textContent||"₹0";
+  const amount=Number(amountText.replace(/[^0-9.]/g,""));
+  if(!amount){box.className="notice error";box.classList.remove("hidden");box.textContent="Please select a service before making payment.";return;}
+  if(!RAZORPAY_KEY_ID){box.className="notice info";box.classList.remove("hidden");box.textContent="Razorpay is added to the website. Your Razorpay Key ID and secure server-side Order API still need to be connected before live payments can be accepted.";return;}
+  const options={key:RAZORPAY_KEY_ID,amount:Math.round(amount*100),currency:"INR",name:"RMA Design & Construction",description:"Service payment",prefill:{name:document.getElementById("s_name")?.value||"",email:document.getElementById("s_email")?.value||"",contact:document.getElementById("s_mobile")?.value||""},theme:{color:"#2e7d5b"},handler:function(response){
+    box.className="notice success";box.classList.remove("hidden");box.textContent="Payment initiated successfully. Payment ID: "+response.razorpay_payment_id;
+  }};
+  if(window.Razorpay){new Razorpay(options).open();}else{box.className="notice error";box.classList.remove("hidden");box.textContent="Razorpay could not be loaded. Please check your internet connection and try again.";}
+}
 
 /* ---------- service form ---------- */
 document.getElementById("serviceForm").addEventListener("submit",async function(e){
@@ -987,43 +1019,35 @@ document.getElementById("serviceForm").addEventListener("submit",async function(
   /* Do not erase the form immediately; the client can review the calculation. */
 });
 
-/* ---------- service map / visit map ---------- */
+/* ---------- location / visit ---------- */
 function createMaps(){
-  serviceMap=L.map("map").setView([RMA_LAT,RMA_LNG],10);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap contributors"}).addTo(serviceMap);
-  serviceMarker=L.marker([RMA_LAT,RMA_LNG],{draggable:true}).addTo(serviceMap);
-  serviceMap.on("click",e=>{serviceMarker.setLatLng(e.latlng);serviceLocation={lat:e.latlng.lat,lng:e.latlng.lng};});
-
-  visitMap=L.map("visitMap").setView([RMA_LAT,RMA_LNG],11);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap contributors"}).addTo(visitMap);
-  visitMarker=L.marker([RMA_LAT,RMA_LNG],{draggable:true,title:"Drag this pin to the project location"}).addTo(visitMap);
-  visitMarker.bindPopup("<b>Project Location</b><br>Drag this pin to the project site, or tap anywhere on the map.").openPopup();
-  visitMarker.on("dragend",()=>{const p=visitMarker.getLatLng();setVisitLocation(p.lat,p.lng)});
-  visitMap.on("click",e=>{visitMarker.setLatLng(e.latlng);setVisitLocation(e.latlng.lat,e.latlng.lng)});
+  // The site-visit page intentionally does not use an interactive map.
+  // Location is captured by GPS or by latitude/longitude entered by the client.
   visitDistance=0;
   updateVisitPrice();
 }
 async function reverseGeo(lat,lng){
   try{
-    const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lng);
+    const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lng+"&zoom=18&addressdetails=1",{headers:{"Accept":"application/json"}});
     const d=await r.json();
     return d.display_name||lat.toFixed(6)+", "+lng.toFixed(6);
   }catch(e){return lat.toFixed(6)+", "+lng.toFixed(6)}
 }
 async function searchGeo(q){
-  const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q="+encodeURIComponent(q));
+  const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q="+encodeURIComponent(q),{headers:{"Accept":"application/json"}});
   const d=await r.json();
   if(!d.length) throw new Error("Location not found");
   return {lat:Number(d[0].lat),lng:Number(d[0].lon)};
 }
 async function setVisitLocation(lat,lng){
-  visitLocation={lat:Number(lat),lng:Number(lng)};
-  document.getElementById("v_lat").value=visitLocation.lat.toFixed(6);
-  document.getElementById("v_lng").value=visitLocation.lng.toFixed(6);
-  document.getElementById("v_address").value=await reverseGeo(visitLocation.lat,visitLocation.lng);
-  document.getElementById("v_google").href="https://www.google.com/maps/search/?api=1&query="+visitLocation.lat+","+visitLocation.lng;
-  const gm=document.getElementById("googleMapFrame"); if(gm) gm.src="https://www.google.com/maps?q="+visitLocation.lat+","+visitLocation.lng+"&z=16&output=embed";
+  lat=Number(lat); lng=Number(lng);
+  if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180){toast("Please enter valid latitude and longitude.");return false}
+  visitLocation={lat,lng};
+  document.getElementById("v_lat").value=lat.toFixed(6);
+  document.getElementById("v_lng").value=lng.toFixed(6);
+  document.getElementById("v_address").value=await reverseGeo(lat,lng);
   await calculateVisitDistance();
+  return true;
 }
 async function calculateVisitDistance(){
   try{
@@ -1050,16 +1074,31 @@ async function visitSearchLocation(){
   if(!q){toast("Enter the project location first.");return}
   try{
     const p=await searchGeo(q);
-    visitMap.setView([p.lat,p.lng],17);visitMarker.setLatLng([p.lat,p.lng]);await setVisitLocation(p.lat,p.lng);
+    await setVisitLocation(p.lat,p.lng);
   }catch(e){toast("Location not found. Try a fuller address.");}
 }
+function useManualCoordinates(){
+  const lat=Number(document.getElementById("v_lat").value.trim());
+  const lng=Number(document.getElementById("v_lng").value.trim());
+  if(!Number.isFinite(lat)||!Number.isFinite(lng)){toast("Enter both latitude and longitude first.");return}
+  setVisitLocation(lat,lng);
+}
 function visitCurrentLocation(){
+  if(!window.isSecureContext){toast("Location requires HTTPS. Please open the website using https://rmadesign.in");return}
   if(!navigator.geolocation){toast("Location is not supported by this browser.");return}
+  toast("Requesting your current GPS location...");
   navigator.geolocation.getCurrentPosition(async p=>{
-    visitMap.setView([p.coords.latitude,p.coords.longitude],17);
-    visitMarker.setLatLng([p.coords.latitude,p.coords.longitude]);
+    const accuracy=Math.round(p.coords.accuracy||0);
     await setVisitLocation(p.coords.latitude,p.coords.longitude);
-  },err=>{const msg=err&&err.code===1?"Location permission was denied. On iPhone, allow Location for Safari/Chrome in Settings, then try again.":err&&err.code===2?"Your location could not be determined. Please try again or search the project location.":"Location request timed out. Please try again.";toast(msg)}, {enableHighAccuracy:true,timeout:20000,maximumAge:0});
+    const accText=accuracy?" GPS accuracy about "+accuracy+" m.":"";
+    toast("Project location detected. Latitude, longitude and road distance updated."+accText);
+  },err=>{
+    let msg="Location could not be determined. Please try again.";
+    if(err&&err.code===1) msg="Location permission was denied. On iPhone, allow Location access for this website in Settings > Privacy & Security > Location Services, then try again.";
+    else if(err&&err.code===2) msg="Your device could not get a GPS fix. Turn on Location Services and try again, or enter the coordinates manually.";
+    else if(err&&err.code===3) msg="GPS request timed out. Try again in an open area, or enter the coordinates manually.";
+    toast(msg);
+  }, {enableHighAccuracy:true,timeout:30000,maximumAge:0});
 }
 document.getElementById("visitForm").addEventListener("submit",async function(e){
   e.preventDefault();
