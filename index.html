@@ -1745,7 +1745,7 @@ checkExistingSession();
   /* ---------- 5. Path Seeker International School client account ---------- */
   function addPathSeekerPortal(){
     const signin=document.getElementById('page-signin');if(!signin||document.getElementById('rmaPathSeekerPortal'))return;
-    const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Drawings, project documents, site visits and project requests.</p></div><div class="rma-v3-client"><div class="panel"><span class="rma-v3-badge">ACTIVE CLIENT</span><h3 style="margin-top:10px">Path Seeker International School</h3><p class="muted">Your project documents and approved drawings will be displayed here.</p><div class="rma-v3-list"><div><b>Project</b><br>Path Seeker International School</div><div><b>Monthly Site Visits</b><br><span id="psVisitsUsed">Loading...</span> used this month • <span id="psVisitsRemaining">Loading...</span> available</div></div><button class="btn dark" style="margin-top:14px" onclick="showPage('sitevisit')">Request Site Visit</button></div><div class="panel"><h3>📐 Drawings & Documents</h3><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div></div><div class="panel" style="margin-top:18px"><h3>📅 Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
+    const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="backrow" style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn outline" type="button" onclick="signOutUser()">← Sign Out</button></div><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Drawings, project documents, site visits and project requests.</p></div><div class="rma-v3-client"><div class="panel"><span class="rma-v3-badge">ACTIVE CLIENT</span><h3 style="margin-top:10px">Path Seeker International School</h3><p class="muted">Your project documents and approved drawings will be displayed here.</p><div class="rma-v3-list"><div><b>Project</b><br>Path Seeker International School</div><div><b>Monthly Site Visits</b><br><span id="psVisitsUsed">Loading...</span> used this month • <span id="psVisitsRemaining">Loading...</span> available</div></div><button class="btn dark" style="margin-top:14px" onclick="showPage('sitevisit')">Request Site Visit</button></div><div class="panel"><h3>📐 Drawings & Documents</h3><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div></div><div class="panel" style="margin-top:18px"><h3>📅 Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
   }
   window.addPathSeekerPortal = addPathSeekerPortal;
 
@@ -1846,8 +1846,15 @@ checkExistingSession();
           }
 
           if(fileUrl){
-            open='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn outline" href="'+esc(fileUrl)+'" target="_blank" rel="noopener">Open / View Drawing</a><a class="btn outline" href="'+esc(fileUrl)+'" download>Download PDF</a></div>';
-            preview='<div style="margin-top:12px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden;background:#fff"><iframe src="'+esc(fileUrl)+'#toolbar=1&navpanes=0" title="Path Seeker architectural drawing" style="display:block;width:100%;height:520px;border:0"></iframe></div>';
+            // Path Seeker is explicitly authorized to open and download its drawing.
+            // Other client portals are view-only.
+            if(isPS){
+              open='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn outline" href="'+esc(fileUrl)+'" target="_blank" rel="noopener">Open / View Drawing</a><a class="btn outline" href="'+esc(fileUrl)+'" download>Download PDF</a></div>';
+              preview='<div class="rma-doc-viewer" style="margin-top:12px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden;background:#fff"><iframe src="'+esc(fileUrl)+'#toolbar=1&navpanes=0" title="Path Seeker architectural drawing" style="display:block;width:100%;height:520px;border:0"></iframe></div>';
+            }else{
+              open='<div class="notice info" style="margin-top:10px"><b>View only</b> — downloading and opening the original file are disabled for this client.</div>';
+              preview='<div class="rma-doc-viewer rma-view-only" style="position:relative;margin-top:12px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden;background:#fff"><div class="rma-view-watermark" aria-hidden="true">RMA DESIGN &amp; CONSTRUCTION • VIEW ONLY</div><iframe src="'+esc(fileUrl)+'#toolbar=0&navpanes=0&scrollbar=1" title="Project drawing — view only" style="display:block;width:100%;height:520px;border:0"></iframe></div>';
+            }
           }else{
             open='<div class="notice error" style="margin-top:10px"><b>Drawing found, but Storage access is not enabled for this client.</b><br>Please add the Storage SELECT policy for the <b>project-documents</b> bucket.</div>';
           }
@@ -1885,6 +1892,19 @@ checkExistingSession();
 
 const oldSubmit=document.getElementById('visitForm');
   if(oldSubmit)oldSubmit.addEventListener('submit',function(){localStorage.setItem('rma_last_visit_scope',document.getElementById('rma_visit_scope')?.value||'');},true);
+
+  /* View-only controls are deterrents only; browser/OS screenshots cannot be technically prevented once pixels are displayed. */
+  (function addViewOnlyProtections(){
+    const style=document.createElement('style');
+    style.textContent='.rma-view-only{user-select:none;-webkit-user-select:none}.rma-view-watermark{position:absolute;z-index:3;left:12px;right:12px;top:50%;transform:translateY(-50%) rotate(-18deg);text-align:center;font-size:18px;font-weight:700;letter-spacing:2px;color:rgba(46,125,91,.18);pointer-events:none;white-space:nowrap}';
+    document.head.appendChild(style);
+    document.addEventListener('contextmenu',function(e){if(e.target.closest('.rma-view-only'))e.preventDefault();},true);
+    document.addEventListener('keydown',function(e){
+      if(!e.target.closest?.('.rma-view-only'))return;
+      const k=(e.key||'').toLowerCase();
+      if((e.ctrlKey||e.metaKey)&&['s','p','u'].includes(k)){e.preventDefault();e.stopPropagation();}
+    },true);
+  })();
 
   function initV3(){injectAllAddresses();addCombos();addVisitPayment();addVisitScope();if(typeof window.addPathSeekerPortal==='function')window.addPathSeekerPortal();window.updateServicePrice?.();window.updateVisitPrice?.();loadPathSeeker();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV3);else initV3();
