@@ -667,12 +667,30 @@ async function loadSignedInPortal(user){
   document.getElementById('authLoginSection')?.classList.add('hidden');
   document.getElementById('clientPortal')?.classList.add('hidden');
   document.getElementById('staffPortal')?.classList.add('hidden');
+  document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
   let role='client', profile=null;
   try{
     const r=await supabaseClient.from('profiles').select('*').eq('id',user.id).maybeSingle();
     if(!r.error) profile=r.data;
     role=(profile?.role||'client').toLowerCase();
   }catch(e){}
+
+  // Path Seeker is a dedicated client portal.  The old generic client portal
+  // must not win the login flow, otherwise the Path Seeker project/documents
+  // portal never becomes visible after a successful sign-in.
+  const identity=((profile?.full_name||'')+' '+(user.email||'')).toLowerCase();
+  const isPathSeeker=identity.includes('path seeker')||identity.includes('pathseeker')||identity.includes('path.seeker');
+  if(isPathSeeker){
+    addPathSeekerPortal?.();
+    document.getElementById('authLoginSection')?.classList.add('hidden');
+    document.getElementById('clientPortal')?.classList.add('hidden');
+    document.getElementById('staffPortal')?.classList.add('hidden');
+    document.getElementById('rmaPathSeekerPortal')?.classList.remove('hidden');
+    document.getElementById('signinNavBtn').textContent='Account';
+    await loadPathSeeker(user);
+    return;
+  }
+
   if(role==='admin'||role==='staff'||role==='employee'){
     document.getElementById('staffPortal')?.classList.remove('hidden');
     document.getElementById('staffWelcome').textContent='Welcome, '+(profile?.full_name||'RMA Team');
@@ -706,7 +724,7 @@ async function resetPassword(){
   const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
   authMsg(error?error.message:'Password reset instructions have been sent to your email.','info');
 }
-async function signOutUser(){await supabaseClient.auth.signOut();document.getElementById('authLoginSection')?.classList.remove('hidden');document.getElementById('clientPortal')?.classList.add('hidden');document.getElementById('staffPortal')?.classList.add('hidden');document.getElementById('signinNavBtn').textContent='Sign In';showPage('signin');}
+async function signOutUser(){await supabaseClient.auth.signOut();document.getElementById('authLoginSection')?.classList.remove('hidden');document.getElementById('clientPortal')?.classList.add('hidden');document.getElementById('staffPortal')?.classList.add('hidden');document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');document.getElementById('signinNavBtn').textContent='Sign In';showPage('signin');}
 async function checkExistingSession(){try{const {data}=await supabaseClient.auth.getSession();if(data?.session?.user) await loadSignedInPortal(data.session.user);}catch(e){}}
 
 /* ---------- pages ---------- */
@@ -1724,9 +1742,9 @@ checkExistingSession();
     const signin=document.getElementById('page-signin');if(!signin||document.getElementById('rmaPathSeekerPortal'))return;
     const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Drawings, project documents, site visits and project requests.</p></div><div class="rma-v3-client"><div class="panel"><span class="rma-v3-badge">ACTIVE CLIENT</span><h3 style="margin-top:10px">Path Seeker International School</h3><p class="muted">Your project documents and approved drawings will be displayed here.</p><div class="rma-v3-list"><div><b>Project</b><br>Path Seeker International School</div><div><b>Monthly Site Visits</b><br><span id="psVisitsUsed">Loading...</span> used this month • <span id="psVisitsRemaining">Loading...</span> available</div></div><button class="btn dark" style="margin-top:14px" onclick="showPage('sitevisit')">Request Site Visit</button></div><div class="panel"><h3>📐 Drawings & Documents</h3><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div></div><div class="panel" style="margin-top:18px"><h3>📅 Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
   }
-  async function loadPathSeeker(){
+  async function loadPathSeeker(knownUser){
     const portal=document.getElementById('rmaPathSeekerPortal');if(!portal)return;
-    const {data}=await supabaseClient.auth.getUser();const user=data?.user;if(!user)return;
+    const user=knownUser || (await supabaseClient.auth.getUser()).data?.user;if(!user)return;
     const profile=await supabaseClient.from('profiles').select('*').eq('id',user.id).maybeSingle();const name=(profile.data?.full_name||'').toLowerCase();const email=(user.email||'').toLowerCase();
     const isPS=name.includes('path seeker')||name.includes('pathseeker')||email.includes('pathseeker')||email.includes('path.seeker');
     if(!isPS)return;
@@ -1744,6 +1762,17 @@ checkExistingSession();
         project=pr.data;
       }
     }catch(e){ console.warn('Path Seeker project link lookup failed',e); }
+
+    // Temporary migration fallback for the existing Path Seeker project while
+    // the client_accounts -> projects relationship is being finalized.
+    // It is only reached for the authenticated Path Seeker identity above.
+    if(!project){
+      try{
+        const fallbackId='d9e2617e-6edc-4c07-891b-7879998d6187';
+        const pr=await supabaseClient.from('projects').select('*').eq('id',fallbackId).maybeSingle();
+        if(!pr.error && pr.data) project=pr.data;
+      }catch(e){ console.warn('Path Seeker fallback project lookup failed',e); }
+    }
 
     const projectBox=portal.querySelector('.rma-v3-client .panel:first-child');
     if(projectBox){
@@ -1767,7 +1796,8 @@ checkExistingSession();
     }catch(e){document.getElementById('psVisitsUsed').textContent='—';document.getElementById('psVisitsRemaining').textContent='3';}
 
     try{
-      const query=project?supabaseClient.from('project_documents').select('*').eq('project_id',project.id).order('created_at',{ascending:false}).limit(50):supabaseClient.from('project_documents').select('*').eq('project_id','00000000-0000-0000-0000-000000000000');
+      const documentProjectId=project?.id||'d9e2617e-6edc-4c07-891b-7879998d6187';
+      const query=supabaseClient.from('project_documents').select('*').eq('project_id',documentProjectId).order('created_at',{ascending:false}).limit(50);
       const d=await query;
       if(d.error) throw d.error;
       const docs=d.data||[];
