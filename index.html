@@ -182,6 +182,78 @@ section{padding:78px 0}
 #page-sitevisit .site-layout{display:block}
 #page-sitevisit .form-panel{width:100%;max-width:900px;margin:0 auto}
 </style>
+
+<style id="rma-v30-mobile-estimator">
+/* V30 — mobile-first refinements and construction estimator */
+.rma-estimator-card h2{font-size:26px;margin:6px 0 8px;color:var(--navy)}
+.rma-calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rma-estimator-card .group{margin-bottom:11px}
+.rma-estimator-card .group label{color:#244337}
+.rma-estimator-card .group input,.rma-estimator-card .group select{padding:10px;border-radius:7px}
+.rma-calc-help{display:block;margin-top:5px;color:#6b7b73;font-size:11px;line-height:1.35}
+.rma-calc-result{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.rma-calc-result>div{background:#f3f8f5;border:1px solid #dcebe2;border-radius:9px;padding:11px}
+.rma-calc-result span{display:block;font-size:11px;color:#64756c;font-weight:700}
+.rma-calc-result strong{display:block;margin-top:2px;color:#173f2f;font-size:18px}
+.rma-calc-note{font-size:12px!important;color:#567267!important;margin:8px 0 0!important}
+@media(max-width:900px){
+  .navlinks{display:none}
+  .menu{display:block}
+  .navin{height:68px}
+  .hero .container{grid-template-columns:1fr;gap:18px}
+  .hero .copy{padding:55px 0 15px}
+  .hero-quick-card{margin-bottom:30px}
+  .form-layout{grid-template-columns:1fr}
+  .service-request-layout{grid-template-columns:1fr}
+  .service-sidebar{position:relative;top:0}
+  .statsgrid{grid-template-columns:1fr 1fr}
+  .info-grid,.cards{grid-template-columns:1fr}
+  .portal-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  body{font-size:15px}
+  .container{width:min(100% - 28px,1180px)}
+  .topbar .container{padding:5px 0;gap:3px}
+  .topbar{font-size:11px}
+  .logo{font-size:17px}
+  .hero{min-height:auto}
+  .hero h1{font-size:40px;margin:10px 0}
+  .hero p{font-size:16px}
+  .hero .copy{padding:42px 0 10px}
+  .hero-quick-card{padding:18px}
+  .rma-calc-grid,.rma-calc-result{grid-template-columns:1fr}
+  .rma-estimator-card h2{font-size:23px}
+  .btn{width:100%;min-height:46px}
+  .hero .copy .btn{width:auto;flex:1;min-width:145px}
+  section{padding:50px 0}
+  .heading h2{font-size:29px}
+  .page-head{padding:38px 0}
+  .page-head h1{font-size:32px}
+  .form-grid,.service-picks,.toolrow{grid-template-columns:1fr}
+  .statsgrid{grid-template-columns:1fr 1fr}
+  .stat{padding:18px 10px}
+  .stat strong{font-size:24px}
+  .site-layout{grid-template-columns:1fr}
+  #visitMap,#map{height:320px;min-height:320px}
+  .pricing-table{display:block;overflow-x:auto;white-space:nowrap}
+  .payment-card{width:100%}
+  .service-sidebar{padding:12px}
+  .service-side-item{padding:13px 7px}
+  .doc-item{flex-direction:column;align-items:flex-start}
+}
+</style>
+
+<style id="rma-v31-mobile-nav">
+@media(max-width:900px){
+  .nav{position:sticky;top:0;z-index:1000}
+  .navin{height:auto;min-height:68px;flex-wrap:wrap;padding:8px 0 0}
+  .mobile-quick-nav{display:flex;order:3;width:100%;overflow-x:auto;gap:6px;padding:7px 0 9px;scrollbar-width:none}
+  .mobile-quick-nav::-webkit-scrollbar{display:none}
+  .mobile-quick-nav button{flex:0 0 auto;border:1px solid #d9e0e7;background:#fff;color:var(--navy);border-radius:18px;padding:7px 11px;font-size:12px;font-weight:700;white-space:nowrap}
+  .mobile-quick-nav button:active{background:var(--gold);color:var(--navy)}
+}
+@media(min-width:901px){.mobile-quick-nav{display:none}}
+</style>
 </head>
 <body>
 <div class="topbar">
@@ -202,6 +274,15 @@ section{padding:78px 0}
 <li><button onclick="showPage('contact')">Contact</button></li>
 <li><button id="signinNavBtn" onclick="showPage('signin')">Sign In</button></li>
 </ul>
+<div class="mobile-quick-nav" aria-label="Quick navigation">
+  <button onclick="showPage('home')">Home</button>
+  <button onclick="showPage('services')">Services</button>
+  <button onclick="showPage('construction')">Construction</button>
+  <button onclick="showPage('sitevisit')">Book Visit</button>
+  <button onclick="showPage('about')">About</button>
+  <button onclick="showPage('contact')">Contact</button>
+  <button onclick="showPage('signin')">Sign In</button>
+</div>
 <button class="menu" onclick="toggleMenu()">☰</button>
 </div>
 </nav>
@@ -215,18 +296,60 @@ section{padding:78px 0}
 <p>Professional architectural planning, structural design, municipality approval drawings, estimation, surveying and construction services.</p>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:28px">
 <button class="btn gold" onclick="showPage('services')">Explore Services</button>
+<button class="btn dark" onclick="showPage('sitevisit')">Book My Site Visit →</button>
 </div>
 </div>
-<div class="hero-quick-card">
-<span class="kicker">QUICK CONSULTATION</span>
-<h2>Book My Site Visit</h2>
-<p>Need an on-site consultation? Choose your project location, calculate the applicable visit charge and request a convenient date and time.</p>
-<ul class="quick-points">
-<li>Location by GPS, address search or PIN code</li>
-<li>Road distance from RMA base</li>
-<li>Choose your preferred visit date and time</li>
-</ul>
-<button class="btn dark full" onclick="showPage('sitevisit')">Book My Site Visit →</button>
+<div class="hero-quick-card rma-estimator-card">
+<span class="kicker">CONSTRUCTION ESTIMATOR</span>
+<h2>Estimate Your Construction Budget</h2>
+<p>Enter the building length and width, number of stories, construction type, class and level to get an instant estimate.</p>
+<div class="rma-calc-grid">
+  <div class="group">
+    <label for="rmaCalcLength">Building Length (ft)</label>
+    <input id="rmaCalcLength" type="number" min="0" step="0.01" placeholder="e.g. 50">
+  </div>
+  <div class="group">
+    <label for="rmaCalcWidth">Building Width (ft)</label>
+    <input id="rmaCalcWidth" type="number" min="0" step="0.01" placeholder="e.g. 30">
+  </div>
+</div>
+<div class="rma-calc-grid">
+  <div class="group">
+    <label for="rmaCalcStories">Number of Stories</label>
+    <select id="rmaCalcStories">
+      <option value="1">Ground Floor</option>
+      <option value="2">G+1</option>
+      <option value="3">G+2</option>
+    </select>
+  </div>
+  <div class="group">
+    <label for="rmaCalcArea">Total Built-up Area (sq.ft.)</label>
+    <input id="rmaCalcArea" type="number" min="0" step="1" placeholder="Calculated automatically" readonly>
+  </div>
+</div>
+<small class="rma-calc-help">Built-up area = building length × building width × number of stories.</small>
+<div class="rma-calc-grid">
+  <div class="group">
+    <label for="rmaCalcType">Project Type</label>
+    <select id="rmaCalcType">
+      <option value="residential">Residential</option>
+      <option value="commercial">Commercial</option>
+    </select>
+  </div>
+  <div class="group">
+    <label for="rmaCalcClass">Construction Class</label>
+    <select id="rmaCalcClass"><option value="C">Class C</option><option value="B">Class B</option><option value="A">Class A</option></select>
+  </div>
+</div>
+<div class="group">
+  <label for="rmaCalcLevel">Construction Level</label>
+  <select id="rmaCalcLevel"><option value="grey">Grey Structure</option><option value="finishing">Up to Finishing Level</option></select>
+</div>
+<div class="rma-calc-result">
+  <div><span>Applicable Rate</span><strong id="rmaCalcRate">₹1,300 / sq.ft.</strong></div>
+  <div><span>Estimated Budget</span><strong id="rmaCalcTotal">₹0</strong></div>
+</div>
+<p id="rmaCalcNote" class="rma-calc-note">Residential • Class C • Ground Floor • Grey Structure</p>
 </div>
 </div>
 </section>
@@ -2243,6 +2366,34 @@ function init(){buildVisit();installServicePayment();}
 const oldShow=window.showPage;
 if(oldShow&&!window.__rmaV29Wrapped){window.showPage=function(name){oldShow(name);if(name==='sitevisit')setTimeout(buildVisit,20);if(name==='services')setTimeout(installServicePayment,20)};window.__rmaV29Wrapped=true;}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<script id="rma-v31-estimator-js">
+(function(){
+  const rates={grey:{C:1300,B:1400,A:1500},finishing:{C:2300,B:2500,A:2700}};
+  const lengthEl=document.getElementById('rmaCalcLength'), widthEl=document.getElementById('rmaCalcWidth');
+  const storiesEl=document.getElementById('rmaCalcStories'), areaEl=document.getElementById('rmaCalcArea');
+  const typeEl=document.getElementById('rmaCalcType'), classEl=document.getElementById('rmaCalcClass'), levelEl=document.getElementById('rmaCalcLevel');
+  const rateEl=document.getElementById('rmaCalcRate'), totalEl=document.getElementById('rmaCalcTotal'), noteEl=document.getElementById('rmaCalcNote');
+  if(!lengthEl||!widthEl||!storiesEl||!areaEl||!typeEl||!classEl||!levelEl)return;
+  function money(n){return '₹'+Math.round(n||0).toLocaleString('en-IN');}
+  function update(){
+    const l=parseFloat(lengthEl.value)||0, w=parseFloat(widthEl.value)||0, stories=parseInt(storiesEl.value,10)||1;
+    const area=l*w*stories;
+    areaEl.value=area>0?area.toFixed(0):'';
+    const level=levelEl.value, cls=classEl.value, type=typeEl.value;
+    let rate=rates[level][cls];
+    if(type==='commercial' && level==='finishing') rate=2500;
+    rateEl.textContent=money(rate)+' / sq.ft.';
+    totalEl.textContent=area>0?money(area*rate):'₹0';
+    const storyText=stories===1?'Ground Floor':`G+${stories-1}`;
+    const levelText=level==='grey'?'Grey Structure':'Up to Finishing Level';
+    noteEl.textContent=`${type==='residential'?'Residential':'Commercial'} • Class ${cls} • ${storyText} • ${levelText}` + (type==='commercial'&&level==='finishing'?' • Standard commercial finishing rate ₹2,500/sq.ft.':'');
+  }
+  [lengthEl,widthEl,storiesEl,typeEl,classEl,levelEl].forEach(el=>el.addEventListener('input',update));
+  [storiesEl,typeEl,classEl,levelEl].forEach(el=>el.addEventListener('change',update));
+  update();
 })();
 </script>
 </body></html>
