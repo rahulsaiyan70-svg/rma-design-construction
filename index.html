@@ -1449,7 +1449,7 @@ checkExistingSession();
     const box=document.createElement('div');box.id='rmaAddressBox';box.className='rma-addon';
     box.innerHTML=`
       <h3>🏠 Project Address</h3>
-      <div class="hint">India is fixed. Enter the project address, or use your location/search/PIN code. PIN-code distance is calculated from RMA base PIN <b>181010</b>.</div>
+      <div class="hint">India is fixed. Enter the project address, or use your location/search/PIN code. PIN-code distance is calculated from RMA base PIN <b>180010</b>.</div>
       <div class="rma-addon-grid">
         <div><label>Country</label><input value="India" readonly class="rma-lock"></div>
         <div><label>House / Plot No. *</label><input id="rma_house" placeholder="House No., Plot No., Shop No." required></div>
@@ -1517,7 +1517,7 @@ checkExistingSession();
       else{di.innerHTML='<option value="Other">'+(po.District||'District from PIN')+'</option>';di.value='Other';}
       di.dispatchEvent(new Event('change'));
       rma2ComposeAddress();
-      if(result)result.innerHTML='<b>PIN verified:</b> '+(po.Name||'Postal area')+', '+(po.District||'')+', '+state+'. Now calculating road distance from RMA PIN <b>181010</b>...';
+      if(result)result.innerHTML='<b>PIN verified:</b> '+(po.Name||'Postal area')+', '+(po.District||'')+', '+state+'. Now calculating road distance from RMA PIN <b>180010</b>...';
       await rma2DistanceFromPin(pin,po.Name||'Postal area',po.District||'',state);
     }catch(e){
       if(result){result.className='rma-result';result.textContent='PIN could not be verified automatically. Please check the 6-digit PIN and complete the address manually.';}
@@ -1528,7 +1528,7 @@ checkExistingSession();
     try{
       /* Use Nominatim only to convert the PIN postal areas into coordinates;
          OSRM then calculates driving/road distance. */
-      const base=await rma2Geocode('181010, Jammu, Jammu & Kashmir, India');
+      const base=await rma2Geocode('180010, Jammu, Jammu & Kashmir, India');
       const dest=await rma2Geocode(pin+', '+poName+', '+district+', '+state+', India');
       const route=await fetch('https://router.project-osrm.org/route/v1/driving/'+base.lng+','+base.lat+';'+dest.lng+','+dest.lat+'?overview=false');
       const rd=await route.json();
@@ -1536,7 +1536,7 @@ checkExistingSession();
       const km=rd.routes[0].distance/1000;
       visitDistance=km;
       const msg=document.getElementById('rmaPinResult');
-      if(msg)msg.innerHTML='<b>PIN verified:</b> '+poName+', '+district+', '+state+'.<br><b>Approx. road distance from RMA base PIN 181010:</b> '+km.toFixed(1)+' km.';
+      if(msg)msg.innerHTML='<b>PIN verified:</b> '+poName+', '+district+', '+state+'.<br><b>Approx. road distance from RMA base PIN 180010:</b> '+km.toFixed(1)+' km.';
       if(typeof updateVisitPrice==='function')updateVisitPrice();
     }catch(e){
       const msg=document.getElementById('rmaPinResult');
@@ -1637,7 +1637,7 @@ checkExistingSession();
         locality:document.getElementById('rma_locality')?.value||'',
         country:'India',state:document.getElementById('rma_state')?.value||'',district:document.getElementById('rma_district')?.value||'',
         sub_district:document.getElementById('rma_tehsil')?.value||'',pin_code:document.getElementById('rma_pin')?.value||'',
-        complete_address:oldAddress,base_pin:'181010',distance_km:Number(visitDistance||0)
+        complete_address:oldAddress,base_pin:'180010',distance_km:Number(visitDistance||0)
       };
       localStorage.setItem('rma_last_visit_address',JSON.stringify(data));
     },true);
@@ -1761,7 +1761,7 @@ checkExistingSession();
       const st=document.getElementById(prefix+'_state'),di=document.getElementById(prefix+'_district'),te=document.getElementById(prefix+'_tehsil');
       st.value=state;st.dispatchEvent(new Event('change'));if(state==='Jammu & Kashmir'&&JK_DISTRICTS.includes(po.District))di.value=po.District;else di.value='Other';di.dispatchEvent(new Event('change'));
       const dist=await routeFromBase(...Object.values(await geocode(pin+', India')) .slice(0,2));
-      out.innerHTML='<b>PIN verified:</b> '+esc(po.Name)+', '+esc(po.District)+', '+esc(state)+'<br><b>Approx. road distance from RMA PIN 181010:</b> '+dist.toFixed(1)+' km.';
+      out.innerHTML='<b>PIN verified:</b> '+esc(po.Name)+', '+esc(po.District)+', '+esc(state)+'<br><b>Approx. road distance from RMA PIN 180010:</b> '+dist.toFixed(1)+' km.';
       out.dataset.distance=dist;compose(prefix,oldAddressId);
       if(prefix==='v')window.visitDistance=dist;if(typeof window.updateVisitPrice==='function')window.updateVisitPrice();
     }catch(e){out.textContent='PIN could not be verified automatically. Complete the address manually or use Search / My Location.';}
@@ -1801,7 +1801,7 @@ checkExistingSession();
       const dist=await routeFromBase(lat,lng);
       if(prefix==='v')window.visitDistance=dist;
       const o=document.getElementById(prefix+'_result');o.classList.remove('hidden');
-      o.innerHTML='<b>My Location detected.</b> Latitude: <b>'+Number(lat).toFixed(6)+'</b>, Longitude: <b>'+Number(lng).toFixed(6)+'</b><br>Approx. road distance from RMA base PIN 181010: <b>'+dist.toFixed(1)+' km</b>.';
+      o.innerHTML='<b>My Location detected.</b> Latitude: <b>'+Number(lat).toFixed(6)+'</b>, Longitude: <b>'+Number(lng).toFixed(6)+'</b><br>Approx. road distance from RMA base PIN 180010: <b>'+dist.toFixed(1)+' km</b>.';
       if(typeof window.updateVisitPrice==='function')window.updateVisitPrice();
     }catch(e){compose(prefix,oldId);}
   }
@@ -2264,7 +2264,7 @@ window.RAZORPAY_KEY_ID=RAZORPAY_KEY_ID;
       if(state==='Jammu & Kashmir'&&JK.includes(po.District))di.value=po.District;else{di.innerHTML='<option>Other</option>';di.value='Other';}fillTehsils();
       document.getElementById('rma_locality').value=document.getElementById('rma_locality').value||po.Name||'';compose();
       const p=await geo(pin+', India'); finalVisitDistance=await roadDistance(p.lat,p.lng); updatePrice();
-      result('<b>PIN verified:</b> '+esc(po.Name)+', '+esc(po.District)+', '+esc(state)+'<br><b>Road distance from RMA base PIN 181010:</b> '+finalVisitDistance.toFixed(1)+' km.');
+      result('<b>PIN verified:</b> '+esc(po.Name)+', '+esc(po.District)+', '+esc(state)+'<br><b>Road distance from RMA base PIN 180010:</b> '+finalVisitDistance.toFixed(1)+' km.');
     }catch(e){finalVisitDistance=0;updatePrice();result(esc(e.message||'PIN could not be verified. Please use My Location.'),false)}
   }
   async function useGPS(){
@@ -2328,6 +2328,241 @@ window.RAZORPAY_KEY_ID=RAZORPAY_KEY_ID;
     window.__rmaFinalShowWrapped=true;
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureUI,50));else setTimeout(ensureUI,50);
+})();
+</script>
+
+
+
+<!-- ============================================================
+     RMA V20 — SITE VISIT ORDER + MANDATORY PAYMENT FIX
+     ============================================================ -->
+<style>
+#rmaV20Address{background:#f7fbf8;border:1px solid #cfe2d6;border-radius:10px;padding:18px;margin:18px 0}
+#rmaV20Address h3{margin:0 0 6px;color:#245b43}
+#rmaV20Address .v20-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#rmaV20Address .v20-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+#rmaV20Address label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}
+#rmaV20Address input,#rmaV20Address select,#rmaV20Address textarea{width:100%;box-sizing:border-box;border:1px solid #dfe4e8;border-radius:6px;padding:11px;background:#fff;color:#172231}
+#rmaV20Address .v20-or{text-align:center;font-weight:900;color:#245b43;margin:12px 0}
+#rmaV20Address .v20-note{font-size:13px;color:#697586;margin-bottom:14px}
+#rmaV20Address .v20-result{margin-top:12px;padding:11px;border-radius:7px;font-size:14px}
+#rmaV20Price{margin-top:16px;padding:14px;background:#fff;border:1px solid #dfe7e2;border-radius:8px}
+#rmaV20Price .v20-line{display:flex;justify-content:space-between;padding:6px 0}
+#rmaV20Price .v20-total{border-top:1px solid #dfe7e2;margin-top:6px;padding-top:10px;font-size:18px;font-weight:900}
+#rmaV20Marking{margin-top:14px;padding:13px;border:1px solid #dfe2e5;border-radius:8px;background:#fff}
+#rmaV20Marking label{font-weight:700;display:flex;align-items:center;gap:9px;margin:0;cursor:pointer}
+#rmaV20Marking input{width:18px;height:18px}
+@media(max-width:700px){#rmaV20Address .v20-grid,#rmaV20Address .v20-grid3{grid-template-columns:1fr}}
+</style>
+<script>
+(function(){
+  'use strict';
+  const BASE_PIN='180010';
+  const BASE_ADDRESS='21/2 Ambika Colony, By Pass Road, Kunjwani, Jammu, Jammu & Kashmir, 180010, India';
+  const ALLOWED=['Jammu & Kashmir','Punjab','Haryana','Chandigarh','Delhi'];
+  const JK=['Jammu','Samba','Kathua','Udhampur','Reasi','Rajouri','Poonch','Doda','Kishtwar','Ramban','Srinagar','Budgam','Ganderbal','Pulwama','Shopian','Kulgam','Anantnag','Baramulla','Kupwara','Bandipora'];
+  const TEHSILS={
+    Jammu:['Jammu','Bahu','Bhalwal','Bishnah','Dansal','Marh','R.S. Pura','Suchetgarh','Akhnoor'],
+    Samba:['Samba','Vijaypur','Bari Brahmana','Ramgarh','Purmandal'],Kathua:['Kathua','Hiranagar','Billawar','Basohli','Bani'],
+    Udhampur:['Udhampur','Chenani','Ramnagar','Majalta'],Reasi:['Reasi','Katra','Arnas','Pouni','Mahore'],
+    Rajouri:['Rajouri','Nowshera','Sunderbani','Kalakote','Thanamandi'],Poonch:['Poonch','Mandi','Mendhar','Surankote'],
+    Doda:['Doda','Bhaderwah','Gandoh'],Kishtwar:['Kishtwar','Chatroo','Paddar'],Ramban:['Ramban','Banihal','Gool'],
+    Srinagar:['Srinagar'],Budgam:['Budgam','Beerwah','Khansahib'],Ganderbal:['Ganderbal','Kangan'],
+    Pulwama:['Pulwama','Pampore','Awantipora','Tral'],Shopian:['Shopian','Zainapora'],Kulgam:['Kulgam','D.H. Pora'],
+    Anantnag:['Anantnag','Bijbehara','Dooru','Kokernag','Pahalgam'],Baramulla:['Baramulla','Sopore','Pattan','Uri','Tangmarg'],
+    Kupwara:['Kupwara','Handwara','Trehgam'],Bandipora:['Bandipora','Gurez','Sumbal']
+  };
+  let baseCoords=null, visitDistanceV20=0, paymentInProgress=false;
+  const esc=x=>String(x??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+  const money=x=>'₹'+Number(x||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+  const setText=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+
+  async function geocode(q){
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q='+encodeURIComponent(q),{headers:{Accept:'application/json'}});
+    const d=await r.json(); if(!d.length)throw Error('Location not found');
+    return {lat:Number(d[0].lat),lng:Number(d[0].lon),display:d[0].display_name||q};
+  }
+  async function getBaseCoords(){
+    if(baseCoords)return baseCoords;
+    try{baseCoords=await geocode(BASE_ADDRESS)}
+    catch(e){baseCoords=await geocode(BASE_PIN+', Kunjwani, Jammu, Jammu & Kashmir, India')}
+    return baseCoords;
+  }
+  function haversine(a,b){const R=6371,rad=Math.PI/180,dLat=(b.lat-a.lat)*rad,dLon=(b.lng-a.lng)*rad;const x=Math.sin(dLat/2)**2+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+  async function roadDistanceV20(lat,lng){
+    const base=await getBaseCoords();
+    // If the GPS point is essentially the RMA base itself, report 0 km rather than a spurious route to a nearby PIN centroid.
+    if(haversine(base,{lat,lng})<0.25)return 0;
+    const r=await fetch('https://router.project-osrm.org/route/v1/driving/'+base.lng+','+base.lat+';'+lng+','+lat+'?overview=false');
+    const d=await r.json();if(d.code!=='Ok'||!d.routes?.[0])throw Error('Road distance unavailable');
+    return d.routes[0].distance/1000;
+  }
+  function compose(){
+    const ids=['rma20_house','rma20_landmark','rma20_locality','rma20_tehsil','rma20_district','rma20_state','rma20_pin'];
+    const parts=ids.map(id=>document.getElementById(id)?.value.trim()).filter(Boolean);
+    const old=document.getElementById('v_address');if(old)old.value=parts.concat(['India']).join(', ');
+  }
+  function fillDistricts(){
+    const s=document.getElementById('rma20_state'),d=document.getElementById('rma20_district'),t=document.getElementById('rma20_tehsil');if(!s||!d||!t)return;
+    d.innerHTML='<option value="">Select district</option>'+(s.value==='Jammu & Kashmir'?JK.map(x=>'<option>'+x+'</option>').join(''):'<option>Other</option>');d.disabled=false;
+    t.innerHTML='<option value="">Select sub-district / tehsil</option>';t.disabled=true;compose();
+  }
+  function fillTehsils(){
+    const d=document.getElementById('rma20_district'),t=document.getElementById('rma20_tehsil');if(!d||!t)return;
+    const a=TEHSILS[d.value]||[];t.innerHTML='<option value="">Select sub-district / tehsil</option>'+(a.length?a.map(x=>'<option>'+x+'</option>').join(''):'<option>Other / Not required</option>');t.disabled=false;compose();
+  }
+  function rateForDistance(d,marking){
+    if(marking)return 3500;
+    if(d<=0)return 0;
+    if(d<=10)return 1500;
+    if(d<=20)return 2000;
+    if(d<=40)return 2500;
+    if(d<=50)return 3500;
+    if(d<=75)return 4000;
+    return 5000;
+  }
+  function updatePrice(){
+    const marking=!!document.getElementById('rma20_marking')?.checked;
+    const base=rateForDistance(visitDistanceV20,marking),gst=base*.18,total=base+gst;
+    setText('rma20Distance',visitDistanceV20?visitDistanceV20.toFixed(1)+' km':'-- km');
+    setText('rma20Fee',money(base));setText('rma20GST',money(gst));setText('rma20Total',money(total));
+    const note=document.getElementById('rma20RateNote');
+    if(note)note.textContent=marking?'Site marking fee is a flat charge.':'City visit fee is distance based; longer-distance visits use the applicable higher travel rate.';
+    const btn=document.getElementById('rma20Pay');if(btn)btn.disabled=!(visitDistanceV20>0)||!requiredAddressOk();
+  }
+  function requiredAddressOk(){
+    const req=['rma20_house','rma20_landmark','rma20_locality','rma20_state','rma20_district'];
+    if(req.some(id=>!document.getElementById(id)?.value.trim()))return false;
+    const pin=document.getElementById('rma20_pin')?.value.trim()||'';
+    const lat=Number(document.getElementById('v_lat')?.value||0),lng=Number(document.getElementById('v_lng')?.value||0);
+    return /^\d{6}$/.test(pin)||(Number.isFinite(lat)&&Number.isFinite(lng)&&lat!==0&&lng!==0);
+  }
+  function showResult(html,ok=true){const e=document.getElementById('rma20Result');if(!e)return;e.className='v20-result';e.style.background=ok?'#e7f4ed':'#fdecec';e.style.color=ok?'#176b3a':'#9b2c2c';e.innerHTML=html;e.classList.remove('hidden');}
+
+  async function verifyPinV20(){
+    const pin=document.getElementById('rma20_pin')?.value.trim()||'';
+    if(!/^\d{6}$/.test(pin)){showResult('Please enter a valid 6-digit PIN code.',false);return}
+    showResult('Checking PIN code and calculating road distance...');
+    try{
+      const r=await fetch('https://api.postalpincode.in/pincode/'+pin),d=await r.json(),row=d?.[0];
+      if(!row||row.Status!=='Success'||!row.PostOffice?.length)throw Error('PIN not found');
+      const po=row.PostOffice[0],state=po.State==='Jammu and Kashmir'?'Jammu & Kashmir':po.State;
+      if(!ALLOWED.includes(state))throw Error('This PIN is outside the current RMA service states.');
+      const s=document.getElementById('rma20_state'),di=document.getElementById('rma20_district');s.value=state;fillDistricts();
+      if(state==='Jammu & Kashmir'&&JK.includes(po.District))di.value=po.District;else{di.innerHTML='<option value="Other">'+esc(po.District||'Other')+'</option>';di.value='Other';}fillTehsils();
+      document.getElementById('rma20_locality').value=document.getElementById('rma20_locality').value||po.Name||'';compose();
+      const p=await geocode(pin+', '+po.Name+', '+po.District+', '+state+', India');visitDistanceV20=await roadDistanceV20(p.lat,p.lng);document.getElementById('v_lat').value=p.lat.toFixed(6);document.getElementById('v_lng').value=p.lng.toFixed(6);document.getElementById('rma20_coords').value=p.lat.toFixed(6)+', '+p.lng.toFixed(6);updatePrice();
+      showResult('<b>PIN verified:</b> '+esc(po.Name)+', '+esc(po.District)+', '+esc(state)+'<br><b>Road distance from RMA base PIN '+BASE_PIN+':</b> '+visitDistanceV20.toFixed(1)+' km.');
+    }catch(e){visitDistanceV20=0;updatePrice();showResult(esc(e.message||'PIN could not be verified. Please use My Location.'),false)}
+  }
+  async function useGPSV20(){
+    if(!window.isSecureContext){showResult('Use the HTTPS version of the website to access your location.',false);return}
+    if(!navigator.geolocation){showResult('Location is not supported by this browser.',false);return}
+    showResult('Requesting your current location...');
+    navigator.geolocation.getCurrentPosition(async p=>{
+      try{
+        const lat=p.coords.latitude,lng=p.coords.longitude;document.getElementById('v_lat').value=lat.toFixed(6);document.getElementById('v_lng').value=lng.toFixed(6);document.getElementById('rma20_coords').value=lat.toFixed(6)+', '+lng.toFixed(6);
+        const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&zoom=18&addressdetails=1',{headers:{Accept:'application/json'}}),d=await r.json(),a=d.address||{};
+        const st=a.state==='Jammu and Kashmir'?'Jammu & Kashmir':a.state||'';if(ALLOWED.includes(st)){document.getElementById('rma20_state').value=st;fillDistricts();const di=document.getElementById('rma20_district');di.value=a.state_district||a.county||'';fillTehsils();}
+        document.getElementById('rma20_locality').value=document.getElementById('rma20_locality').value||a.suburb||a.neighbourhood||a.village||a.town||a.city||'';
+        document.getElementById('rma20_landmark').value=document.getElementById('rma20_landmark').value||a.road||a.neighbourhood||'';
+        const pc=(a.postcode||'').replace(/\D/g,'').slice(0,6);if(pc)document.getElementById('rma20_pin').value=pc;
+        compose();visitDistanceV20=await roadDistanceV20(lat,lng);updatePrice();
+        showResult('<b>My Location detected.</b><br>Latitude: <b>'+lat.toFixed(6)+'</b> · Longitude: <b>'+lng.toFixed(6)+'</b><br><b>Road distance from RMA base:</b> '+visitDistanceV20.toFixed(1)+' km.');
+      }catch(e){visitDistanceV20=0;updatePrice();showResult('Location was detected, but the address/distance could not be completed. Please try again or use PIN.',false)}
+    },()=>showResult('Location permission was denied or GPS could not be obtained. You can use the PIN option instead.',false),{enableHighAccuracy:true,timeout:30000,maximumAge:0});
+  }
+
+  function buildVisitForm(){
+    const old=document.getElementById('visitForm');if(!old||old.dataset.v20==='1')return;
+    const form=document.createElement('form');form.id='visitForm';form.className=old.className;form.dataset.v20='1';
+    form.innerHTML=`
+      <div class="group"><label>Full Name *</label><input id="v_name" required placeholder="Full name"></div>
+      <div class="group"><label>Mobile Number *</label><input id="v_mobile" required inputmode="numeric" placeholder="10-digit mobile number"></div>
+      <div class="group"><label>Email ID</label><input id="v_email" type="email" placeholder="Email address"></div>
+      <div class="group"><label>Building Type</label><select id="v_building"><option>Residential</option><option>Commercial</option><option>Institutional</option><option>Industrial</option><option>Other</option></select></div>
+      <div class="group"><label>Project / Site Requirement</label><textarea id="v_requirement" placeholder="Briefly describe what you want us to inspect or discuss."></textarea></div>
+      <div class="form-grid"><div class="group"><label>Preferred Date *</label><input id="v_date" type="date" required></div><div class="group"><label>Preferred Time *</label><select id="v_time" required><option>Morning</option><option>Afternoon</option><option>Evening</option></select></div></div>
+      <div id="rma20Marking"><label><input type="checkbox" id="rma20_marking"> Site marking required</label><div class="muted" style="margin-top:6px;font-size:12px">Select this only when the visit is for initial site marking.</div></div>
+      <input type="hidden" id="v_address"><input type="hidden" id="v_lat"><input type="hidden" id="v_lng">
+      <div id="rmaV20Address">
+        <h3>📍 Project Address</h3>
+        <div class="v20-note">India is fixed. Complete the project address, then choose <b>PIN code OR Use My Location</b>. You do not need to provide both.</div>
+        <div class="v20-grid"><div><label>Country</label><input value="India" readonly></div><div><label>House / Plot No. *</label><input id="rma20_house" required placeholder="House / Plot No."></div></div>
+        <div class="v20-grid"><div><label>Landmark *</label><input id="rma20_landmark" required placeholder="Near school, market, road, etc."></div><div><label>Locality / Area *</label><input id="rma20_locality" required placeholder="Colony, village, sector, locality"></div></div>
+        <div class="v20-grid3"><div><label>State / UT *</label><select id="rma20_state" required><option value="">Select State / UT</option>${ALLOWED.map(x=>'<option>'+x+'</option>').join('')}</select></div><div><label>District *</label><select id="rma20_district" required disabled><option>Select state first</option></select></div><div><label>Sub-District / Tehsil</label><select id="rma20_tehsil" disabled><option>Select district first</option></select></div></div>
+        <div class="v20-grid"><div><label>PIN Code</label><input id="rma20_pin" inputmode="numeric" maxlength="6" placeholder="6-digit PIN"></div><div><label>Latitude / Longitude</label><input id="rma20_coords" readonly placeholder="Filled by Use My Location"></div></div>
+        <div class="v20-or">OR</div>
+        <div class="v20-grid"><button type="button" class="btn outline" id="rma20_pinBtn">Verify PIN & Calculate Distance</button><button type="button" class="btn dark" id="rma20_gps">📍 Use My Location</button></div>
+        <div id="rma20Result" class="v20-result hidden"></div>
+        <div id="rmaV20Price"><div class="v20-line"><span>Road Distance</span><strong id="rma20Distance">-- km</strong></div><div class="v20-line"><span>Site Visit Fee</span><strong id="rma20Fee">₹0</strong></div><div class="v20-line"><span>GST 18%</span><strong id="rma20GST">₹0</strong></div><div class="v20-line v20-total"><span>Total Payable</span><strong id="rma20Total">₹0</strong></div><div id="rma20RateNote" class="muted" style="font-size:12px;margin-top:8px"></div></div>
+        <div style="margin-top:14px"><button type="button" class="btn gold full" id="rma20Pay" disabled>💳 Pay &amp; Book Site Visit with Razorpay</button><div id="rma20PayMsg" class="notice hidden" style="margin-top:10px"></div></div>
+      </div>`;
+    old.replaceWith(form);
+    document.getElementById('rma20_state').addEventListener('change',fillDistricts);document.getElementById('rma20_district').addEventListener('change',fillTehsils);
+    ['rma20_house','rma20_landmark','rma20_locality','rma20_pin'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{compose();updatePrice()}));
+    document.getElementById('rma20_pinBtn').onclick=verifyPinV20;document.getElementById('rma20_gps').onclick=useGPSV20;document.getElementById('rma20_marking').onchange=updatePrice;
+    document.getElementById('rma20Pay').onclick=payAndBookVisit;
+    form.addEventListener('submit',e=>{e.preventDefault();payAndBookVisit()},true);
+    updatePrice();
+  }
+
+  async function payWithVerification({amount,receipt,description,name,email,contact,msgId,notes,onVerified}){
+    const msg=document.getElementById(msgId);if(paymentInProgress)return;
+    if(!window.Razorpay){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Razorpay could not be loaded. Please refresh the page and try again.';return}
+    paymentInProgress=true;msg.className='notice info';msg.classList.remove('hidden');msg.textContent='Creating secure Razorpay order...';
+    try{
+      const order=await rmaCreateRazorpayOrder(amount,receipt,description,notes);
+      const rz=new window.Razorpay({key:window.RAZORPAY_KEY_ID,order_id:order.order_id,amount:order.amount,currency:order.currency||'INR',name:'RMA Design & Construction',description,prefill:{name:name||'',email:email||'',contact:contact||''},theme:{color:'#2e7d5b'},modal:{ondismiss:()=>{paymentInProgress=false;msg.className='notice info';msg.classList.remove('hidden');msg.textContent='Payment window closed. No payment was confirmed.'}},handler:async response=>{
+        try{msg.textContent='Verifying payment securely...';await rmaVerifyRazorpayPayment(response);await onVerified(response,order);msg.className='notice success';msg.classList.remove('hidden');msg.innerHTML='<b>Payment verified and request booked successfully.</b><br>Payment ID: <b>'+esc(response.razorpay_payment_id)+'</b>';paymentInProgress=false;}
+        catch(e){console.error(e);msg.className='notice error';msg.classList.remove('hidden');msg.textContent=e.message||'Payment verification or booking failed.';paymentInProgress=false;}
+      }});rz.open();
+    }catch(e){console.error(e);msg.className='notice error';msg.classList.remove('hidden');msg.textContent=e.message||'Unable to start Razorpay payment.';paymentInProgress=false}
+  }
+
+  async function insertBooking(payload){
+    let r=await supabaseClient.from('bookings').insert(payload);
+    if(r.error){const retry={...payload};delete retry.visit_scope; r=await supabaseClient.from('bookings').insert(retry)}
+    if(r.error)throw r.error;
+  }
+  async function payAndBookVisit(){
+    if(paymentInProgress)return;
+    const name=document.getElementById('v_name').value.trim(),mobile=document.getElementById('v_mobile').value.trim(),email=document.getElementById('v_email').value.trim(),date=document.getElementById('v_date').value,time=document.getElementById('v_time').value;
+    const msg=document.getElementById('rma20PayMsg');
+    if(!name||!/^[0-9]{10}$/.test(mobile)||!date){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Please complete your name, valid mobile number and preferred date first.';return}
+    compose();
+    if(!requiredAddressOk()||!visitDistanceV20){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Please complete the project address and choose PIN code OR Use My Location, then wait for the road distance.';return}
+    const marking=!!document.getElementById('rma20_marking').checked,fee=rateForDistance(visitDistanceV20,marking),gst=fee*.18,total=fee+gst,requestId='RMA-V-'+Date.now().toString().slice(-9);
+    const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:marking?'Site Visit - Marking':'Site Visit',project_address:document.getElementById('v_address').value,latitude:Number(document.getElementById('v_lat').value)||null,longitude:Number(document.getElementById('v_lng').value)||null,distance_km:Number(visitDistanceV20.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('v_building').value,requirement:document.getElementById('v_requirement').value.trim(),requested_date:date,requested_time:time,marking,payment_required:true,base_pin:BASE_PIN})};
+    await payWithVerification({amount:total,receipt:requestId,description:marking?'RMA Site Visit — Site Marking':'RMA Site Visit Fee',name,email,contact:mobile,msgId:'rma20PayMsg',notes:{request_id:requestId,service_type:payload.service_type,distance_km:String(visitDistanceV20.toFixed(2)),base_pin:BASE_PIN},onVerified:async response=>{payload.payment_id=response.razorpay_payment_id;await insertBooking(payload);localStorage.setItem('rma_last_paid_site_visit',JSON.stringify(payload));document.getElementById('rma20Pay').disabled=true;}});
+  }
+
+  function servicePayload(requestId){
+    const keys=selectedServiceKeys(),floors=Number(document.getElementById('s_floors')?.value||1),areaPerFloor=Number(document.getElementById('s_area')?.value||0);
+    return {request_id:requestId,client_name:document.getElementById('s_name').value.trim(),mobile:document.getElementById('s_mobile').value.trim(),email:document.getElementById('s_email').value.trim()||null,building_type:document.getElementById('s_building').value,plot_size:document.getElementById('s_plot').value.trim(),floors,built_up_area_per_floor:areaPerFloor,selected_services:keys,architectural:{plan_type:document.getElementById('a_planType')?.value||null,electrical:document.getElementById('a_electrical')?.value||null,plumbing:document.getElementById('a_plumbing')?.value||null,elevation:document.getElementById('a_elevation')?.value||null,floors:document.getElementById('floorRequirements')?.innerText||null,other:document.getElementById('a_other')?.value||null},survey:{area_kanal:document.getElementById('sv_area')?.value||null,type:document.getElementById('sv_type')?.value||null},additional_message:document.getElementById('s_message').value.trim()};
+  }
+  async function payServiceMandatory(){
+    const box=document.getElementById('razorpayMessage');const keys=selectedServiceKeys();const mobile=document.getElementById('s_mobile')?.value.trim()||'';
+    if(!keys.length){box.className='notice error';box.classList.remove('hidden');box.textContent='Please select at least one service before payment.';return}
+    if(!document.getElementById('s_name')?.value.trim()||!/^[0-9]{10}$/.test(mobile)){box.className='notice error';box.classList.remove('hidden');box.textContent='Please complete your full name and valid 10-digit mobile number first.';return}
+    updateServicePrice();const amount=Number((document.getElementById('serviceTotal')?.textContent||'').replace(/[^0-9.]/g,''));if(!amount){box.className='notice error';box.classList.remove('hidden');box.textContent='Please complete the service details so the total can be calculated.';return}
+    const requestId='RMA-S-'+Date.now().toString().slice(-9),payload=servicePayload(requestId);
+    await payWithVerification({amount,receipt:requestId,description:'RMA Professional Service Payment',name:payload.client_name,email:payload.email,contact:mobile,msgId:'razorpayMessage',notes:{request_id:requestId,service_type:keys.join(',')},onVerified:async response=>{payload.payment_id=response.razorpay_payment_id;payload.payment_amount=amount;payload.payment_status='paid';const booking={request_id:requestId,client_name:payload.client_name,mobile:payload.mobile,email:payload.email,service_type:'Paid Service Request — '+keys.join(', '),project_address:'Service request — see visit_scope',latitude:null,longitude:null,distance_km:0,visit_fee:amount,gst_amount:0,total_amount:amount,status:'paid',visit_scope:JSON.stringify(payload)};await insertBooking(booking);localStorage.setItem('rma_last_service_request',JSON.stringify(payload));const b=document.getElementById('serviceMessage');if(b){b.className='notice success';b.classList.remove('hidden');b.innerHTML='<b>Payment verified. Your service request has been submitted.</b><br>Request ID: <b>'+esc(requestId)+'</b>';}const btn=document.getElementById('razorpayServiceBtn');if(btn)btn.disabled=true;}});
+  }
+
+  function installServicePayment(){
+    const btn=document.getElementById('razorpayServiceBtn');if(btn){btn.textContent='💳 Pay & Submit Service Request with Razorpay';btn.onclick=payServiceMandatory;btn.type='button';}
+    const form=document.getElementById('serviceForm');if(form&&!form.dataset.v20){form.dataset.v20='1';form.addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation();payServiceMandatory()},true);}
+  }
+
+  function initV20(){
+    buildVisitForm();installServicePayment();
+    // Remove the old free-submit button if it is still present in the service form.
+    const sb=document.getElementById('serviceSubmit');if(sb){sb.type='button';sb.textContent='💳 Pay & Submit Service Request with Razorpay';sb.onclick=payServiceMandatory;}
+  }
+  const oldShow=window.showPage;
+  if(oldShow&&!window.__rmaV20ShowWrapped){window.showPage=function(name){oldShow(name);if(name==='sitevisit')setTimeout(buildVisitForm,30);if(name==='services')setTimeout(installServicePayment,30)};window.__rmaV20ShowWrapped=true;}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(initV20,80));else setTimeout(initV20,80);
 })();
 </script>
 
