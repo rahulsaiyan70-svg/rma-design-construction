@@ -1731,6 +1731,33 @@ checkExistingSession();
     const isPS=name.includes('path seeker')||name.includes('pathseeker')||email.includes('pathseeker')||email.includes('path.seeker');
     if(!isPS)return;
     portal.classList.remove('hidden');document.getElementById('authLoginSection')?.classList.add('hidden');
+
+    // Resolve this authenticated user -> client account -> project.
+    let clientAccount=null, project=null;
+    try{
+      const ca=await supabaseClient.from('client_accounts').select('*').eq('user_id',user.id).maybeSingle();
+      if(ca.error) throw ca.error;
+      clientAccount=ca.data;
+      if(clientAccount){
+        const pr=await supabaseClient.from('projects').select('*').eq('client_account_id',clientAccount.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
+        if(pr.error) throw pr.error;
+        project=pr.data;
+      }
+    }catch(e){ console.warn('Path Seeker project link lookup failed',e); }
+
+    const projectBox=portal.querySelector('.rma-v3-client .panel:first-child');
+    if(projectBox){
+      const projectLine=projectBox.querySelector('.rma-v3-list > div:first-child');
+      if(projectLine) projectLine.innerHTML='<b>Project</b><br>'+esc(project?.project_name||'No project linked yet')+(project?.project_code?'<br><small>'+esc(project.project_code)+'</small>':'');
+      const statusBox=projectBox.parentElement?.querySelector('.panel');
+    }
+    const statusCard=portal.querySelector('.rma-v3-client')?.querySelector('.panel:nth-child(1)');
+    if(statusCard && project?.status){
+      const old=statusCard.querySelector('.rma-v3-project-status');
+      if(old) old.remove();
+      const st=document.createElement('div');st.className='rma-v3-project-status notice info';st.style.marginTop='12px';st.innerHTML='<b>Project Status:</b> '+esc(project.status);statusCard.appendChild(st);
+    }
+
     const monthStart=new Date();monthStart.setDate(1);monthStart.setHours(0,0,0,0);const iso=monthStart.toISOString();
     try{
       const q=await supabaseClient.from('bookings').select('*').gte('created_at',iso).or('client_name.ilike.%Path Seeker%,service_type.ilike.%Site Visit%').order('created_at',{ascending:false});
@@ -1738,7 +1765,28 @@ checkExistingSession();
       const used=rows.length,remain=Math.max(0,3-used);document.getElementById('psVisitsUsed').textContent=used;document.getElementById('psVisitsRemaining').textContent=remain;
       document.getElementById('psVisitHistory').innerHTML=rows.length?rows.map(x=>'<div><b>'+esc(x.project_address||'Site Visit')+'</b><br><small>'+new Date(x.created_at).toLocaleDateString('en-IN')+' • '+esc(x.status||'Booked')+'</small><br><small>Scope: '+esc(x.visit_scope||'Project inspection / site consultation')+'</small></div>').join(''):'<div class="muted">No site visits recorded this month.</div>';
     }catch(e){document.getElementById('psVisitsUsed').textContent='—';document.getElementById('psVisitsRemaining').textContent='3';}
-    try{const d=await supabaseClient.from('project_documents').select('*').order('created_at',{ascending:false}).limit(50);const docs=d.data||[];document.getElementById('psDocuments').innerHTML=docs.length?docs.map(x=>'<div><b>'+esc(x.title||x.document_name||'Project Document')+'</b><br><small>'+esc(x.document_type||x.category||'Drawing / Document')+'</small>'+(x.file_url||x.public_url?'<br><a class="btn outline" href="'+esc(x.file_url||x.public_url)+'" target="_blank">Open Document</a>':'')+'</div>').join(''):'<div class="muted">Documents will appear after RMA uploads them.</div>';}catch(e){}
+
+    try{
+      const query=project?supabaseClient.from('project_documents').select('*').eq('project_id',project.id).order('created_at',{ascending:false}).limit(50):supabaseClient.from('project_documents').select('*').eq('project_id','00000000-0000-0000-0000-000000000000');
+      const d=await query;
+      if(d.error) throw d.error;
+      const docs=d.data||[];
+      const rendered=[];
+      for(const x of docs){
+        let open='';
+        if(x.storage_path){
+          try{
+            const signed=await supabaseClient.storage.from('project-documents').createSignedUrl(x.storage_path,3600);
+            if(signed.data?.signedUrl) open='<br><a class="btn outline" href="'+esc(signed.data.signedUrl)+'" target="_blank" rel="noopener">Open / View Document</a>';
+            else if(signed.error) open='<br><small class="muted">Document stored, but file access policy needs to be configured.</small>';
+          }catch(err){open='<br><small class="muted">Document stored, but file access policy needs to be configured.</small>';}
+        }else if(x.file_url||x.public_url){
+          open='<br><a class="btn outline" href="'+esc(x.file_url||x.public_url)+'" target="_blank" rel="noopener">Open / View Document</a>';
+        }
+        rendered.push('<div><b>'+esc(x.document_name||'Project Document')+'</b><br><small>'+esc(x.document_type||'Drawing / Document')+(x.floor_name?' • '+esc(x.floor_name):'')+'</small>'+open+'</div>');
+      }
+      document.getElementById('psDocuments').innerHTML=rendered.length?rendered.join(''):'<div class="muted">No documents have been uploaded for this project yet.</div>';
+    }catch(e){console.warn('Path Seeker documents load failed',e);document.getElementById('psDocuments').innerHTML='<div class="muted">Documents could not be loaded. Please check the project-document access policy.</div>';}
   }
 
   /* Add site-visit scope and monthly cap to the booking form. */
