@@ -1926,15 +1926,49 @@ checkExistingSession();
     }catch(e){}
     const requestId='RMA-PSV-'+Date.now().toString().slice(-8);
     const scope=JSON.stringify({reason,requested_date:date,requested_time:time||null,source:'Path Seeker Client Portal'});
-    const booking={request_id:requestId,client_name:'Path Seeker International School',mobile:'',email:user.email||null,service_type:'Path Seeker Site Visit Request',project_address:'Path Seeker International School Project',latitude:null,longitude:null,distance_km:0,visit_fee:0,gst_amount:0,total_amount:0,status:'pending',visit_scope:scope};
+
+    // Keep the first insert compatible with the existing bookings table.
+    // Some deployments do not yet have the optional visit_scope column.
+    const booking={
+      request_id:requestId,
+      client_name:'Path Seeker International School',
+      mobile:'',
+      email:user.email||null,
+      service_type:'Path Seeker Site Visit Request',
+      project_address:'Path Seeker International School Project',
+      latitude:null,
+      longitude:null,
+      distance_km:0,
+      visit_fee:0,
+      gst_amount:0,
+      total_amount:0,
+      status:'pending'
+    };
+
     try{
-      const {error}=await supabaseClient.from('bookings').insert(booking);
-      if(error)throw error;
-      msg.className='notice success';msg.classList.remove('hidden');msg.innerHTML='<b>Site visit request submitted.</b><br>Request ID: <b>'+esc(requestId)+'</b><br>RMA will review the request and the approval status will appear in your portal.';
+      let result=await supabaseClient.from('bookings').insert(booking);
+      if(result.error){
+        // If the database has the optional visit_scope column, retry with it.
+        // If it does not, the request itself is still saved using the existing schema.
+        const optionalBooking={...booking,visit_scope:scope};
+        const retry=await supabaseClient.from('bookings').insert(optionalBooking);
+        if(retry.error) throw retry.error;
+      }
+
+      // Keep the requested date/time/reason locally as a fallback until the
+      // optional database field is enabled.
+      localStorage.setItem('rma_last_path_seeker_visit_request',JSON.stringify({
+        request_id:requestId,requested_date:date,requested_time:time,reason
+      }));
+
+      msg.className='notice success';msg.classList.remove('hidden');
+      msg.innerHTML='<b>Site visit request submitted.</b><br>Request ID: <b>'+esc(requestId)+'</b><br>Requested date: <b>'+esc(date)+'</b>'+ (time?'<br>Requested time: <b>'+esc(time)+'</b>':'') +'<br>RMA will review the request and the approval status will appear in your portal.';
       document.getElementById('psVisitReason').value='';
       await loadPathSeeker(user);
     }catch(e){
-      console.error(e);msg.className='notice error';msg.classList.remove('hidden');msg.textContent='The request could not be saved. Please use Email RMA or WhatsApp RMA for the request.';
+      console.error('Path Seeker site visit insert failed:',e);
+      msg.className='notice error';msg.classList.remove('hidden');
+      msg.textContent='The request could not be saved. Please use Email RMA or WhatsApp RMA for the request.';
     }
   }
 
