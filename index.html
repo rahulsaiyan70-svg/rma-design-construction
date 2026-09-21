@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="RMA Design & Construction — Architectural Planning, Structural Design, Municipality Approval, Estimation, Survey and Construction.">
 <title>RMA Design & Construction</title>
-<!-- RMA V9: fixed Path Seeker login scope; combo packages removed; service layout + hero site-visit CTA -->
+<!-- RMA V14: service-rate sidebar, Path Seeker visit workflow, notifications and client messaging -->
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
  integrity="sha256-p4NxAoJBhIINfQ3nJ5e5J1R8k3x5x7l4KQ1Q0e1Z0vM="
@@ -101,7 +101,12 @@ section{padding:78px 0}
 .service-sidebar-head{padding:8px 8px 14px;border-bottom:1px solid var(--line);margin-bottom:8px}
 .service-sidebar-head h2{font-size:25px;margin:4px 0}
 .service-sidebar-head p{font-size:13px;color:var(--muted);margin:0}
-.service-side-item{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:0;border-bottom:1px solid #e8eeea;background:#fff;color:var(--ink);padding:15px 9px;font-weight:700}
+.service-side-item{position:relative;width:100%;display:block;text-align:left;border:0;border-bottom:1px solid #e8eeea;background:#fff;color:var(--ink);padding:15px 9px;font-weight:400;font-size:15px;letter-spacing:.1px;cursor:pointer}
+.service-side-item:hover,.service-side-item:focus{background:#f3f8f5;color:#245b43;outline:none}
+.service-side-item .service-rate-pop{display:block;max-height:0;overflow:hidden;opacity:0;transition:max-height .2s ease,opacity .2s ease;padding:0;font-size:12px;color:#5f6f68;font-weight:400}
+.service-side-item:hover .service-rate-pop,.service-side-item:focus .service-rate-pop,.service-side-item.rate-open .service-rate-pop{max-height:80px;opacity:1;padding-top:6px}
+.service-side-item .service-name{display:block;font-weight:400}
+.service-side-item span{display:none}
 .service-side-item:last-child{border-bottom:0}
 .service-side-item span{font-size:21px;width:28px}
 .service-side-item:hover{background:#eef7f1;color:#245b43}
@@ -164,6 +169,7 @@ section{padding:78px 0}
 .footer h3{color:#fff;margin-bottom:10px}
 .footbottom{border-top:1px solid #ffffff18;margin-top:30px;padding-top:17px;text-align:center;font-size:13px}
 .toast{position:fixed;right:18px;bottom:18px;z-index:3000;max-width:360px;background:#0b1b2b;color:#fff;padding:14px 17px;border-radius:8px;box-shadow:0 10px 35px #0004;display:none}
+.ps-portal-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.ps-request-box,.ps-notify-box,.ps-message-box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px}.ps-request-box h3,.ps-notify-box h3,.ps-message-box h3{margin-bottom:8px}.ps-status-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.ps-status-row:last-child{border-bottom:0}.ps-notification{padding:11px 0;border-bottom:1px solid var(--line)}.ps-notification:last-child{border-bottom:0}.ps-counter{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}.ps-counter .counter{flex:1;min-width:150px;border:1px solid var(--line);border-radius:8px;padding:12px;background:#fafcfb}.ps-counter strong{display:block;font-size:22px;color:var(--navy)}.ps-admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.ps-admin-request{border:1px solid var(--line);border-radius:9px;padding:14px;margin-top:10px;background:#fff}@media(max-width:800px){.ps-portal-grid{grid-template-columns:1fr}}
 @media(max-width:900px){
  .navlinks{display:none}.menu{display:block}
  .cards{grid-template-columns:1fr 1fr}.form-layout,.site-layout,.profile,.info-grid{grid-template-columns:1fr}.service-request-layout{grid-template-columns:1fr}
@@ -275,12 +281,12 @@ section{padding:78px 0}
             <h2>Services</h2>
             <p>Select a service to jump to its section in the form.</p>
           </div>
-          <button type="button" class="service-side-item" onclick="selectService('architectural')"><span>🏠</span><b>Architectural Planning</b></button>
-          <button type="button" class="service-side-item" onclick="selectService('structural')"><span>🏗️</span><b>Structural Design</b></button>
-          <button type="button" class="service-side-item" onclick="selectService('municipality')"><span>📑</span><b>Municipality Approval</b></button>
-          <button type="button" class="service-side-item" onclick="selectService('estimation')"><span>💰</span><b>Estimation & BOQ</b></button>
-          <button type="button" class="service-side-item" onclick="selectService('survey')"><span>📍</span><b>Survey / Plotting</b></button>
-          <button type="button" class="service-side-item" onclick="showPage('construction')"><span>👷</span><b>Construction Services</b></button>
+          <button type="button" class="service-side-item" onclick="toggleServiceRate(this,'architectural');selectService('architectural')"><span class="service-name">Architectural Planning</span><span class="service-rate-pop">From ₹14,999 per floor • Duplex plan ₹19,999</span></button>
+          <button type="button" class="service-side-item" onclick="toggleServiceRate(this,'structural');selectService('structural')"><span class="service-name">Structural Design</span><span class="service-rate-pop">₹4,999 per floor</span></button>
+          <button type="button" class="service-side-item" onclick="toggleServiceRate(this,'municipality');selectService('municipality')"><span class="service-name">Municipality Approval</span><span class="service-rate-pop">₹14,999 per floor</span></button>
+          <button type="button" class="service-side-item" onclick="toggleServiceRate(this,'estimation');selectService('estimation')"><span class="service-name">Estimation &amp; BOQ</span><span class="service-rate-pop">₹2,999 ground floor + ₹4,999 per additional floor</span></button>
+          <button type="button" class="service-side-item" onclick="toggleServiceRate(this,'survey');selectService('survey')"><span class="service-name">Survey / Plotting</span><span class="service-rate-pop">₹4,999 up to 1 kanal • ₹9,999 above 1 kanal</span></button>
+          <button type="button" class="service-side-item" onclick="showPage('construction');toggleServiceRate(this,'construction')"><span class="service-name">Construction Services</span><span class="service-rate-pop">Quoted separately according to project scope</span></button>
         </aside>
 
         <div class="service-form-area">
@@ -317,33 +323,33 @@ section{padding:78px 0}
             <div class="group">
               <label>Select Services *</label>
               <div class="service-picks">
-                <label class="pick"><input type="checkbox" name="service" value="architectural" onchange="refreshServiceDetails()"> <span><b>Architectural Planning</b><br><small>₹15,000/floor; duplex plan ₹20,000</small></span></label>
-                <label class="pick"><input type="checkbox" name="service" value="structural" onchange="refreshServiceDetails()"> <span><b>Structural Design</b><br><small>₹5,000/floor</small></span></label>
-                <label class="pick"><input type="checkbox" name="service" value="municipality" onchange="refreshServiceDetails()"> <span><b>Municipality / Approval</b><br><small>₹15,000 per floor</small></span></label>
-                <label class="pick"><input type="checkbox" name="service" value="estimation" onchange="refreshServiceDetails()"> <span><b>Estimation & BOQ</b><br><small>₹3,000 + ₹5,000/additional floor</small></span></label>
-                <label class="pick"><input type="checkbox" name="service" value="survey" onchange="refreshServiceDetails()"> <span><b>Survey / Plotting</b><br><small>₹5,000 up to 1 kanal</small></span></label>
+                <label class="pick"><input type="checkbox" name="service" value="architectural" onchange="refreshServiceDetails()"> <span>Architectural Planning</span></label>
+                <label class="pick"><input type="checkbox" name="service" value="structural" onchange="refreshServiceDetails()"> <span>Structural Design</span></label>
+                <label class="pick"><input type="checkbox" name="service" value="municipality" onchange="refreshServiceDetails()"> <span>Municipality / Approval</span></label>
+                <label class="pick"><input type="checkbox" name="service" value="estimation" onchange="refreshServiceDetails()"> <span>Estimation &amp; BOQ</span></label>
+                <label class="pick"><input type="checkbox" name="service" value="survey" onchange="refreshServiceDetails()"> <span>Survey / Plotting</span></label>
                 
               </div>
             </div>
 
             <div id="architecturalDetails" class="detail-box hidden">
-              <h3>🏠 Architectural Planning Requirements</h3>
+              <h3>Architectural Planning Requirements</h3>
               <p class="muted">Choose the required drawings and provide floor-wise requirements. The plan charge updates immediately.</p>
 
               <div class="form-grid" style="margin-top:12px">
                 <div class="group"><label>Plan Type</label>
-                  <select id="a_planType" onchange="updateServicePrice()"><option value="normal">Normal floor plan</option><option value="duplex">Duplex house plan — ₹20,000 plan only</option></select>
+                  <select id="a_planType" onchange="updateServicePrice()"><option value="normal">Normal floor plan</option><option value="duplex">Duplex house plan</option></select>
                 </div>
-                <div class="group"><label>Electrical Drawing</label><select id="a_electrical" onchange="updateServicePrice()"><option value="0">Not required</option><option value="2500">Required — ₹2,500</option></select></div>
+                <div class="group"><label>Electrical Drawing</label><select id="a_electrical" onchange="updateServicePrice()"><option value="0">Not required</option><option value="2500">Required</option></select></div>
               </div>
               <div class="form-grid">
-                <div class="group"><label>Plumbing Drawing</label><select id="a_plumbing" onchange="updateServicePrice()"><option value="0">Not required</option><option value="2500">Required — ₹2,500</option></select></div>
+                <div class="group"><label>Plumbing Drawing</label><select id="a_plumbing" onchange="updateServicePrice()"><option value="0">Not required</option><option value="2500">Required</option></select></div>
                 <div class="group"><label>Elevation</label>
                   <select id="a_elevation" onchange="updateServicePrice()">
                     <option value="0">Not required</option>
-                    <option value="6000">Front Elevation — ₹6,000</option>
-                    <option value="6000">Side Elevation — ₹6,000</option>
-                    <option value="12000">Front + Side Elevation — ₹12,000</option>
+                    <option value="6000">Front Elevation</option>
+                    <option value="6000">Side Elevation</option>
+                    <option value="12000">Front + Side Elevation</option>
                   </select>
                 </div>
               </div>
@@ -353,30 +359,30 @@ section{padding:78px 0}
             </div>
 
             <div id="structuralDetails" class="detail-box hidden">
-              <h3>🏗️ Structural Design</h3>
+              <h3>Structural Design</h3>
               <p class="muted">RCC design of slab, beam, column and foundation.</p>
-              <div class="notice info">Current structural design charge: <b>₹5,000 per floor</b>. The floor count above controls the calculation.</div>
+              <div class="notice info">The floor count above controls the structural-design calculation.</div>
             </div>
 
             <div id="municipalityDetails" class="detail-box hidden">
-              <h3>📑 Municipality / Approval Drawing</h3>
+              <h3>Municipality / Approval Drawing</h3>
               <p class="muted">Municipality approval drawing charges are calculated per floor.</p>
-              <div class="notice info">₹15,000 per floor + 18% GST. Example: 2 floors = ₹30,000 before GST.</div>
+              <div class="notice info">The municipality/approval quotation is calculated from the selected floor count.</div>
             </div>
 
             <div id="estimationDetails" class="detail-box hidden">
-              <h3>💰 Estimation & BOQ</h3>
-              <p class="muted">Ground floor: ₹3,000. Each additional floor: ₹5,000.</p>
-              <div class="notice info" id="estimationFormula">Select floor count to calculate the estimation fee.</div>
+              <h3>Estimation &amp; BOQ</h3>
+              <p class="muted">Provide the project floor information required for estimation.</p>
+              <div class="notice info" id="estimationFormula">The estimate will be calculated after the requested floors and project details are selected.</div>
             </div>
 
             <div id="surveyDetails" class="detail-box hidden">
-              <h3>📍 Survey / Plotting</h3>
+              <h3>Survey / Plotting</h3>
               <div class="form-grid">
                 <div class="group"><label>Site Area</label><input id="sv_area" type="number" min="0" step="0.01" placeholder="Area in kanal"></div>
                 <div class="group"><label>Survey Type</label><select id="sv_type"><option>Plot / Chain Survey</option><option>Level Survey</option><option>Theodolite Survey</option><option>Plane Table Survey</option><option>Other</option></select></div>
               </div>
-              <div class="notice info">Up to 1 kanal: ₹5,000. More than 1 kanal: approximately ₹10,000. Applicable site/travel charges may be added.</div>
+              <div class="notice info">Enter the site area and survey type. The applicable quotation will be shown with the service selection summary.</div>
             </div>
 
             <div class="group">
@@ -608,6 +614,7 @@ section{padding:78px 0}
     <div class="backrow"><button onclick="signOutUser()">← Sign Out</button></div>
     <div class="heading"><span class="kicker">RMA STAFF / ADMIN</span><h2 id="staffWelcome">Dashboard</h2><p>Authorized staff and administrators can access RMA management functions here.</p></div>
     <div class="portal-grid"><div class="portal-card"><h3>Bookings</h3><p class="muted">Manage service and site-visit bookings.</p></div><div class="portal-card"><h3>Projects</h3><p class="muted">Manage client projects and project status.</p></div><div class="portal-card"><h3>Documents</h3><p class="muted">Upload drawings, estimates, BOQs, invoices and other project documents.</p></div></div>
+    <div class="form-panel" style="margin-top:20px"><h2>Path Seeker Site-Visit Requests</h2><p class="form-note">Approve requests when accepted and mark them completed after the physical visit. The client portal counts a complimentary visit only after completion.</p><div id="staffSiteVisitRequests"><div class="muted">Loading requests...</div></div></div>
     <div class="notice info">The dashboard is role-protected. Admin/staff access is determined from the authenticated RMA profile.</div>
   </div></section>
 </main>
@@ -775,6 +782,7 @@ async function loadSignedInPortal(user){
   if(role==='admin'||role==='staff'||role==='employee'){
     document.getElementById('staffPortal')?.classList.remove('hidden');
     document.getElementById('staffWelcome').textContent='Welcome, '+(profile?.full_name||'RMA Team');
+    setTimeout(()=>loadStaffSiteVisitRequests(),100);
   }else{
     document.getElementById('clientPortal')?.classList.remove('hidden');
     document.getElementById('portalWelcome').textContent='Welcome, '+(profile?.full_name||user.email||'Client');
@@ -840,6 +848,10 @@ function selectService(key){
   if(cb) cb.checked=true;
   refreshServiceDetails();
   setTimeout(()=>document.getElementById("serviceForm").scrollIntoView({behavior:"smooth",block:"start"}),120);
+}
+function toggleServiceRate(el,key){
+  document.querySelectorAll('.service-side-item.rate-open').forEach(x=>{if(x!==el)x.classList.remove('rate-open');});
+  el.classList.toggle('rate-open');
 }
 function selectedServiceKeys(){
   return Array.from(document.querySelectorAll('input[name="service"]:checked')).map(x=>x.value);
@@ -1319,7 +1331,7 @@ checkExistingSession();
     if(keys.includes('architectural')){
       const duplex=document.getElementById('a_planType')?.value==='duplex';
       const v=duplex?RMA2_SERVICE_RATES.duplex:RMA2_SERVICE_RATES.architectural*floors;
-      subtotal+=v;lines.push(['Architectural Planning',v,duplex?'Duplex plan':'₹14,999 × '+floors+' floor(s)']);
+      subtotal+=v;lines.push(['Architectural Planning',v,duplex?'Duplex plan':'Per selected floor']);
       const e=Number(document.getElementById('a_electrical')?.value||0);
       const p=Number(document.getElementById('a_plumbing')?.value||0);
       const elev=Number(document.getElementById('a_elevation')?.value||0);
@@ -1327,9 +1339,9 @@ checkExistingSession();
       if(p){subtotal+=p;lines.push(['Plumbing Drawing',p,'₹2,499']);}
       if(elev){const label=document.getElementById('a_elevation')?.options[document.getElementById('a_elevation').selectedIndex]?.text||'Elevation';subtotal+=elev;lines.push([label,elev,'']);}
     }
-    if(keys.includes('structural')){const v=RMA2_SERVICE_RATES.structural*floors;subtotal+=v;lines.push(['Structural Design',v,'₹4,999 × '+floors]);}
-    if(keys.includes('municipality')){const v=RMA2_SERVICE_RATES.municipality*floors;subtotal+=v;lines.push(['Municipality / Approval',v,'₹14,999 × '+floors]);}
-    if(keys.includes('estimation')){const v=RMA2_SERVICE_RATES.estimationGround+Math.max(0,floors-1)*RMA2_SERVICE_RATES.estimationAdditional;subtotal+=v;lines.push(['Estimation & BOQ',v,'₹2,999 ground + ₹4,999/additional']);}
+    if(keys.includes('structural')){const v=RMA2_SERVICE_RATES.structural*floors;subtotal+=v;lines.push(['Structural Design',v,'Per selected floor']);}
+    if(keys.includes('municipality')){const v=RMA2_SERVICE_RATES.municipality*floors;subtotal+=v;lines.push(['Municipality / Approval',v,'Per selected floor']);}
+    if(keys.includes('estimation')){const v=RMA2_SERVICE_RATES.estimationGround+Math.max(0,floors-1)*RMA2_SERVICE_RATES.estimationAdditional;subtotal+=v;lines.push(['Estimation & BOQ',v,'Calculated from selected floors']);}
     if(keys.includes('survey')){const area=Number(document.getElementById('sv_area')?.value||0);const v=area>1?RMA2_SERVICE_RATES.surveyAbove1Kanal:RMA2_SERVICE_RATES.survey1Kanal;subtotal+=v;lines.push(['Survey / Plotting',v,area>1?'> 1 kanal':'Up to 1 kanal']);}
 
     discount=subtotal*rma2DiscountRate(subtotal)/100;
@@ -1745,7 +1757,7 @@ checkExistingSession();
   /* ---------- 5. Path Seeker International School client account ---------- */
   function addPathSeekerPortal(){
     const signin=document.getElementById('page-signin');if(!signin||document.getElementById('rmaPathSeekerPortal'))return;
-    const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="backrow" style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn outline" type="button" onclick="signOutUser()">← Sign Out</button></div><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Drawings, project documents, site visits and project requests.</p></div><div class="rma-v3-client"><div class="panel"><span class="rma-v3-badge">ACTIVE CLIENT</span><h3 style="margin-top:10px">Path Seeker International School</h3><p class="muted">Your project documents and approved drawings will be displayed here.</p><div class="rma-v3-list"><div><b>Project</b><br>Path Seeker International School</div><div><b>Monthly Site Visits</b><br><span id="psVisitsUsed">Loading...</span> used this month • <span id="psVisitsRemaining">Loading...</span> available</div></div><button class="btn dark" style="margin-top:14px" onclick="showPage('sitevisit')">Request Site Visit</button></div><div class="panel"><h3>📐 Drawings & Documents</h3><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div></div><div class="panel" style="margin-top:18px"><h3>📅 Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
+    const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="backrow" style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn outline" type="button" onclick="signOutUser()">← Sign Out</button></div><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Drawings, project documents, site visits and project requests.</p></div><div class="rma-v3-client"><div class="panel"><span class="rma-v3-badge">ACTIVE CLIENT</span><h3 style="margin-top:10px">Path Seeker International School</h3><p class="muted">Your project documents and approved drawings will be displayed here.</p><div class="rma-v3-list"><div><b>Project</b><br>Path Seeker International School</div><div><b>Monthly Site Visits</b><br><span id="psVisitsUsed">Loading...</span> of 3 used this month • <span id="psVisitsRemaining">Loading...</span> remaining</div></div><div class="ps-counter"><div class="counter"><span class="muted">Total completed site visits</span><strong id="psTotalVisits">23</strong></div><div class="counter"><span class="muted">Current month</span><strong id="psMonthlyCounter">0 / 3</strong></div></div><button class="btn dark" style="margin-top:14px" onclick="togglePathSeekerVisitRequest()">Request Site Visit</button><div id="psVisitRequestBox" class="ps-request-box hidden" style="margin-top:16px"><h3>Request a Site Visit</h3><p class="muted">Choose your preferred date and explain what you would like RMA to inspect or discuss.</p><div class="form-grid"><div class="group"><label>Preferred Date *</label><input id="psRequestedDate" type="date"></div><div class="group"><label>Preferred Time</label><input id="psRequestedTime" type="time"></div></div><div class="group"><label>Reason / Scope of Visit *</label><textarea id="psVisitReason" placeholder="For example: progress inspection, structural discussion, drawing coordination, site verification, etc."></textarea></div><div id="psVisitRequestMessage" class="notice hidden"></div><button type="button" class="btn dark" onclick="submitPathSeekerVisitRequest()">Submit Site Visit Request</button></div></div><div class="panel"><h3>Drawings &amp; Documents</h3><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div></div><div class="ps-portal-grid"><div class="ps-notify-box"><h3>Notifications</h3><div id="psNotifications"><div class="muted">Loading notifications...</div></div></div><div class="ps-message-box"><h3>Message RMA</h3><p class="muted">Send a request, correction, clarification or change directly to RMA.</p><div class="group"><label>Subject</label><input id="psMessageSubject" placeholder="Subject"></div><div class="group"><label>Message</label><textarea id="psMessageText" placeholder="Write your message here..."></textarea></div><div id="psMessageStatus" class="notice hidden"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn dark" onclick="sendPathSeekerMessage()">Send Message</button><a class="btn outline" href="mailto:RMA.studies07@gmail.com?subject=Path%20Seeker%20Project%20Request">Email RMA</a><a class="btn outline" href="https://wa.me/919622121692?text=Path%20Seeker%20Project%20Request" target="_blank" rel="noopener">WhatsApp RMA</a></div></div></div><div class="panel" style="margin-top:18px"><h3>Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
   }
   window.addPathSeekerPortal = addPathSeekerPortal;
 
@@ -1800,8 +1812,16 @@ checkExistingSession();
     try{
       const q=await supabaseClient.from('bookings').select('*').gte('created_at',iso).or('client_name.ilike.%Path Seeker%,service_type.ilike.%Site Visit%').order('created_at',{ascending:false});
       const rows=(q.data||[]).filter(x=>(x.client_name||'').toLowerCase().includes('path seeker'));
-      const used=rows.length,remain=Math.max(0,3-used);document.getElementById('psVisitsUsed').textContent=used;document.getElementById('psVisitsRemaining').textContent=remain;
-      document.getElementById('psVisitHistory').innerHTML=rows.length?rows.map(x=>'<div><b>'+esc(x.project_address||'Site Visit')+'</b><br><small>'+new Date(x.created_at).toLocaleDateString('en-IN')+' • '+esc(x.status||'Booked')+'</small><br><small>Scope: '+esc(x.visit_scope||'Project inspection / site consultation')+'</small></div>').join(''):'<div class="muted">No site visits recorded this month.</div>';
+      const completedThisMonth=rows.filter(x=>['completed','visited','done'].includes(String(x.status||'').toLowerCase())).length;
+      const remain=Math.max(0,3-completedThisMonth);
+      document.getElementById('psVisitsUsed').textContent=completedThisMonth;document.getElementById('psVisitsRemaining').textContent=remain;
+      document.getElementById('psMonthlyCounter').textContent=completedThisMonth+' / 3';
+      try{
+        const allq=await supabaseClient.from('bookings').select('id,status,service_type').or('client_name.ilike.%Path Seeker%,service_type.ilike.%Path Seeker%');
+        const completedAll=(allq.data||[]).filter(x=>['completed','visited','done'].includes(String(x.status||'').toLowerCase())).length;
+        document.getElementById('psTotalVisits').textContent=23+completedAll;
+      }catch(e){document.getElementById('psTotalVisits').textContent='23+';}
+      document.getElementById('psVisitHistory').innerHTML=rows.length?rows.map(x=>{let scope=x.visit_scope||'Project inspection / site consultation';try{const j=JSON.parse(scope);if(j&&j.reason)scope=j.reason+(j.requested_date?' • Requested '+j.requested_date:'');}catch(e){}return '<div class="ps-status-row"><div><b>'+esc(x.project_address||'Site Visit')+'</b><br><small>'+new Date(x.created_at).toLocaleDateString('en-IN')+' • '+esc(x.status||'pending')+'</small><br><small>'+esc(scope)+'</small></div><span class="role-badge">'+esc(x.status||'pending')+'</span></div>';}).join(''):'<div class="muted">No site visit requests yet.</div>';
     }catch(e){document.getElementById('psVisitsUsed').textContent='—';document.getElementById('psVisitsRemaining').textContent='3';}
 
     try{
@@ -1866,10 +1886,97 @@ checkExistingSession();
         rendered.push('<div><b>'+esc(x.document_name||'Project Document')+'</b><br><small>'+esc(x.document_type||'Drawing / Document')+(x.floor_name?' • '+esc(x.floor_name):'')+(x.is_final?' • Final':'')+'</small>'+open+preview+'</div>');
       }
       document.getElementById('psDocuments').innerHTML=rendered.join('');
+      await refreshPathSeekerNotifications();
     }catch(e){console.warn('Path Seeker documents load failed',e);document.getElementById('psDocuments').innerHTML='<div class="notice error"><b>Drawing could not be loaded.</b><br>'+esc(e?.message||'Please check the project-document access policy.')+'</div>';}
   }
 
   window.loadPathSeeker = loadPathSeeker;
+  window.togglePathSeekerVisitRequest=togglePathSeekerVisitRequest;
+  window.submitPathSeekerVisitRequest=submitPathSeekerVisitRequest;
+  window.sendPathSeekerMessage=sendPathSeekerMessage;
+  window.updatePathSeekerVisitStatus=updatePathSeekerVisitStatus;
+  window.loadStaffSiteVisitRequests=loadStaffSiteVisitRequests;
+  window.refreshPathSeekerNotifications=refreshPathSeekerNotifications;
+
+  async function refreshPathSeekerNotifications(){
+    const box=document.getElementById('psNotifications');if(!box)return;
+    try{
+      const projectId='d9e2617e-6edc-4c07-891b-7879998d6187';
+      const q=await supabaseClient.from('project_documents').select('document_name,document_type,floor_name,is_final,created_at').eq('project_id',projectId).order('created_at',{ascending:false}).limit(10);
+      const rows=q.data||[];
+      box.innerHTML=rows.length?rows.map(x=>'<div class="ps-notification"><b>New drawing or document uploaded</b><br><span>'+esc(x.document_name||'Project document')+'</span><br><small class="muted">'+(x.created_at?new Date(x.created_at).toLocaleString('en-IN'):'')+(x.floor_name?' • '+esc(x.floor_name):'')+'</small></div>').join(''):'<div class="muted">No new notifications.</div>';
+    }catch(e){box.innerHTML='<div class="muted">Notifications will appear here when RMA uploads or updates project documents.</div>';}
+  }
+
+  function togglePathSeekerVisitRequest(){
+    const box=document.getElementById('psVisitRequestBox');if(!box)return;
+    box.classList.toggle('hidden');
+    if(!box.classList.contains('hidden')){const d=document.getElementById('psRequestedDate');if(d&&!d.value){const t=new Date();t.setDate(t.getDate()+1);d.value=t.toISOString().slice(0,10);}}
+  }
+
+  async function submitPathSeekerVisitRequest(){
+    const date=document.getElementById('psRequestedDate')?.value||'',time=document.getElementById('psRequestedTime')?.value||'',reason=document.getElementById('psVisitReason')?.value.trim()||'',msg=document.getElementById('psVisitRequestMessage');
+    if(!date||!reason){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Please select a preferred date and enter the reason for the visit.';return;}
+    const user=(await supabaseClient.auth.getUser()).data?.user;if(!user){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Your session has expired. Please sign in again.';return;}
+    const start=new Date();start.setDate(1);start.setHours(0,0,0,0);
+    try{
+      const q=await supabaseClient.from('bookings').select('id,status,visit_scope').gte('created_at',start.toISOString()).ilike('client_name','%Path Seeker%');
+      const completed=(q.data||[]).filter(x=>['completed','visited','done'].includes(String(x.status||'').toLowerCase())).length;
+      if(completed>=3){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='All three complimentary site visits for this month have already been completed.';return;}
+    }catch(e){}
+    const requestId='RMA-PSV-'+Date.now().toString().slice(-8);
+    const scope=JSON.stringify({reason,requested_date:date,requested_time:time||null,source:'Path Seeker Client Portal'});
+    const booking={request_id:requestId,client_name:'Path Seeker International School',mobile:'',email:user.email||null,service_type:'Path Seeker Site Visit Request',project_address:'Path Seeker International School Project',latitude:null,longitude:null,distance_km:0,visit_fee:0,gst_amount:0,total_amount:0,status:'pending',visit_scope:scope};
+    try{
+      const {error}=await supabaseClient.from('bookings').insert(booking);
+      if(error)throw error;
+      msg.className='notice success';msg.classList.remove('hidden');msg.innerHTML='<b>Site visit request submitted.</b><br>Request ID: <b>'+esc(requestId)+'</b><br>RMA will review the request and the approval status will appear in your portal.';
+      document.getElementById('psVisitReason').value='';
+      await loadPathSeeker(user);
+    }catch(e){
+      console.error(e);msg.className='notice error';msg.classList.remove('hidden');msg.textContent='The request could not be saved. Please use Email RMA or WhatsApp RMA for the request.';
+    }
+  }
+
+  async function sendPathSeekerMessage(){
+    const subject=document.getElementById('psMessageSubject')?.value.trim()||'Path Seeker Project Request';
+    const message=document.getElementById('psMessageText')?.value.trim()||'';
+    const box=document.getElementById('psMessageStatus');if(!message){box.className='notice error';box.classList.remove('hidden');box.textContent='Please write your message first.';return;}
+    const user=(await supabaseClient.auth.getUser()).data?.user;
+    try{
+      const {error}=await supabaseClient.from('client_messages').insert({user_id:user?.id||null,client_name:'Path Seeker International School',email:user?.email||null,subject,message,status:'new'});
+      if(error)throw error;
+      box.className='notice success';box.classList.remove('hidden');box.textContent='Your message has been sent to RMA.';
+      document.getElementById('psMessageText').value='';
+    }catch(e){
+      const body=encodeURIComponent(message);const subj=encodeURIComponent(subject);window.location.href='mailto:RMA.studies07@gmail.com?subject='+subj+'&body='+body;
+      box.className='notice info';box.classList.remove('hidden');box.textContent='The message system is not yet connected to the RMA message table, so your email app has been opened instead.';
+    }
+  }
+
+  async function loadStaffSiteVisitRequests(){
+    const staff=document.getElementById('staffSiteVisitRequests');if(!staff)return;
+    try{
+      const q=await supabaseClient.from('bookings').select('*').ilike('client_name','%Path Seeker%').ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(50);
+      if(q.error)throw q.error;const rows=q.data||[];
+      staff.innerHTML=rows.length?rows.map(x=>{
+        let details=x.visit_scope||'';
+        try{const j=JSON.parse(details);if(j)details='Requested date: '+(j.requested_date||'—')+' '+(j.requested_time||'')+'<br>Reason: '+(j.reason||'—');}catch(e){}
+        const id=esc(x.id||'');
+        return '<div class="ps-admin-request"><b>'+esc(x.request_id||'Site Visit Request')+'</b><br><small>'+new Date(x.created_at).toLocaleString('en-IN')+' • '+esc(x.status||'pending')+'</small><p style="margin:8px 0">'+details+'</p><div class="ps-admin-actions"><button class="btn outline" type="button" onclick="updatePathSeekerVisitStatus(&quot;'+id+'&quot;,&quot;approved&quot;)">Approve</button><button class="btn outline" type="button" onclick="updatePathSeekerVisitStatus(&quot;'+id+'&quot;,&quot;completed&quot;)">Mark Completed</button><button class="btn outline" type="button" onclick="updatePathSeekerVisitStatus(&quot;'+id+'&quot;,&quot;rejected&quot;)">Reject</button></div></div>';
+      }).join(''):'<div class="muted">No Path Seeker site-visit requests.</div>';
+    }catch(e){staff.innerHTML='<div class="notice error">Site-visit requests could not be loaded. Check the staff RLS/update policy.</div>';}
+  }
+
+  async function updatePathSeekerVisitStatus(id,status){
+    try{
+      const user=(await supabaseClient.auth.getUser()).data?.user;const p=user?await supabaseClient.from('profiles').select('full_name').eq('id',user.id).maybeSingle():{data:null};
+      let r=await supabaseClient.from('bookings').update({status,approved_by:p.data?.full_name||user?.email||'RMA Staff'}).eq('id',id);
+      if(r.error)r=await supabaseClient.from('bookings').update({status}).eq('id',id);
+      if(r.error)throw r.error;
+      await loadStaffSiteVisitRequests();
+    }catch(e){alert('The request status could not be updated. Please check the bookings update policy for staff/admin users.');}
+  }
 
   /* Add site-visit scope and monthly cap to the booking form. */
   function addVisitScope(){
