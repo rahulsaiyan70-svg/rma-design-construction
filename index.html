@@ -369,7 +369,7 @@ section{padding:78px 0}
 <textarea id="s_message" placeholder="Anything else you want us to know?"></textarea>
 </div>
 <div class="notice hidden" id="serviceMessage"></div>
-<button class="btn dark full" id="serviceSubmit" type="submit">Submit Service Request</button>
+
 </form>
 </div>
 <aside class="pricebox">
@@ -384,12 +384,6 @@ section{padding:78px 0}
 <div class="notice info" id="serviceDiscountNote" style="margin:0">No discount up to ₹3,000. Discount is calculated automatically for higher service amounts.</div>
 </div>
 <div class="line total"><span>Total</span><span id="serviceTotal">₹0</span></div>
-<div class="payment-card" style="margin-top:16px">
-<h3>💳 Pay Online with Razorpay</h3>
-<p class="muted">After reviewing your service charges, you can pay securely online through Razorpay.</p>
-<button class="btn gold full" id="razorpayServiceBtn" onclick="payServiceWithRazorpay()" type="button">Pay with Razorpay</button>
-<div class="notice hidden" id="razorpayMessage" style="margin-top:10px"></div>
-</div>
 </aside>
 </div>
 </div>
@@ -2119,7 +2113,7 @@ const oldSubmit=document.getElementById('visitForm');
     },true);
   })();
 
-  function initV3(){injectAllAddresses();addCombos();addVisitPayment();addVisitScope();if(typeof window.addPathSeekerPortal==='function')window.addPathSeekerPortal();window.updateServicePrice?.();window.updateVisitPrice?.();loadPathSeeker();}
+  function initV3(){addCombos();addVisitScope();if(typeof window.addPathSeekerPortal==='function')window.addPathSeekerPortal();window.updateServicePrice?.();window.updateVisitPrice?.();loadPathSeeker();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV3);else initV3();
   window.rmaV3Init=initV3;
 })();
@@ -2516,19 +2510,96 @@ window.RAZORPAY_KEY_ID=RAZORPAY_KEY_ID;
   }
 
   function installServicePayment(){
-    const btn=document.getElementById('razorpayServiceBtn');if(btn){btn.textContent='💳 Pay & Submit Service Request with Razorpay';btn.onclick=payServiceMandatory;btn.type='button';}
-    const form=document.getElementById('serviceForm');if(form&&!form.dataset.v20){form.dataset.v20='1';form.addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation();payServiceMandatory()},true);}
+    const form=document.getElementById('serviceForm');
+    if(!form)return;
+    // Keep exactly one Razorpay payment button in the service form.
+    const legacy=form.querySelectorAll('#serviceSubmit');
+    legacy.forEach(el=>el.remove());
+    let btn=form.querySelector('#razorpayServiceBtn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='razorpayServiceBtn';
+      btn.className='btn gold full';
+      btn.type='button';
+      form.appendChild(btn);
+    }
+    btn.textContent='💳 Pay & Submit Service Request with Razorpay';
+    btn.onclick=payServiceMandatory;
+    btn.type='button';
+    if(!form.dataset.v20){form.dataset.v20='1';form.addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation();payServiceMandatory()},true);}
+    // Remove any accidental duplicate payment buttons created by an older patch.
+    form.querySelectorAll('button').forEach(el=>{
+      if(el!==btn && /Pay.*Submit Service Request with Razorpay|Submit Service Request/i.test(el.textContent||'')) el.remove();
+    });
+  }
+
+  function cleanDuplicateVisitUI(){
+    const page=document.getElementById('page-sitevisit');
+    if(!page)return;
+    const forms=page.querySelectorAll('#visitForm');
+    forms.forEach((f,i)=>{if(i>0)f.remove();});
+    const form=page.querySelector('#visitForm');
+    if(!form)return;
+    // There must be exactly one project-address block and one final payment button.
+    const addresses=form.querySelectorAll('#rmaV20Address');
+    addresses.forEach((el,i)=>{if(i>0)el.remove();});
+    const pays=form.querySelectorAll('#rma20Pay');
+    pays.forEach((el,i)=>{if(i>0)el.remove();});
+    // Remove any older payment button labels accidentally left in this form.
+    form.querySelectorAll('button').forEach(el=>{
+      if(el.id!=='rma20Pay' && /Pay.*Book Site Visit with Razorpay|Book Site Visit/i.test(el.textContent||'')) el.remove();
+    });
   }
 
   function initV20(){
-    buildVisitForm();installServicePayment();
-    // Remove the old free-submit button if it is still present in the service form.
-    const sb=document.getElementById('serviceSubmit');if(sb){sb.type='button';sb.textContent='💳 Pay & Submit Service Request with Razorpay';sb.onclick=payServiceMandatory;}
+    buildVisitForm();
+    cleanDuplicateVisitUI();
+    installServicePayment();
   }
   const oldShow=window.showPage;
-  if(oldShow&&!window.__rmaV20ShowWrapped){window.showPage=function(name){oldShow(name);if(name==='sitevisit')setTimeout(buildVisitForm,30);if(name==='services')setTimeout(installServicePayment,30)};window.__rmaV20ShowWrapped=true;}
+  if(oldShow&&!window.__rmaV20ShowWrapped){window.showPage=function(name){oldShow(name);if(name==='sitevisit')setTimeout(()=>{buildVisitForm();cleanDuplicateVisitUI()},30);if(name==='services')setTimeout(installServicePayment,30)};window.__rmaV20ShowWrapped=true;}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(initV20,80));else setTimeout(initV20,80);
+  setTimeout(()=>{cleanDuplicateVisitUI();installServicePayment()},300);
 })();
 </script>
-</body>
-</html>
+
+<!-- RMA V25 — CLEAN SINGLE SITE-VISIT FORM -->
+<script>
+(function(){
+'use strict';
+const BASE_LAT=32.6712660,BASE_LNG=74.8848835,BASE_PIN='180010';
+const page=document.getElementById('page-sitevisit'); if(!page)return;
+const rate=d=>d<=10?1500:d<=20?2000:d<=40?2500:d<=50?3500:d<=75?4000:5000;
+const money=n=>'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+function notice(id,t,c='info'){const e=document.getElementById(id);e.className='notice '+c;e.classList.remove('hidden');e.textContent=t;}
+function render(){
+ page.querySelectorAll('section').forEach(e=>e.remove());
+ const s=document.createElement('section');
+ s.innerHTML=`<div class="container"><div class="form-panel" style="max-width:850px;margin:0 auto"><h2>Book My Site Visit</h2><form id="visitForm">
+ <div class="group"><label>Full Name *</label><input id="v_name" required></div>
+ <div class="group"><label>Mobile Number *</label><input id="v_mobile" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" required></div>
+ <div class="group"><label>Email ID</label><input id="v_email" type="email"></div>
+ <div class="group"><label>Building Type *</label><select id="v_building" required><option>Residential</option><option>Commercial</option><option>Institutional</option><option>Industrial</option><option>Other</option></select></div>
+ <div class="group"><label>Project / Site Requirement *</label><textarea id="v_requirement" required placeholder="Briefly describe your project/site requirement."></textarea></div>
+ <div class="form-grid"><div class="group"><label>Preferred Date *</label><input id="v_date" type="date" required></div><div class="group"><label>Preferred Time *</label><select id="v_time" required><option>Morning</option><option>Afternoon</option><option>Evening</option></select></div></div>
+ <div class="group"><label>Project Address *</label><textarea id="v_project_address" required placeholder="Enter the complete project address"></textarea><div class="form-grid" style="margin-top:10px"><div><label>PIN Code *</label><input id="v_pin" inputmode="numeric" maxlength="6" placeholder="6-digit PIN" required></div><div style="display:flex;align-items:end"><button class="btn outline full" type="button" id="v_verify_pin">Verify PIN &amp; Get Location</button></div></div><button class="btn outline" type="button" id="v_gps" style="margin-top:10px">Use My Location</button><input id="v_lat" type="hidden"><input id="v_lng" type="hidden"><div class="form-note" id="v_location_note">Enter the project PIN or use My Location.</div></div>
+ <div class="notice info"><div>Road Distance: <b id="v_distance">—</b></div><div>Site Visit Fee: <b id="v_fee">—</b></div><div>GST (18%): <b id="v_gst">—</b></div><strong>Total Payable: <span id="v_total">—</span></strong></div>
+ <div class="notice hidden" id="v_message"></div><button class="btn gold full" id="v_pay" type="submit">Pay Site Visit Fee &amp; Book Site Visit with Razorpay</button>
+ </form></div></div>`;
+ page.appendChild(s); wire();
+}
+async function geocode(q){const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q='+encodeURIComponent(q));if(!r.ok)throw Error('Location lookup failed.');const d=await r.json();if(!d.length)throw Error('Project location could not be found.');return{lat:+d[0].lat,lng:+d[0].lon};}
+async function distance(lat,lng){const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${BASE_LNG},${BASE_LAT};${lng},${lat}?overview=false`);if(!r.ok)throw Error('Road distance could not be calculated.');const d=await r.json();if(!d.routes?.length)throw Error('No road route found.');return d.routes[0].distance/1000;}
+function setFee(d){const f=rate(d),g=f*.18,t=f+g;v_distance.textContent=d.toFixed(2)+' km';v_fee.textContent=money(f);v_gst.textContent=money(g);v_total.textContent=money(t);v_pay.dataset.total=t.toFixed(2);}
+async function locate(){const pin=v_pin.value.trim();if(!/^\d{6}$/.test(pin)){notice('v_location_note','Enter a valid 6-digit PIN.','error');return}try{notice('v_location_note','Fetching project location...');const p=await fetch('https://api.postalpincode.in/pincode/'+pin).then(r=>r.json());const po=p?.[0]?.PostOffice?.[0];const q=[v_project_address.value.trim(),pin,po?.District,po?.State,'India'].filter(Boolean).join(', ');const x=await geocode(q);v_lat.value=x.lat;v_lng.value=x.lng;setFee(await distance(x.lat,x.lng));notice('v_location_note','Project location found and road distance calculated.','success')}catch(e){notice('v_location_note',e.message||'Could not find project location.','error')}}
+function wire(){
+ v_verify_pin.onclick=locate;v_pin.addEventListener('change',locate);
+ v_gps.onclick=()=>navigator.geolocation?.getCurrentPosition(async p=>{try{v_lat.value=p.coords.latitude;v_lng.value=p.coords.longitude;setFee(await distance(+v_lat.value,+v_lng.value));notice('v_location_note','Your location was found and road distance calculated.','success')}catch(e){notice('v_location_note',e.message,'error')}},()=>notice('v_location_note','Unable to access your location. Please use the PIN.','error'),{enableHighAccuracy:true,timeout:15000});
+ visitForm.onsubmit=pay;
+}
+async function pay(e){e.preventDefault();if(!visitForm.reportValidity())return;const total=+v_pay.dataset.total;if(!total||!v_lat.value||!v_lng.value){notice('v_message','Please verify the project PIN or use My Location first.','error');return}if(!window.Razorpay){notice('v_message','Razorpay could not be loaded.','error');return}v_pay.disabled=true;notice('v_message','Creating secure Razorpay order...');const id='RMA-V-'+Date.now().toString().slice(-9),d=parseFloat(v_distance.textContent),f=rate(d),g=f*.18;try{const o=await rmaCreateRazorpayOrder(total,id,'RMA Site Visit Fee',{request_id:id,distance_km:String(d)});new Razorpay({key:window.RAZORPAY_KEY_ID,order_id:o.order_id,amount:o.amount,currency:o.currency||'INR',name:'RMA Design & Construction',description:'RMA Site Visit Fee',prefill:{name:v_name.value,email:v_email.value,contact:v_mobile.value},handler:async r=>{try{notice('v_message','Verifying payment securely...');await rmaVerifyRazorpayPayment(r);const ins=await supabaseClient.from('bookings').insert({request_id:id,client_name:v_name.value.trim(),mobile:v_mobile.value.trim(),email:v_email.value.trim()||null,service_type:'Site Visit',project_address:v_project_address.value.trim(),latitude:+v_lat.value,longitude:+v_lng.value,distance_km:d,visit_fee:f,gst_amount:+g.toFixed(2),total_amount:+total.toFixed(2),status:'booked',visit_scope:JSON.stringify({building_type:v_building.value,requirement:v_requirement.value.trim(),requested_date:v_date.value,requested_time:v_time.value,payment_id:r.razorpay_payment_id,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG})});if(ins.error)throw ins.error;notice('v_message','Payment verified. Your site visit has been booked successfully.','success');v_pay.textContent='Site Visit Booked'}catch(x){v_pay.disabled=false;notice('v_message',x.message||'Booking failed.','error')}},modal:{ondismiss:()=>{v_pay.disabled=false;notice('v_message','Payment window closed. No booking was made.')}}}).open()}catch(x){v_pay.disabled=false;notice('v_message',x.message||'Unable to start payment.','error')}}
+const originalShow=window.showPage;if(originalShow&&!window.__rmaV25){window.showPage=function(n){originalShow(n);if(n==='sitevisit')setTimeout(render,20)};window.__rmaV25=true}
+render();
+})();
+</script>
+</body></html>
