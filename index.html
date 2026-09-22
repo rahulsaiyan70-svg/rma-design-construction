@@ -6,7 +6,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta content="RMA Design &amp; Construction — Architectural Planning, Structural Design, Municipality Approval, Estimation, Survey and Construction." name="description"/>
 <title>RMA Design &amp; Construction</title>
-<!-- RMA V14: service-rate sidebar, Path Seeker visit workflow, notifications and client messaging -->
+<!-- RMA V41: Path Seeker project document loader fixed to use the project UUID and load all documents -->
 <link crossorigin="" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3nJ5e5J1R8k3x5x7l4KQ1Q0e1Z0vM=" rel="stylesheet"/>
 <style>
 :root{
@@ -329,6 +329,13 @@ section{padding:78px 0}
 </style>
 <style id="rma-v39-enhancements">
 .ps-v39-review-editor{margin-top:14px;padding:13px;border:1px solid #dce9e1;border-radius:10px;background:#f8fbf9}.ps-v39-review-editor textarea{width:100%;min-height:90px;box-sizing:border-box;padding:10px;border:1px solid #d8e0e5;border-radius:7px;margin:8px 0}.ps-v39-review-editor input[type=file]{display:block;margin:8px 0}.ps-v39-review{padding:10px;margin:8px 0;border:1px solid #e0e6ea;border-radius:8px;background:#fff}.ps-v39-review small{display:block;color:#687580;margin-bottom:6px}.ps-v39-review-photos a{margin-right:8px}.ps-v39-review-list{margin-top:10px}.ps-v39-history-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:12px;border:1px solid #dfe7e2;border-radius:9px;background:#fff;margin:8px 0}.ps-v39-history-row .role-badge{white-space:nowrap}.ps-v36-status.approved{background:#eef8f2;border-color:#bfe0cb}.ps-v36-status.rejected{background:#fff0f0;border-color:#efc2c2}.ps-v36-status.completed{background:#eef6ff;border-color:#c8dcf2}
+</style>
+<style id="rma-v41-pathseeker-documents">
+.ps-v41-doc-card{transition:box-shadow .18s ease,border-color .18s ease}
+.ps-v41-doc-card:hover{border-color:#b9d7c7!important;box-shadow:0 5px 18px #0000000a}
+.ps-v41-doc-card code{font-size:12px;word-break:break-all}
+.ps-v41-doc-summary{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+@media(max-width:600px){.ps-v41-doc-card{padding:12px}.ps-v41-doc-card iframe{height:380px!important}}
 </style>
 </head></head>
 <body>
@@ -2103,69 +2110,55 @@ checkExistingSession();
     }catch(e){document.getElementById('psMonthlyCounter').textContent='— / 2';}
 
     try{
-      const documentProjectId=project?.id||'d9e2617e-6edc-4c07-891b-7879998d6187';
-      const knownPath="PSIS001/architectural/all floors/PATHSEEKER'S 2ND FLOOR 01.pdf";
-      const query=supabaseClient.from('project_documents').select('*').eq('project_id',documentProjectId).order('created_at',{ascending:false}).limit(50);
+      /* V41 FIX: Path Seeker documents always use the known Path Seeker project UUID. */
+      const documentProjectId='d9e2617e-6edc-4c07-891b-7879998d6187';
+      const query=supabaseClient.from('project_documents')
+        .select('id,project_id,document_name,document_type,floor_name,storage_path,preview_storage_path,is_final,created_at')
+        .eq('project_id',documentProjectId)
+        .order('created_at',{ascending:false}).limit(100);
       const d=await query;
       if(d.error) throw d.error;
       let docs=d.data||[];
 
-      // The existing Path Seeker drawing is already uploaded in Supabase Storage.
-      // If the database row is hidden by an RLS relationship/policy, use the known
-      // project document as a temporary migration fallback so the client can still
-      // access the drawing while the database policy is finalized.
+      /* Only use the legacy single-file fallback when the table returns zero rows. */
       if(!docs.length){
-        docs=[{
-          document_name:"Path Seeker International School — 2nd Floor Drawing",
-          document_type:"architectural",
-          floor_name:"All Floors",
-          is_final:true,
-          storage_path:knownPath
-        }];
+        docs=[{document_name:'Path Seeker project drawing',document_type:'architectural',floor_name:'All Floors',is_final:true,storage_path:"PSIS001/architectural/all floors/PATHSEEKER'S 2ND FLOOR 01.pdf"}];
       }
 
       const rendered=[];
       for(const x of docs){
-        let open='';
-        let preview='';
+        let open=''; let preview='';
         if(x.storage_path){
           let fileUrl='';
           try{
             const signed=await supabaseClient.storage.from('project-documents').createSignedUrl(x.storage_path,3600);
             if(signed.data?.signedUrl) fileUrl=signed.data.signedUrl;
-          }catch(err){ console.warn('Signed URL failed',err); }
-
-          // Fallback for a public Supabase Storage bucket.
+          }catch(err){ console.warn('Signed URL failed for',x.storage_path,err); }
           if(!fileUrl){
             try{
               const pub=supabaseClient.storage.from('project-documents').getPublicUrl(x.storage_path);
               if(pub.data?.publicUrl) fileUrl=pub.data.publicUrl;
-            }catch(err){ console.warn('Public URL fallback failed',err); }
+            }catch(err){ console.warn('Public URL fallback failed for',x.storage_path,err); }
           }
-
           if(fileUrl){
-            // Path Seeker is explicitly authorized to open and download its drawing.
-            // Other client portals are view-only.
-            if(isPS){
-              open='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn outline" href="'+esc(fileUrl)+'" target="_blank" rel="noopener">Open / View Drawing</a><a class="btn outline" href="'+esc(fileUrl)+'" download>Download PDF</a></div>';
-              preview='<div class="rma-doc-viewer" style="margin-top:12px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden;background:#fff"><iframe src="'+esc(fileUrl)+'#toolbar=1&navpanes=0" title="Path Seeker architectural drawing" style="display:block;width:100%;height:520px;border:0"></iframe></div>';
-            }else{
-              open='<div class="notice info" style="margin-top:10px"><b>View only</b> — downloading and opening the original file are disabled for this client.</div>';
-              preview='<div class="rma-doc-viewer rma-view-only" style="position:relative;margin-top:12px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden;background:#fff"><div class="rma-view-watermark" aria-hidden="true">RMA DESIGN &amp; CONSTRUCTION • VIEW ONLY</div><iframe src="'+esc(fileUrl)+'#toolbar=0&navpanes=0&scrollbar=1" title="Project drawing — view only" style="display:block;width:100%;height:520px;border:0"></iframe></div>';
-            }
+            open='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn outline" href="'+esc(fileUrl)+'" target="_blank" rel="noopener">Open / View Drawing</a><a class="btn outline" href="'+esc(fileUrl)+'" download>Download PDF</a></div>';
+            preview='<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:800;color:#245b43;padding:8px 0">Preview Drawing</summary><div class="rma-doc-viewer" style="margin-top:8px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden;background:#fff"><iframe src="'+esc(fileUrl)+'#toolbar=1&navpanes=0" title="'+esc(x.document_name||'Path Seeker drawing')+'" style="display:block;width:100%;height:520px;border:0"></iframe></div></details>';
           }else{
-            open='<div class="notice error" style="margin-top:10px"><b>Drawing found, but Storage access is not enabled for this client.</b><br>Please add the Storage SELECT policy for the <b>project-documents</b> bucket.</div>';
+            open='<div class="notice error" style="margin-top:10px"><b>Drawing record found, but Storage access is unavailable.</b><br>Storage path: <code>'+esc(x.storage_path)+'</code></div>';
           }
-        }else if(x.file_url||x.public_url){
-          const fileUrl=x.file_url||x.public_url;
-          open='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn outline" href="'+esc(fileUrl)+'" target="_blank" rel="noopener">Open / View Document</a></div>';
-          preview='<div style="margin-top:12px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden"><iframe src="'+esc(fileUrl)+'#toolbar=1&navpanes=0" title="Project document" style="display:block;width:100%;height:520px;border:0"></iframe></div>';
         }
-        rendered.push('<div><b>'+esc(x.document_name||'Project Document')+'</b><br><small>'+esc(x.document_type||'Drawing / Document')+(x.floor_name?' • '+esc(x.floor_name):'')+(x.is_final?' • Final':'')+'</small>'+open+preview+'</div>');
+        rendered.push('<div class="ps-v41-doc-card" style="border:1px solid #dfe7e2;border-radius:10px;padding:15px;background:#fff"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="min-width:0"><b style="font-size:15px">'+esc(x.document_name||'Project Document')+'</b><div class="muted" style="margin-top:3px">'+esc(x.document_type||'Drawing / Document')+(x.floor_name?' • '+esc(x.floor_name):'')+(x.is_final?' • Final':'')+'</div></div><span class="role-badge">RMA Document</span></div>'+open+preview+'</div>');
       }
-      document.getElementById('psDocuments').innerHTML=rendered.join('');
+      const docBox=document.getElementById('psDocuments');
+      if(docBox){
+        docBox.innerHTML='<div class="ps-v41-doc-summary" style="margin-bottom:12px;padding:11px 13px;border-radius:9px;background:#f4fbf7;border:1px solid #dce9e1"><b>'+docs.length+' project document'+(docs.length===1?'':'s')+' available</b><span class="muted"> • Automatically loaded from Supabase</span></div><div style="display:grid;gap:10px">'+rendered.join('')+'</div>';
+      }
       await refreshPathSeekerNotifications();
-    }catch(e){console.warn('Path Seeker documents load failed',e);document.getElementById('psDocuments').innerHTML='<div class="notice error"><b>Drawing could not be loaded.</b><br>'+esc(e?.message||'Please check the project-document access policy.')+'</div>';}
+    }catch(e){
+      console.warn('Path Seeker documents load failed',e);
+      const box=document.getElementById('psDocuments');
+      if(box) box.innerHTML='<div class="notice error"><b>Project documents could not be loaded.</b><br>'+esc(e?.message||'Please check the project_documents RLS policy and project-document Storage access.')+'</div>';
+    }
   }
 
   window.loadPathSeeker = loadPathSeeker;
