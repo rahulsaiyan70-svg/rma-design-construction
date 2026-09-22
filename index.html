@@ -329,6 +329,10 @@ section{padding:78px 0}
 </style>
 </head></head>
 <body>
+<style id="rma-v38-auth-fix">
+#authLoginSection.hidden{display:none!important}
+</style>
+
 <div class="topbar">
 <div class="container">
 <span>RMA Design &amp; Construction</span>
@@ -860,8 +864,9 @@ async function signInUser(){
   }
 }
 async function loadSignedInPortal(user){
-  // Keep the login form visible until we have positively identified an authenticated portal.
-  document.getElementById('authLoginSection')?.classList.remove('hidden');
+  // A successful authentication always hides the login form immediately.
+  // The profile role is then used to choose the correct portal.
+  document.getElementById('authLoginSection')?.classList.add('hidden');
   document.getElementById('clientPortal')?.classList.add('hidden');
   document.getElementById('staffPortal')?.classList.add('hidden');
   document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
@@ -911,6 +916,7 @@ async function loadSignedInPortal(user){
     return;
   }
 
+  const isRmaAdminIdentity=(user.email||'').toLowerCase()==='rma.studies07@gmail.com';
   if(role==='admin'||role==='staff'||role==='employee'){
     document.getElementById('authLoginSection')?.classList.add('hidden');
     document.getElementById('clientPortal')?.classList.add('hidden');
@@ -920,8 +926,15 @@ async function loadSignedInPortal(user){
     setTimeout(()=>loadStaffSiteVisitRequests(),100);
   }else{
     document.getElementById('clientPortal')?.classList.remove('hidden');
-    document.getElementById('portalWelcome').textContent='Welcome, '+(profile?.full_name||user.email||'Client');
-    await loadClientPortal(user);
+    if(isRmaAdminIdentity){
+      document.getElementById('portalWelcome').textContent='Welcome, RMA Admin';
+      document.getElementById('portalProjects').innerHTML='<div class="notice error">This RMA account is authenticated, but its Supabase profile is not marked as <b>admin</b>. Run the RMA admin promotion SQL, then sign out and sign in again.</div>';
+      document.getElementById('portalPayments').textContent='Admin profile setup required.';
+      document.getElementById('portalStatus').textContent='Admin profile setup required.';
+    }else{
+      document.getElementById('portalWelcome').textContent='Welcome, '+(profile?.full_name||user.email||'Client');
+      await loadClientPortal(user);
+    }
   }
   document.getElementById('signinNavBtn').textContent='Account';
 }
