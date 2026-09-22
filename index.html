@@ -327,6 +327,9 @@ section{padding:78px 0}
 @media(max-width:800px){.ps-v36-profile{grid-template-columns:1fr}.ps-v36-profile-grid{grid-template-columns:1fr}.ps-v36-admin-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.ps-v36-admin-grid{grid-template-columns:1fr}.ps-v36-msg{max-width:95%}}
 </style>
+<style id="rma-v39-enhancements">
+.ps-v39-review-editor{margin-top:14px;padding:13px;border:1px solid #dce9e1;border-radius:10px;background:#f8fbf9}.ps-v39-review-editor textarea{width:100%;min-height:90px;box-sizing:border-box;padding:10px;border:1px solid #d8e0e5;border-radius:7px;margin:8px 0}.ps-v39-review-editor input[type=file]{display:block;margin:8px 0}.ps-v39-review{padding:10px;margin:8px 0;border:1px solid #e0e6ea;border-radius:8px;background:#fff}.ps-v39-review small{display:block;color:#687580;margin-bottom:6px}.ps-v39-review-photos a{margin-right:8px}.ps-v39-review-list{margin-top:10px}.ps-v39-history-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:12px;border:1px solid #dfe7e2;border-radius:9px;background:#fff;margin:8px 0}.ps-v39-history-row .role-badge{white-space:nowrap}.ps-v36-status.approved{background:#eef8f2;border-color:#bfe0cb}.ps-v36-status.rejected{background:#fff0f0;border-color:#efc2c2}.ps-v36-status.completed{background:#eef6ff;border-color:#c8dcf2}
+</style>
 </head></head>
 <body>
 <style id="rma-v38-auth-fix">
@@ -2487,18 +2490,20 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 'use strict';
 const V36_ADMIN_USERNAME='rmaadmin';
 const V36_ADMIN_EMAIL='RMA.studies07@gmail.com';
-const V36_CLIENT_ID='PSIS001';
+const V36_CLIENT_ID='PSIS261';
 const V36_CLIENT_NAME='Path Seeker International School';
 const V36_SITE_PHONE='+91 96221 21692';
 const V36_SITE_EMAIL='RMA.studies07@gmail.com';
+const V36_CLIENT_PHONE='9419118424';
+const V36_CLIENT_EMAIL='pathseekers.vijaypur@gmail.com';
 const V36_WA='919622121692';
 const V36_PROJECT_ADDRESS='Ramgarh, Jammu & Kashmir, India';
 const esc36=s=>{const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML};
 const getUser36=async()=> (await supabaseClient.auth.getUser()).data?.user;
 function toast36(msg,type='info'){const e=document.getElementById('toast');if(e){e.textContent=msg;e.className='toast show '+type;setTimeout(()=>e.className='toast',3500)}else alert(msg)}
 function profileFields36(ca,profile,user){
- const phone=ca?.phone||ca?.mobile||ca?.client_phone||profile?.phone||profile?.mobile||'Not added';
- const email=ca?.email||user?.email||profile?.email||'Not added';
+ const phone=ca?.phone||ca?.mobile||ca?.client_phone||profile?.phone||profile?.mobile||V36_CLIENT_PHONE;
+ const email=ca?.email||profile?.email||V36_CLIENT_EMAIL;
  const address=ca?.address||ca?.project_address||ca?.client_address||profile?.address||V36_PROJECT_ADDRESS;
  return {clientId:ca?.client_id||ca?.client_code||V36_CLIENT_ID,name:ca?.client_name||profile?.full_name||V36_CLIENT_NAME,phone,email,address};
 }
@@ -2531,11 +2536,47 @@ async function enhancePathSeekerPortal36(user){
  await loadConversation36(user.id);
  await renderLatestStatus36(document.getElementById('psV36LatestStatus'),user.id);
 }
-async function renderLatestStatus36(row,userId){if(!row)return;try{const q=await supabaseClient.from('bookings').select('*').eq('client_user_id',userId).ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(1);let x=q.data?.[0];if(!x){const q2=await supabaseClient.from('bookings').select('*').ilike('client_name','%Path Seeker%').ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(1);x=q2.data?.[0]}
- if(!x){row.className='ps-v36-status';row.innerHTML='<span><b>Recent request</b><br><small>No request yet</small></span><span>—</span>';return}
- let status=String(x.status||'pending').toLowerCase();let label=status==='approved'?'Approved':status==='rejected'?'Rejected':status==='completed'?'Completed':'Pending';let extra='';if(x.scheduled_date)extra='Scheduled: '+x.scheduled_date+(x.scheduled_time?' at '+x.scheduled_time:'');else{try{const j=JSON.parse(x.visit_scope||'{}');if(j.requested_date_from)extra='Preferred: '+j.requested_date_from+' to '+(j.requested_date_to||j.requested_date_from)}catch(e){}}
- row.className='ps-v36-status '+status;row.innerHTML='<span><b>Latest site-visit request</b><br><small>'+esc36(label)+'</small>'+(extra?'<br><small>'+esc36(extra)+'</small>':'')+'</span><strong>'+esc36(x.request_id||'Request')+'</strong>';
- }catch(e){row.innerHTML='<span><b>Recent request</b><br><small>Status will appear here.</small></span>'}}
+async function renderLatestStatus36(row,userId){
+ if(!row)return;
+ try{
+  const q=await supabaseClient.from('bookings').select('*').eq('client_user_id',userId).ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(20);
+  if(q.error)throw q.error;
+  const rows=q.data||[]; const x=rows[0];
+  if(!x){row.className='ps-v36-status';row.innerHTML='<span><b>Recent request</b><br><small>No request yet</small></span><span>—</span>';return;}
+  const status=String(x.status||'pending').toLowerCase();
+  const label=status==='approved'?'Approved':status==='rejected'?'Rejected':status==='completed'?'Completed':'Pending';
+  let message='Your site-visit request is '+label.toLowerCase()+'.';
+  if(status==='approved' && x.scheduled_date){message='Your appointment has been booked for '+new Date(x.scheduled_date+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'})+(x.scheduled_time?' at '+String(x.scheduled_time).slice(0,5):'')+'.';}
+  if(status==='rejected')message='Your site-visit request has been rejected. Please contact RMA if you need another slot.';
+  if(status==='completed')message='Your site visit has been completed.';
+  row.className='ps-v36-status '+status;
+  row.innerHTML='<span><b>Latest site-visit request</b><br><small>'+esc36(message)+'</small>'+(x.scheduled_date?'<br><small>Scheduled: '+esc36(x.scheduled_date)+(x.scheduled_time?' at '+esc36(String(x.scheduled_time).slice(0,5)):'')+'</small>':'')+'</span><strong>'+esc36(x.request_id||'Request')+'</strong>';
+  await renderVisitHistory36(userId,rows);
+ }catch(e){row.innerHTML='<span><b>Recent request</b><br><small>Status will appear here.</small></span>';}
+}
+async function renderVisitHistory36(userId,rows){
+ const box=document.getElementById('psVisitHistory');if(!box)return;
+ try{
+  const ids=(rows||[]).map(x=>x.id).filter(Boolean);
+  let reviews=[];
+  if(ids.length){const rq=await supabaseClient.from('site_visit_reviews').select('*').in('booking_id',ids).order('created_at',{ascending:true});if(!rq.error)reviews=rq.data||[];}
+  const reviewMap={};reviews.forEach(r=>(reviewMap[r.booking_id]??=[]).push(r));
+  if(!rows?.length){box.innerHTML='<div class="muted">No site visit requests yet.</div>';return;}
+  const html=[];
+  for(const x of rows){
+   const st=String(x.status||'pending').toLowerCase();
+   const label=st==='approved'?'Approved':st==='rejected'?'Rejected':st==='completed'?'Completed':'Pending';
+   let j={};try{j=JSON.parse(x.visit_scope||'{}')}catch(e){}
+   let schedule=x.scheduled_date?('Appointment: '+x.scheduled_date+(x.scheduled_time?' at '+String(x.scheduled_time).slice(0,5):'')):'Preferred: '+(x.preferred_date_from||j.requested_date_from||'—')+' to '+(x.preferred_date_to||j.requested_date_to||j.requested_date_from||'—');
+   let inner='<div class="ps-v36-history-row"><div><b>'+esc36(x.request_id||'Site Visit')+'</b><br><small>'+esc36(schedule)+'</small><br><small>Requested: '+new Date(x.created_at).toLocaleString('en-IN')+'</small>'+(j.reason?'<br><small>Reason: '+esc36(j.reason)+'</small>':'')+'</div><span class="role-badge">'+esc36(label)+'</span></div>';
+   const rr=reviewMap[x.id]||[];
+   if(rr.length){inner+='<div class="ps-v39-review-list">'+rr.map(r=>'<div class="ps-v39-review"><small>RMA review • '+new Date(r.created_at).toLocaleString('en-IN')+'</small><div>'+esc36(r.notes||'No notes added.')+'</div>'+((r.photo_paths||[]).length?'<div class="ps-v39-review-photos">'+(r.photo_paths||[]).map(p=>'<a href="#" onclick="openSiteReviewPhoto36(event,'+JSON.stringify(p)+')">View photo</a>').join(' • ')+'</div>':'')+'</div>').join('')+'</div>'}
+   html.push(inner);
+  }
+  box.innerHTML=html.join('');
+ }catch(e){box.innerHTML='<div class="muted">Site visit history will appear here.</div>';}
+}
+async function openSiteReviewPhoto36(ev,path){ev.preventDefault();try{const r=await supabaseClient.storage.from('site-visit-photos').createSignedUrl(path,3600);if(r.data?.signedUrl)window.open(r.data.signedUrl,'_blank','noopener');else toast36('Photo could not be opened.','error');}catch(e){toast36('Photo could not be opened.','error');}}
 async function submitPathSeekerVisitRequest36(){
  const from=document.getElementById('psRequestedDateFrom')?.value||'',to=document.getElementById('psRequestedDateTo')?.value||'',reason=document.getElementById('psVisitReason')?.value.trim()||'',msg=document.getElementById('psVisitRequestMessage');
  if(!from||!to){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='Please select both the preferred start and end dates.';return}
@@ -2545,9 +2586,9 @@ async function submitPathSeekerVisitRequest36(){
  try{const q=await supabaseClient.from('bookings').select('id,status,service_type').gte('created_at',monthStart.toISOString()).ilike('client_name','%Path Seeker%');if(q.error)throw q.error;const used=(q.data||[]).filter(x=>String(x.service_type||'').toLowerCase().includes('site visit')&&!['rejected','cancelled'].includes(String(x.status||'').toLowerCase())).length;if(used>=2){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='The monthly limit of two site-visit requests has been reached.';return}}catch(e){console.warn(e)}
  const requestId='RMA-PSV-'+Date.now().toString().slice(-8);const scope=JSON.stringify({reason:reason||null,requested_date_from:from,requested_date_to:to,requested_time:null,source:'Path Seeker Client Portal'});
  let ca36=null;try{const caq=await supabaseClient.from('client_accounts').select('*').eq('user_id',user.id).maybeSingle();ca36=caq.data||null}catch(e){}
- const clientPhone36=ca36?.phone||ca36?.mobile||ca36?.client_phone||'';
+ const clientPhone36=ca36?.phone||ca36?.mobile||ca36?.client_phone||V36_CLIENT_PHONE;
  const clientAddress36=ca36?.address||ca36?.project_address||V36_PROJECT_ADDRESS;
- const booking={request_id:requestId,client_user_id:user.id,client_name:V36_CLIENT_NAME,mobile:clientPhone36,email:user.email||ca36?.email||null,service_type:'Path Seeker Site Visit Request',project_address:clientAddress36};
+ const booking={request_id:requestId,client_user_id:user.id,client_name:V36_CLIENT_NAME,mobile:clientPhone36,email:V36_CLIENT_EMAIL,service_type:'Path Seeker Site Visit Request',project_address:clientAddress36};
  try{const r=await supabaseClient.from('bookings').insert(booking);if(r.error)throw r.error;await supabaseClient.from('bookings').update({visit_scope:scope,status:'pending',preferred_date_from:from,preferred_date_to:to}).eq('request_id',requestId);
    try{await supabaseClient.from('client_messages').insert({user_id:user.id,client_name:V36_CLIENT_NAME,email:user.email||null,subject:'Site Visit Request — '+requestId,message:'Preferred dates: '+from+' to '+to+'\nReason / Scope: '+(reason||'Not provided')+'\nRequest ID: '+requestId,sender_role:'client',thread_id:user.id,status:'new'})}catch(e){console.warn('message copy',e)}
    msg.className='notice success';msg.classList.remove('hidden');msg.innerHTML='<b>Site visit request submitted.</b><br>Request ID: <b>'+esc36(requestId)+'</b><br>Preferred dates: <b>'+esc36(from)+' to '+esc36(to)+'</b><br>RMA will assign the final date and time.';
@@ -2555,24 +2596,55 @@ async function submitPathSeekerVisitRequest36(){
  }catch(e){msg.className='notice error';msg.classList.remove('hidden');msg.innerHTML='<b>The request could not be saved.</b><br><small>'+esc36([e?.code,e?.message,e?.details,e?.hint].filter(Boolean).join(' | '))+'</small>'}
 }
 async function loadConversation36(userId){const box=document.getElementById('psV36Thread');if(!box)return;try{const q=await supabaseClient.from('client_messages').select('*').eq('user_id',userId).order('created_at',{ascending:true});if(q.error)throw q.error;const rows=q.data||[];box.innerHTML=rows.length?rows.map(x=>'<div class="ps-v36-msg '+(x.sender_role==='admin'?'admin':'client')+'"><small><b>'+(x.sender_role==='admin'?'RMA':'You')+'</b> • '+new Date(x.created_at).toLocaleString('en-IN')+(x.subject?' • '+esc36(x.subject):'')+'</small>'+esc36(x.message||'')+'</div>').join(''):'<div class="muted">No messages yet.</div>';box.scrollTop=box.scrollHeight}catch(e){box.innerHTML='<div class="notice error">Conversation could not be loaded. Please run the V36 Supabase SQL.</div>'}}
-async function loadStaff36(){const staff=document.getElementById('staffSiteVisitRequests');if(!staff)return;let rows=[];try{let q=await supabaseClient.from('bookings').select('*').ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(100);if(q.error)throw q.error;rows=q.data||[]}catch(e){staff.innerHTML='<div class="notice error">Requests could not be loaded. Check staff/admin RLS.</div>';return}
- staff.innerHTML='<div class="ps-v36-admin-toolbar"><button class="btn outline" onclick="loadStaffSiteVisitRequests()">Refresh</button><span class="role-badge">'+rows.filter(x=>String(x.status||'pending')==='pending').length+' pending</span></div>'+(rows.length?rows.map(x=>{let j={};try{j=JSON.parse(x.visit_scope||'{}')}catch(e){}const status=String(x.status||'pending');return '<div class="ps-v36-admin-request"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b>'+esc36(x.request_id||'Site Visit')+'</b><br><small>'+esc36(x.client_name||'Client')+' • '+new Date(x.created_at).toLocaleString('en-IN')+'</small></div><span class="role-badge">'+esc36(status)+'</span></div><p style="margin:8px 0"><b>Preferred:</b> '+esc36(x.preferred_date_from||j.requested_date_from||j.requested_date||'—')+' to '+esc36(x.preferred_date_to||j.requested_date_to||j.requested_date||'—')+'<br><b>Reason:</b> '+esc36(j.reason||'Not provided')+'</p><div class="ps-v36-admin-grid"><input type="date" id="admDate_'+esc36(x.id)+'" value="'+esc36(x.scheduled_date||'')+'" aria-label="Scheduled date"><input type="time" id="admTime_'+esc36(x.id)+'" value="'+esc36(x.scheduled_time||'')+'" aria-label="Scheduled time"><input id="admPhone_'+esc36(x.id)+'" value="'+esc36(x.mobile||'')+'" placeholder="Client phone" aria-label="Client phone"><input id="admEmail_'+esc36(x.id)+'" value="'+esc36(x.email||'')+'" placeholder="Client email" aria-label="Client email"></div><div class="rma-v36-admin-actions"><button class="btn dark" onclick="approvePathSeeker36(\''+esc36(x.id)+'\')">Approve & Schedule</button><button class="btn outline" onclick="setBookingStatus36(\''+esc36(x.id)+'\',\'rejected\')">Reject</button><button class="btn outline" onclick="setBookingStatus36(\''+esc36(x.id)+'\',\'completed\')">Mark Completed</button><button class="btn outline" onclick="openChatForBooking36(\''+esc36(x.client_user_id||'')+'\')">Open Conversation</button></div></div>'}).join(''):'<div class="muted">No site-visit requests.</div>');
- await loadAdminMessages36();
+async function loadStaff36(){
+ const staff=document.getElementById('staffSiteVisitRequests');if(!staff)return;let rows=[];
+ try{const q=await supabaseClient.from('bookings').select('*').ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(100);if(q.error)throw q.error;rows=q.data||[]}
+ catch(e){staff.innerHTML='<div class="notice error">Requests could not be loaded. Check staff/admin RLS.</div>';return}
+ const pending=rows.filter(x=>String(x.status||'pending').toLowerCase()==='pending').length;
+ const rendered=rows.map(x=>{let j={};try{j=JSON.parse(x.visit_scope||'{}')}catch(e){}const status=String(x.status||'pending').toLowerCase();
+ return `<div class="ps-v36-admin-request" id="adminReq_${esc36(x.id)}"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b>${esc36(x.request_id||'Site Visit')}</b><br><small>${esc36(x.client_name||'Client')} • ${esc36(x.mobile||V36_CLIENT_PHONE)} • ${esc36(x.email||V36_CLIENT_EMAIL)}</small><br><small>Requested ${new Date(x.created_at).toLocaleString('en-IN')}</small></div><span class="role-badge">${esc36(status)}</span></div>
+ <p style="margin:8px 0"><b>Preferred:</b> ${esc36(x.preferred_date_from||j.requested_date_from||j.requested_date||'—')} to ${esc36(x.preferred_date_to||j.requested_date_to||j.requested_date||'—')}<br><b>Reason:</b> ${esc36(j.reason||'Not provided')}</p>
+ <div class="ps-v36-admin-grid"><input type="date" id="admDate_${esc36(x.id)}" value="${esc36(x.scheduled_date||'')}" aria-label="Scheduled date"><input type="time" id="admTime_${esc36(x.id)}" value="${esc36(x.scheduled_time||'')}" aria-label="Scheduled time"><input id="admPhone_${esc36(x.id)}" value="${esc36(x.mobile||V36_CLIENT_PHONE)}" placeholder="Client phone"><input id="admEmail_${esc36(x.id)}" value="${esc36(x.email||V36_CLIENT_EMAIL)}" placeholder="Client email"></div>
+ <div class="rma-v36-admin-actions"><button class="btn dark" onclick="approvePathSeeker36('${esc36(x.id)}')">Approve &amp; Schedule</button><button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','rejected')">Reject</button><button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','completed')">Mark Completed</button><button class="btn outline" onclick="openChatForBooking36('${esc36(x.client_user_id||'')}')">Open Conversation</button></div>
+ <div class="ps-v39-review-editor"><h4>Site Visit Review / Record</h4><textarea id="reviewNotes_${esc36(x.id)}" placeholder="Write what was inspected, discussed, verified, decided, pending work, etc."></textarea><input id="reviewPhotos_${esc36(x.id)}" type="file" accept="image/*" multiple><button class="btn outline" onclick="saveSiteVisitReview36('${esc36(x.id)}')">Save Visit Review &amp; Photos</button><div id="reviewMsg_${esc36(x.id)}" class="muted"></div></div>
+ <div id="reviewHistory_${esc36(x.id)}" class="ps-v39-review-list">Loading visit reviews...</div></div>`;}).join('');
+ staff.innerHTML='<div class="ps-v36-admin-toolbar"><button class="btn outline" onclick="loadStaffSiteVisitRequests()">Refresh</button><span class="role-badge">'+pending+' pending</span></div>'+(rendered||'<div class="muted">No site-visit requests.</div>');
+ await loadAdminMessages36(); for(const x of rows) await loadAdminReviewHistory36(x.id);
 }
-async function approvePathSeeker36(id){const d=document.getElementById('admDate_'+id)?.value||'',t=document.getElementById('admTime_'+id)?.value||'';if(!d||!t){toast36('Select the scheduled date and time first.','error');return}const user=await getUser36();let name=user?.email||'RMA Admin';try{const p=await supabaseClient.from('profiles').select('full_name').eq('id',user.id).maybeSingle();name=p.data?.full_name||name}catch(e){}let r=await supabaseClient.from('bookings').update({status:'approved',approved_by:name,scheduled_date:d,scheduled_time:t}).eq('id',id);if(r.error)throw r.error;const b=await supabaseClient.from('bookings').select('*').eq('id',id).maybeSingle();const x=b.data;await createClientNotification36(x?.client_user_id,'Site visit approved','Your recent site-visit request has been approved. Scheduled for '+d+' at '+t+'.',id);await loadStaff36();toast36('Site visit approved and scheduled.','success')}
-async function setBookingStatus36(id,status){let r=await supabaseClient.from('bookings').update({status}).eq('id',id);if(r.error){toast36(r.error.message,'error');return}const x=(await supabaseClient.from('bookings').select('*').eq('id',id).maybeSingle()).data;if(x?.client_user_id)await createClientNotification36(x.client_user_id,'Site visit status updated','Your site-visit request status is now '+status+'.',id);await loadStaff36()}
+async function approvePathSeeker36(id){
+ const d=document.getElementById('admDate_'+id)?.value||'',t=document.getElementById('admTime_'+id)?.value||'';if(!d||!t){toast36('Select the scheduled date and time first.','error');return}
+ const user=await getUser36();let name=user?.email||'RMA Admin';try{const p=await supabaseClient.from('profiles').select('full_name').eq('id',user.id).maybeSingle();name=p.data?.full_name||name}catch(e){}
+ const r=await supabaseClient.from('bookings').update({status:'approved',approved_by:name,scheduled_date:d,scheduled_time:t,mobile:document.getElementById('admPhone_'+id)?.value||V36_CLIENT_PHONE,email:document.getElementById('admEmail_'+id)?.value||V36_CLIENT_EMAIL}).eq('id',id);if(r.error){toast36(r.error.message,'error');return}
+ const x=(await supabaseClient.from('bookings').select('*').eq('id',id).maybeSingle()).data;
+ if(x?.client_user_id)await createClientNotification36(x.client_user_id,'Site visit appointment booked','Your appointment has been booked for '+d+' at '+t+'. Request ID: '+(x.request_id||''),id);
+ await loadStaff36();toast36('Site visit approved and scheduled.','success');
+}
+async function setBookingStatus36(id,status){
+ const user=await getUser36();let name=user?.email||'RMA Admin';try{const p=await supabaseClient.from('profiles').select('full_name').eq('id',user.id).maybeSingle();name=p.data?.full_name||name}catch(e){}
+ const r=await supabaseClient.from('bookings').update({status,approved_by:status==='rejected'?name:undefined}).eq('id',id);if(r.error){toast36(r.error.message,'error');return}
+ const x=(await supabaseClient.from('bookings').select('*').eq('id',id).maybeSingle()).data;if(x?.client_user_id){const text=status==='rejected'?'Your site-visit request has been rejected.':status==='completed'?'Your site visit has been completed.':'Your site-visit request status is now '+status+'.';await createClientNotification36(x.client_user_id,'Site visit status updated',text,id)}await loadStaff36();
+}
 async function createClientNotification36(userId,title,message,bookingId){if(!userId)return;try{await supabaseClient.from('client_notifications').insert({user_id:userId,title,message,booking_id:bookingId,type:'site_visit'})}catch(e){console.warn('notification insert',e)}}
-async function loadAdminMessages36(){const staff=document.getElementById('staffSiteVisitRequests');if(!staff)return;let wrap=document.getElementById('rmaV36AdminMessages');if(!wrap){wrap=document.createElement('div');wrap.id='rmaV36AdminMessages';wrap.className='ps-v36-card';wrap.style.marginTop='18px';staff.parentElement.appendChild(wrap)}try{const q=await supabaseClient.from('client_messages').select('*').order('created_at',{ascending:false}).limit(100);if(q.error)throw q.error;const rows=q.data||[];wrap.innerHTML='<h3>Client Messages / Conversations</h3><p class="muted">Every client message and RMA reply is recorded with date and time.</p>'+ (rows.length?rows.map(x=>'<div class="ps-v36-admin-request"><b>'+esc36(x.subject||'Client Message')+'</b><br><small>'+esc36(x.client_name||'Client')+' • '+new Date(x.created_at).toLocaleString('en-IN')+' • '+esc36(x.sender_role||'client')+'</small><p style="white-space:pre-wrap">'+esc36(x.message||'')+'</p>'+(x.sender_role==='client'&&x.user_id?'<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="reply_'+esc36(x.id)+'" placeholder="Reply to client" style="flex:1;min-width:220px;padding:9px;border:1px solid #d8e0e5;border-radius:7px"><button class="btn dark" onclick="replyClientMessage36(\''+esc36(x.user_id)+'\',\''+esc36(x.subject||'')+'\',\'reply_'+esc36(x.id)+'\')">Reply</button></div>':'')+'</div>').join(''):'<div class="muted">No client messages.</div>')}catch(e){wrap.innerHTML='<h3>Client Messages</h3><div class="notice error">Could not load messages.</div>'}}
+async function loadAdminMessages36(){
+ const staff=document.getElementById('staffSiteVisitRequests');if(!staff)return;let wrap=document.getElementById('rmaV36AdminMessages');if(!wrap){wrap=document.createElement('div');wrap.id='rmaV36AdminMessages';wrap.className='ps-v36-card';wrap.style.marginTop='18px';staff.parentElement.appendChild(wrap)}
+ try{const q=await supabaseClient.from('client_messages').select('*').order('created_at',{ascending:true}).limit(300);if(q.error)throw q.error;const rows=q.data||[];const groups={};rows.forEach(x=>{const k=x.user_id||x.thread_id||'unknown';(groups[k]??=[]).push(x)});
+  const html=Object.entries(groups).map(([uid,msgs])=>'<div class="ps-v36-admin-request"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><b>Conversation — '+esc36(msgs[0]?.client_name||'Client')+'</b><br><small>'+msgs.length+' message(s)</small></div><button class="btn outline" onclick="deleteConversation36(\''+esc36(uid)+'\')">Delete Entire Conversation</button></div><div class="ps-v36-thread">'+msgs.map(x=>'<div class="ps-v36-msg '+(x.sender_role==='admin'?'admin':'client')+'"><small><b>'+(x.sender_role==='admin'?'RMA':'Client')+'</b> • '+new Date(x.created_at).toLocaleString('en-IN')+(x.subject?' • '+esc36(x.subject):'')+'</small>'+esc36(x.message||'')+'</div>').join('')+'</div>'+(msgs.some(x=>x.sender_role==='client')?'<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="reply_'+esc36(uid)+'" placeholder="Reply to client" style="flex:1;min-width:220px;padding:9px;border:1px solid #d8e0e5;border-radius:7px"><button class="btn dark" onclick="replyClientMessage36(\''+esc36(uid)+'\',\'Project Conversation\',\'reply_'+esc36(uid)+'\')">Reply</button></div>':'')+'</div>').join('');
+  wrap.innerHTML='<h3>Client Messages / Conversations</h3><p class="muted">Every client message and RMA reply is recorded with date and time. Deleting a conversation removes it from both sides.</p>'+(html||'<div class="muted">No client messages.</div>');
+ }catch(e){wrap.innerHTML='<h3>Client Messages</h3><div class="notice error">Could not load messages.</div>'}
+}
+async function deleteConversation36(userId){if(!userId||userId==='unknown')return toast36('This conversation has no client user ID.','error');if(!confirm('Delete this entire conversation from both the client and RMA sides? This cannot be undone.'))return;const r=await supabaseClient.from('client_messages').delete().eq('user_id',userId);if(r.error){toast36(r.error.message,'error');return}toast36('Conversation deleted from both sides.','success');await loadAdminMessages36()}
 async function replyClientMessage36(userId,subject,inputId){const input=document.getElementById(inputId),text=input?.value.trim();if(!text)return;const user=await getUser36();let r=await supabaseClient.from('client_messages').insert({user_id:userId,client_name:'RMA Design & Construction',email:user?.email||V36_SITE_EMAIL,subject:subject||'RMA Reply',message:text,sender_role:'admin',thread_id:userId,status:'sent'});if(r.error){toast36(r.error.message,'error');return}await createClientNotification36(userId,'New message from RMA',text,null);input.value='';await loadAdminMessages36();toast36('Reply saved.','success')}
-async function openChatForBooking36(userId){if(!userId)return toast36('This booking has no linked client user ID yet.','error');const box=document.getElementById('rmaV36AdminMessages');box?.scrollIntoView({behavior:'smooth'});}
-window.submitPathSeekerVisitRequest=submitPathSeekerVisitRequest36;
-window.loadStaffSiteVisitRequests=loadStaff36;
-window.updatePathSeekerVisitStatus=async(id,status)=>setBookingStatus36(id,status);
-window.approvePathSeeker36=approvePathSeeker36;
-window.setBookingStatus36=setBookingStatus36;
-window.replyClientMessage36=replyClientMessage36;
-window.openChatForBooking36=openChatForBooking36;
-const oldSend=window.sendPathSeekerMessage;
+async function openChatForBooking36(userId){if(!userId)return toast36('This booking has no linked client user ID yet.','error');document.getElementById('rmaV36AdminMessages')?.scrollIntoView({behavior:'smooth'});}
+async function saveSiteVisitReview36(bookingId){
+ const notes=document.getElementById('reviewNotes_'+bookingId)?.value.trim()||'';const files=[...(document.getElementById('reviewPhotos_'+bookingId)?.files||[])];const msg=document.getElementById('reviewMsg_'+bookingId);if(!notes&&!files.length){toast36('Add a note or at least one photograph.','error');return}
+ const user=await getUser36();if(!user)return;
+ try{const paths=[];for(const file of files){if(!file.type.startsWith('image/'))continue;if(file.size>8*1024*1024)continue;const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');const path=bookingId+'/'+Date.now()+'_'+safe;const up=await supabaseClient.storage.from('site-visit-photos').upload(path,file,{upsert:false,contentType:file.type});if(up.error)throw up.error;paths.push(path)}
+  const r=await supabaseClient.from('site_visit_reviews').insert({booking_id:bookingId,reviewed_by:user.id,notes,photo_paths:paths});if(r.error)throw r.error;
+  const b=(await supabaseClient.from('bookings').select('client_user_id,request_id').eq('id',bookingId).maybeSingle()).data;if(b?.client_user_id)await createClientNotification36(b.client_user_id,'Site visit review updated','RMA has added a site-visit review'+(b.request_id?' for '+b.request_id:'')+'.',bookingId);
+  if(msg)msg.textContent='Visit review saved.';document.getElementById('reviewNotes_'+bookingId).value='';document.getElementById('reviewPhotos_'+bookingId).value='';await loadAdminReviewHistory36(bookingId);
+ }catch(e){if(msg)msg.textContent='Could not save review: '+(e.message||'Check site-visit review SQL and Storage policies.');}
+}
+async function loadAdminReviewHistory36(bookingId){const box=document.getElementById('reviewHistory_'+bookingId);if(!box)return;try{const q=await supabaseClient.from('site_visit_reviews').select('*').eq('booking_id',bookingId).order('created_at',{ascending:false});if(q.error)throw q.error;const rows=q.data||[];box.innerHTML=rows.length?rows.map(r=>'<div class="ps-v39-review"><small>RMA • '+new Date(r.created_at).toLocaleString('en-IN')+'</small><div>'+esc36(r.notes||'No notes')+'</div>'+((r.photo_paths||[]).length?'<div>'+r.photo_paths.map(p=>'<a href="#" onclick="openSiteReviewPhoto36(event,'+JSON.stringify(p)+')">View photo</a>').join(' • ')+'</div>':'')+'</div>').join(''):'<div class="muted">No site-visit review recorded yet.</div>'}catch(e){box.innerHTML='<div class="muted">Review history unavailable.</div>'}}
 window.sendPathSeekerMessage=async function(){const user=await getUser36();if(!user)return;const subject=document.getElementById('psMessageSubject')?.value.trim()||'Path Seeker Project Request';const message=document.getElementById('psMessageText')?.value.trim()||'';const box=document.getElementById('psMessageStatus');if(!message){box.className='notice error';box.classList.remove('hidden');box.textContent='Please write your message first.';return}let r=await supabaseClient.from('client_messages').insert({user_id:user.id,client_name:V36_CLIENT_NAME,email:user.email||null,subject,message,sender_role:'client',thread_id:user.id,status:'new'});if(r.error){box.className='notice error';box.classList.remove('hidden');box.textContent=r.error.message;return}box.className='notice success';box.classList.remove('hidden');box.textContent='Message sent and recorded in your conversation.';document.getElementById('psMessageText').value='';await loadConversation36(user.id)};
 const oldLoad=window.loadPathSeeker;
 window.loadPathSeeker=async function(user){if(oldLoad)await oldLoad(user);await enhancePathSeekerPortal36(user)};
@@ -2582,6 +2654,149 @@ function mapAdminUsername36(){const email=document.getElementById('authEmail');i
 function v36Init(){mapAdminUsername36();const emailLabel=document.querySelector('#authEmail')?.parentElement?.querySelector('label');if(emailLabel)emailLabel.textContent='Email / Admin Username';setTimeout(()=>{if(document.getElementById('staffPortal')&&!document.getElementById('staffPortal').classList.contains('hidden'))enhanceStaffPortal36()},500)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(v36Init,300));else setTimeout(v36Init,300);
 window.rmaV36Init=v36Init;
+})();
+</script>
+
+<script id="rma-v39-client-fixes">
+(function(){
+ const originalEnhance=window.enhancePathSeekerPortal36;
+ // Ensure the client-visible data is always the agreed account data, even if an older
+ // client_accounts row still contains the legacy PSIS001/contact values.
+ const origLoad=window.loadPathSeeker;
+ window.loadPathSeeker=async function(user){if(origLoad)await origLoad(user);try{
+   const p=document.getElementById('rmaPathSeekerPortal');if(!p)return;
+   const fields=p.querySelectorAll('.ps-v36-field');
+   fields.forEach(f=>{const label=f.querySelector('small')?.textContent||'';const b=f.querySelector('b');if(!b)return;if(label==='Client ID')b.textContent='PSIS261';if(label==='Client Phone')b.textContent='9419118424';if(label==='Client Email')b.textContent='pathseekers.vijaypur@gmail.com';});
+ }catch(e){console.warn('V39 client refresh',e)}};
+})();
+</script>
+
+<style id="rma-v40-admin-client-fix">
+/* V40 — cleaner client scope + full RMA admin dashboard */
+.ps-v40-admin-shell{display:grid;gap:18px;margin-top:22px}
+.ps-v40-admin-profile{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+.ps-v40-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px}
+.ps-v40-card h3{margin:0 0 8px}
+.ps-v40-kicker{font-size:11px;letter-spacing:2px;font-weight:800;color:var(--blue);text-transform:uppercase}
+.ps-v40-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.ps-v40-field{border:1px solid var(--line);border-radius:9px;padding:11px;background:#fbfcfc}
+.ps-v40-field small{display:block;color:#66727b;margin-bottom:4px}.ps-v40-field b{display:block;color:#17232b}
+.ps-v40-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.ps-v40-stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px}.ps-v40-stat small{display:block;color:#68747d}.ps-v40-stat strong{display:block;font-size:25px;margin-top:5px}
+.ps-v40-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ps-v40-section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.ps-v40-request{border:1px solid var(--line);border-radius:10px;padding:15px;margin-top:10px;background:#fff}
+.ps-v40-request.approved{border-left:4px solid #198754}.ps-v40-request.pending{border-left:4px solid #d39e00}.ps-v40-request.rejected{border-left:4px solid #c0392b}.ps-v40-request.completed{border-left:4px solid #1d6f42}
+.ps-v40-request-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.ps-v40-request-meta{color:#68747d;font-size:13px;line-height:1.55}.ps-v40-schedule{margin-top:10px;padding:10px;border-radius:8px;background:#f1f8f5}
+.ps-v40-hide{display:none!important}
+@media(max-width:900px){.ps-v40-admin-profile,.ps-v40-stats{grid-template-columns:1fr 1fr}.ps-v40-profile-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.ps-v40-admin-profile,.ps-v40-stats{grid-template-columns:1fr}}
+</style>
+<script id="rma-v40-fixes">
+(function(){
+  'use strict';
+  const V40_CLIENT_ID='PSIS261', V40_CLIENT_NAME='Path Seeker International School', V40_CLIENT_PHONE='9419118424', V40_CLIENT_EMAIL='pathseekers.vijaypur@gmail.com', V40_ADDRESS='Ramgarh, Jammu & Kashmir, India', V40_RMA_PHONE='+91 96221 21692', V40_RMA_EMAIL='RMA.studies07@gmail.com';
+  const e=s=>{const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML};
+  const q=s=>document.querySelector(s);
+  const qa=s=>[...document.querySelectorAll(s)];
+  function rebuildClientScope(){
+    const portal=q('#rmaPathSeekerPortal'); if(!portal) return;
+    const top=portal.querySelector('.ps-v33-top');
+    const newProfile=portal.querySelector('.ps-v36-profile');
+    if(!top || !newProfile) return;
+    const detailedScope=top.querySelector('.ps-v33-scope');
+    const generatedScope=portal.querySelector('#psV36ScopeCard');
+    if(generatedScope) generatedScope.remove();
+    if(detailedScope){
+      top.replaceWith(detailedScope);
+      detailedScope.classList.add('ps-v40-client-scope');
+      newProfile.insertAdjacentElement('afterend',detailedScope);
+    }else{
+      top.remove();
+    }
+  }
+  function renderAdminShell(){
+    const staff=q('#staffPortal'); if(!staff) return;
+    const oldGrid=staff.querySelector('.portal-grid');
+    const oldNotice=[...staff.children].find(x=>x.classList?.contains('notice') && x.textContent.includes('dashboard is role-protected'));
+    if(oldGrid) oldGrid.remove(); if(oldNotice) oldNotice.remove();
+    let shell=q('#rmaV40AdminShell');
+    if(!shell){
+      shell=document.createElement('div');shell.id='rmaV40AdminShell';shell.className='ps-v40-admin-shell';
+      const req=staff.querySelector('#staffSiteVisitRequests')?.closest('.form-panel');
+      const h=staff.querySelector('.heading');
+      if(h) h.insertAdjacentElement('afterend',shell); else staff.querySelector('.container')?.appendChild(shell);
+      shell.innerHTML=`
+        <div class="ps-v40-admin-profile">
+          <div class="ps-v40-card"><span class="ps-v40-kicker">RMA ADMIN PROFILE</span><h3 style="margin-top:7px">RMA Design &amp; Construction</h3><p class="muted">Authorized administrator account</p>
+            <div class="ps-v40-profile-grid">
+              <div class="ps-v40-field"><small>Admin Name</small><b>RMA Admin</b></div>
+              <div class="ps-v40-field"><small>Admin Email</small><b>${e(V40_RMA_EMAIL)}</b></div>
+              <div class="ps-v40-field"><small>RMA Phone</small><b>${e(V40_RMA_PHONE)}</b></div>
+              <div class="ps-v40-field"><small>Role</small><b>Administrator</b></div>
+            </div>
+          </div>
+          <div class="ps-v40-card"><span class="ps-v40-kicker">PATH SEEKER CLIENT</span><h3 style="margin-top:7px">${e(V40_CLIENT_NAME)}</h3><p class="muted">Active consultation project</p>
+            <div class="ps-v40-field"><small>Client ID</small><b>${V40_CLIENT_ID}</b></div>
+            <div class="ps-v40-profile-grid">
+              <div class="ps-v40-field"><small>Client Phone</small><b>${V40_CLIENT_PHONE}</b></div>
+              <div class="ps-v40-field"><small>Client Email</small><b>${V40_CLIENT_EMAIL}</b></div>
+              <div class="ps-v40-field" style="grid-column:1/-1"><small>Project Address</small><b>${e(V40_ADDRESS)}</b></div>
+            </div>
+            <div class="ps-v40-actions"><button class="btn outline" type="button" onclick="document.getElementById('staffSiteVisitRequests')?.scrollIntoView({behavior:'smooth'})">Site Visits</button><button class="btn outline" type="button" onclick="document.getElementById('rmaV36AdminMessages')?.scrollIntoView({behavior:'smooth'})">Messages</button></div>
+          </div>
+        </div>
+        <div class="ps-v40-card"><div class="ps-v40-section-title"><div><span class="ps-v40-kicker">ADMIN OVERVIEW</span><h3 style="margin-top:5px">Project &amp; Request Control</h3></div><button class="btn outline" type="button" onclick="window.loadStaff36?.()">Refresh Dashboard</button></div>
+          <div class="ps-v40-stats">
+            <div class="ps-v40-stat"><small>Pending visits</small><strong id="v40Pending">—</strong></div>
+            <div class="ps-v40-stat"><small>Approved visits</small><strong id="v40Approved">—</strong></div>
+            <div class="ps-v40-stat"><small>Completed visits</small><strong id="v40Completed">—</strong></div>
+            <div class="ps-v40-stat"><small>Client messages</small><strong id="v40Messages">—</strong></div>
+            <div class="ps-v40-stat"><small>Documents</small><strong id="v40Docs">—</strong></div>
+          </div>
+          <div class="ps-v40-actions"><button class="btn dark" type="button" onclick="document.getElementById('staffSiteVisitRequests')?.scrollIntoView({behavior:'smooth'})">Manage Site Visits</button><button class="btn outline" type="button" onclick="document.getElementById('rmaV36AdminMessages')?.scrollIntoView({behavior:'smooth'})">Client Conversations</button><button class="btn outline" type="button" onclick="document.getElementById('rmaV40ClientProject')?.scrollIntoView({behavior:'smooth'})">Client / Project</button></div>
+        </div>
+        <div class="ps-v40-card" id="rmaV40ClientProject"><span class="ps-v40-kicker">PROJECT PROFILE</span><h3 style="margin-top:7px">${e(V40_CLIENT_NAME)}</h3><p class="muted">Architect &amp; Engineering Consultant — consultation basis only.</p><div class="ps-v40-profile-grid"><div class="ps-v40-field"><small>Client ID</small><b>${V40_CLIENT_ID}</b></div><div class="ps-v40-field"><small>Monthly complimentary site visits</small><b>2</b></div><div class="ps-v40-field"><small>Client phone</small><b>${V40_CLIENT_PHONE}</b></div><div class="ps-v40-field"><small>Client email</small><b>${V40_CLIENT_EMAIL}</b></div><div class="ps-v40-field" style="grid-column:1/-1"><small>Scope</small><b>Architectural consultation, engineering consultation, site consultation and client coordination.</b></div><div class="ps-v40-field" style="grid-column:1/-1"><small>Project address</small><b>${e(V40_ADDRESS)}</b></div></div></div>`;
+    }
+    const req=staff.querySelector('#staffSiteVisitRequests')?.closest('.form-panel');
+    if(req && req.parentElement!==staff.querySelector('.container')){
+      // leave it in its existing position; the shell is the overview above it
+    }
+  }
+  async function refreshAdminStats(){
+    try{
+      const q1=await supabaseClient.from('bookings').select('status,service_type').ilike('service_type','%Site Visit%');
+      const rows=q1.error?[]:(q1.data||[]); const count=s=>rows.filter(x=>String(x.status||'pending').toLowerCase()===s).length;
+      q('#v40Pending')?.replaceChildren(document.createTextNode(String(count('pending'))));
+      q('#v40Approved')?.replaceChildren(document.createTextNode(String(count('approved'))));
+      q('#v40Completed')?.replaceChildren(document.createTextNode(String(count('completed'))));
+    }catch(_){ }
+    try{const q2=await supabaseClient.from('client_messages').select('id',{count:'exact',head:true});q('#v40Messages')?.replaceChildren(document.createTextNode(String(q2.count||0)))}catch(_){ }
+    try{const q3=await supabaseClient.from('project_documents').select('id',{count:'exact',head:true});q('#v40Docs')?.replaceChildren(document.createTextNode(String(q3.count||0)))}catch(_){ }
+  }
+  function patchAdminRequestRendering(){
+    if(typeof window.loadStaff36!=='function' || window.rmaV40Patched) return;
+    window.rmaV40Patched=true;
+    const original=window.loadStaff36;
+    window.loadStaff36=async function(){await original(); refreshAdminStats();};
+  }
+  // Make the status controls truthful: approved requests shouldn't still offer Approve/Reject.
+  function cleanRequestButtons(){
+    qa('#staffSiteVisitRequests .ps-v36-admin-request').forEach(card=>{
+      const badge=card.querySelector('.role-badge'); const status=(badge?.textContent||'').trim().toLowerCase();
+      if(status==='approved') card.querySelectorAll('button').forEach(b=>{if(/approve & schedule|reject/i.test(b.textContent)) b.classList.add('ps-v40-hide')});
+      if(status==='completed'||status==='rejected') card.querySelectorAll('button').forEach(b=>{if(/approve & schedule/i.test(b.textContent)) b.classList.add('ps-v40-hide')});
+    });
+  }
+  function initV40(){
+    rebuildClientScope();
+    renderAdminShell();
+    patchAdminRequestRendering();
+    setTimeout(()=>{cleanRequestButtons();refreshAdminStats()},800);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(initV40,600));else setTimeout(initV40,600);
+  const oldEnhance=window.enhanceStaffPortal36;
+  window.enhanceStaffPortal36=async function(){if(oldEnhance)await oldEnhance();renderAdminShell();patchAdminRequestRendering();setTimeout(()=>{cleanRequestButtons();refreshAdminStats()},300)};
 })();
 </script>
 
