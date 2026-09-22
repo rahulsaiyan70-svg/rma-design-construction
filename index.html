@@ -2800,4 +2800,101 @@ window.rmaV36Init=v36Init;
 })();
 </script>
 
+
+<style id="rma-v41-request-fixes">
+.ps-v41-delete{border-color:#c0392b!important;color:#a52a1f!important}
+.ps-v41-notice{margin-top:8px}
+</style>
+<script id="rma-v41-request-fixes-script">
+(function(){
+'use strict';
+const V41_CLIENT_NAME='Path Seeker International School';
+const V41_CLIENT_EMAIL='pathseekers.vijaypur@gmail.com';
+const esc41=s=>{const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML};
+async function getCurrentUser41(){try{return (await supabaseClient.auth.getUser()).data?.user||null}catch(e){return null}}
+async function findClientBookings41(userId){
+  const out=[]; const seen=new Set();
+  const add=rows=>{for(const x of (rows||[])){if(x?.id&&!seen.has(x.id)){seen.add(x.id);out.push(x)}}};
+  try{let q=await supabaseClient.from('bookings').select('*').eq('client_user_id',userId).ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(50);if(!q.error)add(q.data)}catch(e){}
+  const user=await getCurrentUser41();
+  if(user?.email){try{let q=await supabaseClient.from('bookings').select('*').eq('email',user.email).ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(50);if(!q.error)add(q.data)}catch(e){}}
+  const last=(()=>{try{return JSON.parse(localStorage.getItem('rma_last_path_seeker_visit_request')||'null')}catch(e){return null}})();
+  if(last?.request_id){try{let q=await supabaseClient.from('bookings').select('*').eq('request_id',last.request_id).maybeSingle();if(!q.error&&q.data)add([q.data])}catch(e){}}
+  if(!out.length){try{let q=await supabaseClient.from('bookings').select('*').eq('client_name',V41_CLIENT_NAME).ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(50);if(!q.error)add(q.data)}catch(e){}}
+  return out.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+}
+async function renderLatestStatus41(row,userId){
+ if(!row)return;
+ try{
+  const rows=await findClientBookings41(userId); const x=rows[0];
+  if(!x){row.className='ps-v36-status';row.innerHTML='<span><b>Recent request</b><br><small>No request yet</small></span><span>—</span>';return;}
+  const status=String(x.status||'pending').toLowerCase();
+  const label=status==='approved'?'Approved':status==='rejected'?'Rejected':status==='completed'?'Completed':'Pending';
+  let message='Your site-visit request is '+label.toLowerCase()+'.';
+  if(status==='approved' && x.scheduled_date){message='Your appointment has been booked for '+new Date(x.scheduled_date+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'})+(x.scheduled_time?' at '+String(x.scheduled_time).slice(0,5):'')+'.';}
+  if(status==='rejected')message='Your site-visit request has been rejected. Please contact RMA if you need another slot.';
+  if(status==='completed')message='Your site visit has been completed.';
+  row.className='ps-v36-status '+status;
+  row.innerHTML='<span><b>Latest site-visit request</b><br><small>'+esc41(message)+'</small>'+(x.scheduled_date?'<br><small>Scheduled: '+esc41(x.scheduled_date)+(x.scheduled_time?' at '+esc41(String(x.scheduled_time).slice(0,5)):'')+'</small>':'')+'</span><strong>'+esc41(x.request_id||'Request')+'</strong>';
+  if(typeof window.renderVisitHistory36==='function') await window.renderVisitHistory36(userId,rows);
+ }catch(e){row.innerHTML='<span><b>Recent request</b><br><small>Request status could not be loaded. Please refresh.</small></span>'}
+}
+async function deleteRequest41(id){
+ if(!id)return;
+ if(!confirm('Delete this site-visit request and its visit history? This cannot be undone.'))return;
+ try{
+  try{await supabaseClient.from('site_visit_reviews').delete().eq('booking_id',id)}catch(e){}
+  try{await supabaseClient.from('client_notifications').delete().eq('booking_id',id)}catch(e){}
+  const r=await supabaseClient.from('bookings').delete().eq('id',id);
+  if(r.error)throw r.error;
+  toast36('Site-visit request deleted.','success');
+  await loadStaff36();
+ }catch(e){toast36('Could not delete request: '+(e.message||'Check the admin delete policy.'),'error')}
+}
+async function approvePathSeeker41(id){
+ const d=document.getElementById('admDate_'+id)?.value||'',t=document.getElementById('admTime_'+id)?.value||'';
+ if(!d||!t){toast36('Select the scheduled date and time first.','error');return}
+ const user=await getCurrentUser41(); let name=user?.email||'RMA Admin';
+ try{const p=await supabaseClient.from('profiles').select('full_name').eq('id',user.id).maybeSingle();name=p.data?.full_name||name}catch(e){}
+ try{
+  let x=(await supabaseClient.from('bookings').select('*').eq('id',id).maybeSingle()).data;
+  if(!x)throw new Error('Request not found.');
+  let clientUserId=x.client_user_id||null;
+  if(!clientUserId && x.email){try{const u=await supabaseClient.from('profiles').select('id').ilike('email',x.email).maybeSingle();clientUserId=u.data?.id||null}catch(e){}}
+  if(!clientUserId && x.email){try{const ca=await supabaseClient.from('client_accounts').select('user_id').ilike('email',x.email).maybeSingle();clientUserId=ca.data?.user_id||null}catch(e){}}
+  if(!clientUserId && x.client_name){try{const ca=await supabaseClient.from('client_accounts').select('user_id').ilike('full_name',x.client_name).maybeSingle();clientUserId=ca.data?.user_id||null}catch(e){}}
+  const patch={status:'approved',approved_by:name,scheduled_date:d,scheduled_time:t,mobile:document.getElementById('admPhone_'+id)?.value||x.mobile||'9419118424',email:document.getElementById('admEmail_'+id)?.value||x.email||V41_CLIENT_EMAIL};
+  if(clientUserId)patch.client_user_id=clientUserId;
+  const r=await supabaseClient.from('bookings').update(patch).eq('id',id);if(r.error)throw r.error;
+  if(clientUserId){await createClientNotification36(clientUserId,'Site visit appointment booked','Your site visit has been confirmed for '+d+' at '+t+'. Request ID: '+(x.request_id||'')+'. Please be ready for the scheduled visit.',id)}
+  await loadStaff36();toast36('Site visit approved and scheduled.','success');
+ }catch(e){toast36('Could not approve request: '+(e.message||'Check bookings columns/RLS.'),'error')}
+}
+function patchAdminCards41(){
+ const cards=[...document.querySelectorAll('#staffSiteVisitRequests .ps-v36-admin-request')];
+ cards.forEach(card=>{
+   if(card.querySelector('.ps-v41-delete'))return;
+   const id=(card.id||'').replace(/^adminReq_/,''); if(!id)return;
+   const actions=card.querySelector('.rma-v36-admin-actions'); if(!actions)return;
+   const b=document.createElement('button');b.type='button';b.className='btn outline ps-v41-delete';b.textContent='Delete Request';b.onclick=()=>deleteRequest41(id);actions.appendChild(b);
+ });
+}
+const originalLoad=window.loadStaff36;
+if(originalLoad&&!window.rmaV41LoadPatched){
+ window.rmaV41LoadPatched=true;
+ window.loadStaff36=async function(){await originalLoad();patchAdminCards41()};
+}
+const originalEnhance=window.enhancePathSeekerPortal36;
+if(originalEnhance&&!window.rmaV41ClientPatched){
+ window.rmaV41ClientPatched=true;
+ window.enhancePathSeekerPortal36=async function(user){await originalEnhance(user);const row=document.getElementById('psV36LatestStatus');if(row)await renderLatestStatus41(row,user.id)};
+}
+window.deleteSiteVisitRequest41=deleteRequest41;
+window.approvePathSeeker36=approvePathSeeker41;
+function init41(){patchAdminCards41();const row=document.getElementById('psV36LatestStatus');if(row)getCurrentUser41().then(u=>u&&renderLatestStatus41(row,u.id))}
+setTimeout(init41,1200);
+setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36LatestStatus');if(row)getCurrentUser41().then(u=>u&&renderLatestStatus41(row,u.id))},15000);
+})();
+</script>
+
 </body></html>
