@@ -3025,4 +3025,152 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
   window.rmaV44RefreshDocumentStatus=loadAdminDocumentReviewV44;
 })();
 </script>
+
+
+<style id="rma-v45-site-visit-history">
+#psV36ScopeCard{display:none!important}
+
+/* V45 — Path Seeker monthly site-visit ledger, completion records and reports */
+#psV45MonthlyBox{margin-top:14px;padding:14px 16px;border:1px solid #cfe2d6;border-radius:10px;background:#f4fbf7}
+#psV45MonthlyBox .v45-counter{font-size:25px;font-weight:900;color:#245b43;margin-top:3px}
+#psV45MonthlyBox .v45-sub{font-size:12px;color:#65736c;margin-top:3px}
+#psV45History{margin-top:18px}
+.ps-v45-history-card{border:1px solid #dfe7e2;border-radius:10px;background:#fff;padding:14px 15px;margin-top:9px}
+.ps-v45-history-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.ps-v45-date{font-size:15px;font-weight:900;color:#245b43}
+.ps-v45-meta{font-size:12px;color:#6a766f;margin-top:3px;line-height:1.5}
+.ps-v45-report{margin-top:10px;padding:10px;border-radius:8px;background:#f7fbf8;border:1px solid #dce9e1}
+.ps-v45-report small{display:block;color:#687580;margin-bottom:5px}
+.ps-v45-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.ps-v45-actions .btn{padding:7px 10px;font-size:11px;min-height:32px}
+.ps-v45-pending{background:#fff8e7;border-color:#ead9ad}
+.ps-v45-completed{background:#f4fbf7;border-color:#cfe2d6}
+.ps-v45-upcoming{background:#f7f9ff;border-color:#d7dff1}
+.ps-v45-admin-hint{font-size:12px;color:#687580;margin-top:7px}
+@media(max-width:600px){#psV45MonthlyBox .v45-counter{font-size:22px}.ps-v45-history-card{padding:12px}}
+</style>
+<script id="rma-v45-site-visit-ledger">
+(function(){
+'use strict';
+const V45_CLIENT_NAME='Path Seeker International School';
+const V45_MAX_MONTHLY_VISITS=2;
+/* Confirmed historical record supplied by RMA: the first September 2026 visit was completed on 15 September. */
+const V45_RECORDED_VISITS=[
+  {id:'rma-recorded-2026-09-15',date:'2026-09-15',status:'completed',request_id:'RMA-PSV-2026-09-15',reason:'Site visit completed on 15 September 2026.',seed:true}
+];
+const V45_NEXT_PLANNED_DATE='2026-09-24';
+const esc45=v=>{if(typeof window.esc==='function')return window.esc(v==null?'':String(v));const d=document.createElement('div');d.textContent=String(v==null?'':v);return d.innerHTML};
+function fmtDate45(value){if(!value)return '—';const d=new Date(value+'T00:00:00');if(Number.isNaN(d.getTime()))return String(value);return d.toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});}
+function currentMonth45(){const d=new Date();return {year:d.getFullYear(),month:d.getMonth()};}
+function monthKey45(date){const d=new Date(date+'T00:00:00');return Number.isNaN(d.getTime())?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function bookingDate45(x){return x?.scheduled_date||x?.preferred_date_from||(x?.created_at?new Date(x.created_at).toISOString().slice(0,10):'');}
+function isUsableVisit45(x){return !['rejected','cancelled'].includes(String(x?.status||'pending').toLowerCase());}
+async function getVisits45(){
+  const out=[];const seen=new Set();
+  const add=rows=>{for(const x of rows||[]){if(x&&!seen.has(x.id||x.request_id)){seen.add(x.id||x.request_id);out.push(x)}}};
+  try{const q=await supabaseClient.from('bookings').select('*').ilike('client_name','%Path Seeker%').ilike('service_type','%Site Visit%').order('created_at',{ascending:true}).limit(100);if(!q.error)add(q.data)}catch(e){}
+  /* The 15 September record is retained in the ledger even if it was completed before the current database workflow was introduced. */
+  for(const x of V45_RECORDED_VISITS){
+    if(!out.some(b=>bookingDate45(b)===x.date)){add([x]);}
+  }
+  return out.filter(x=>isUsableVisit45(x)).sort((a,b)=>String(bookingDate45(a)).localeCompare(String(bookingDate45(b))));
+}
+async function getReviews45(ids){
+  const map={};if(!ids.length)return map;
+  try{const q=await supabaseClient.from('site_visit_reviews').select('*').in('booking_id',ids).order('created_at',{ascending:true});if(!q.error)(q.data||[]).forEach(r=>(map[r.booking_id]??=[]).push(r));}catch(e){}
+  return map;
+}
+function makeReport45(visit,reviews){
+  const reportReviews=reviews||[];
+  const lines=[];
+  lines.push('RMA DESIGN & CONSTRUCTION');
+  lines.push('PATH SEEKER INTERNATIONAL SCHOOL — SITE VISIT REPORT');
+  lines.push('');
+  lines.push('Visit date: '+fmtDate45(bookingDate45(visit)));
+  if(visit.scheduled_time)lines.push('Visit time: '+String(visit.scheduled_time).slice(0,5));
+  lines.push('Status: '+(String(visit.status||'completed').charAt(0).toUpperCase()+String(visit.status||'completed').slice(1)));
+  if(visit.request_id)lines.push('Request ID: '+visit.request_id);
+  let scope={};try{scope=JSON.parse(visit.visit_scope||'{}')}catch(e){}
+  if(scope.reason)lines.push('Visit scope / reason: '+scope.reason);
+  lines.push('');
+  if(reportReviews.length){
+    lines.push('SITE VISIT REVIEW / RECORD');
+    reportReviews.forEach((r,i)=>{lines.push('');lines.push('Record '+(i+1)+' — '+new Date(r.created_at||Date.now()).toLocaleString('en-IN'));lines.push(r.notes||'No notes recorded.');});
+  }else{
+    lines.push('SITE VISIT REVIEW / RECORD');
+    lines.push('No admin review has been entered for this visit yet.');
+  }
+  lines.push('');lines.push('Prepared through the RMA Design & Construction client portal.');
+  return lines.join('\n');
+}
+function downloadReport45(visit,reviews){
+  const text=makeReport45(visit,reviews);const blob=new Blob([text],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='RMA-Path-Seeker-Site-Visit-Report-'+(bookingDate45(visit)||'visit')+'.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function ensureLedger45(){
+  const portal=document.getElementById('rmaPathSeekerPortal');if(!portal)return null;
+  let box=document.getElementById('psV45Ledger');
+  if(!box){
+    box=document.createElement('div');box.id='psV45Ledger';box.className='ps-v36-card';box.style.marginTop='18px';
+    const status=document.getElementById('psV36LatestStatus');
+    if(status?.parentElement)status.parentElement.insertAdjacentElement('afterend',box);else portal.appendChild(box);
+  }
+  return box;
+}
+async function renderLedger45(){
+  const box=ensureLedger45();if(!box)return;
+  try{
+    const visits=await getVisits45();const now=currentMonth45();const key=now.year+'-'+String(now.month+1).padStart(2,'0');
+    const monthly=visits.filter(x=>monthKey45(bookingDate45(x))===key && String(x.status||'').toLowerCase()==='completed').length;
+    const monthName=new Date(now.year,now.month,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+    const reviews=await getReviews45(visits.filter(x=>x.id&&!String(x.id).startsWith('rma-recorded-')).map(x=>x.id));
+    /* 24 September is shown as the next planned visit until an actual booking for that date exists. */
+    const hasNext=visits.some(x=>bookingDate45(x)===V45_NEXT_PLANNED_DATE);
+    let html='<div class="ps-v45-history-head"><div><span class="kicker">SITE VISIT RECORD</span><h3 style="margin-top:5px">Monthly Site Visits</h3><div class="v45-sub">The allowance refreshes automatically at the beginning of every calendar month.</div></div></div>';
+    html+='<div id="psV45MonthlyBox"><div class="v45-sub">'+esc45(monthName)+' allowance</div><div class="v45-counter">'+monthly+' of '+V45_MAX_MONTHLY_VISITS+' site visits used</div><div class="v45-sub">'+(monthly>=V45_MAX_MONTHLY_VISITS?'Monthly allowance fully used.':'Remaining: '+(V45_MAX_MONTHLY_VISITS-monthly)+' of '+V45_MAX_MONTHLY_VISITS)+'</div></div>';
+    html+='<div id="psV45History"><div class="ps-v45-history-card"><b>Visit History</b></div>';
+    if(!visits.length)html+='<div class="ps-v45-history-card"><span class="muted">No site visits recorded yet.</span></div>';
+    for(const x of visits){
+      const st=String(x.status||'pending').toLowerCase();const date=bookingDate45(x);const rr=reviews[x.id]||[];let scope={};try{scope=JSON.parse(x.visit_scope||'{}')}catch(e){}
+      const cls=st==='completed'?'ps-v45-completed':st==='pending'?'ps-v45-pending':'ps-v45-upcoming';
+      html+='<div class="ps-v45-history-card '+cls+'"><div class="ps-v45-history-head"><div><div class="ps-v45-date">'+esc45(fmtDate45(date))+'</div><div class="ps-v45-meta">'+esc45(st.charAt(0).toUpperCase()+st.slice(1))+(x.scheduled_time?' • '+esc45(String(x.scheduled_time).slice(0,5)):'')+(x.request_id?' • '+esc45(x.request_id):'')+'</div>'+(scope.reason?'<div class="ps-v45-meta">Scope: '+esc45(scope.reason)+'</div>':'')+'</div><span class="role-badge">'+esc45(st)+'</span></div>';
+      if(st==='completed'){
+        if(rr.length){html+='<div class="ps-v45-report"><small>Site visit report</small>'+rr.map(r=>'<div style="margin-bottom:7px">'+esc45(r.notes||'No notes recorded.')+'</div>').join('')+'<div class="ps-v45-actions"><button type="button" class="btn outline" data-v45-report="'+esc45(x.id||x.request_id)+'">Download Report</button></div></div>'}
+        else html+='<div class="ps-v45-report"><small>Site visit report</small><span class="muted">Admin review is pending. The report will appear here after RMA saves the visit review.</span></div>';
+      }
+      html+='</div>';
+    }
+    if(!hasNext && key==='2026-09')html+='<div class="ps-v45-history-card ps-v45-upcoming"><div class="ps-v45-date">24 September 2026</div><div class="ps-v45-meta">Next planned site visit • awaiting/linked to the second September visit record</div><div class="ps-v45-admin-hint">When RMA completes the visit, its actual booking record and report will replace this planned entry automatically.</div></div>';
+    html+='</div>';
+    box.innerHTML=html;
+    box.querySelectorAll('[data-v45-report]').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.getAttribute('data-v45-report');const v=visits.find(x=>String(x.id||x.request_id)===String(id));if(v)downloadReport45(v,reviews[v.id]||[])}));
+  }catch(e){box.innerHTML='<div class="notice error">Site visit record could not be loaded.</div>';}
+}
+async function completeVisit45(id){
+  try{
+    const r=await supabaseClient.from('bookings').update({status:'completed'}).eq('id',id);if(r.error)throw r.error;
+    const x=(await supabaseClient.from('bookings').select('*').eq('id',id).maybeSingle()).data;
+    if(x?.client_user_id&&typeof window.createClientNotification36==='function')await window.createClientNotification36(x.client_user_id,'Site visit completed','The RMA site visit has been marked completed for '+fmtDate45(x.scheduled_date||new Date().toISOString().slice(0,10))+'.',id);
+    if(typeof window.loadStaff36==='function')await window.loadStaff36();
+    setTimeout(()=>{const card=document.getElementById('adminReq_'+id);card?.querySelector('.ps-v39-review-editor')?.scrollIntoView({behavior:'smooth',block:'center'});},250);
+    if(typeof window.toast36==='function')window.toast36('Site visit marked completed. Add the visit review/report in the box below.','success');
+  }catch(e){if(typeof window.toast36==='function')window.toast36('Could not mark visit completed: '+(e.message||'Check bookings permissions.'),'error');else alert('Could not mark visit completed: '+(e.message||''));}
+}
+function patchCompletedButtons45(){
+  document.querySelectorAll('#staffSiteVisitRequests .ps-v36-admin-request').forEach(card=>{
+    const id=(card.id||'').replace(/^adminReq_/,'');if(!id)return;
+    card.querySelectorAll('button').forEach(b=>{if(/mark completed/i.test(b.textContent)){b.onclick=()=>completeVisit45(id);}});
+  });
+}
+window.rmaV45RenderSiteVisitLedger=renderLedger45;
+window.rmaV45CompleteSiteVisit=completeVisit45;
+window.rmaV45DownloadReport=downloadReport45;
+const oldLoadStaff45=window.loadStaff36;
+if(oldLoadStaff45&&!window.rmaV45StaffPatched){window.rmaV45StaffPatched=true;window.loadStaff36=async function(){await oldLoadStaff45();patchCompletedButtons45();setTimeout(patchCompletedButtons45,150);};}
+const oldEnhance45=window.enhancePathSeekerPortal36;
+if(oldEnhance45&&!window.rmaV45ClientPatched){window.rmaV45ClientPatched=true;window.enhancePathSeekerPortal36=async function(user){await oldEnhance45(user);await renderLedger45();};}
+function init45(){patchCompletedButtons45();renderLedger45();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init45,1200));else setTimeout(init45,1200);
+setInterval(()=>{renderLedger45();patchCompletedButtons45();},15000);
+})();
+</script>
 </body></html>
