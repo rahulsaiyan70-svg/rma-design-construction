@@ -2112,6 +2112,7 @@ checkExistingSession();
     try{
       /* V41 FIX: Path Seeker documents always use the known Path Seeker project UUID. */
       const documentProjectId='d9e2617e-6edc-4c07-891b-7879998d6187';
+      console.info('V43: Loading ALL Path Seeker project documents for project', documentProjectId);
       /* V42: load every document row for the Path Seeker project. No single-document fallback/selection. */
       const query=supabaseClient.from('project_documents')
         .select('id,project_id,document_name,document_type,floor_name,storage_path,preview_storage_path,is_final,created_at')
@@ -2121,7 +2122,7 @@ checkExistingSession();
       const d=await query;
       if(d.error) throw d.error;
       let docs=d.data||[];
-      console.info('V42 Path Seeker project_documents rows returned:', docs.length);
+      console.info('V43 Path Seeker project_documents rows returned:', docs.length);
 
       /* Only use the legacy single-file fallback when the table returns zero rows. */
       if(!docs.length){
@@ -2154,7 +2155,7 @@ checkExistingSession();
       }
       const docBox=document.getElementById('psDocuments');
       if(docBox){
-        docBox.innerHTML='<div class="ps-v41-doc-summary" style="margin-bottom:12px;padding:11px 13px;border-radius:9px;background:#f4fbf7;border:1px solid #dce9e1"><b>'+docs.length+' project document'+(docs.length===1?'':'s')+' available</b><span class="muted"> • Automatically loaded from Supabase</span></div><div style="display:grid;gap:10px">'+rendered.join('')+'</div>';
+        docBox.innerHTML='<div class="ps-v41-doc-summary" style="margin-bottom:12px;padding:11px 13px;border-radius:9px;background:#f4fbf7;border:1px solid #dce9e1"><b>'+docs.length+' project document'+(docs.length===1?'':'s')+' available</b><span class="muted"> • Automatically loaded from Supabase • V43</span></div><div style="display:grid;gap:10px">'+rendered.join('')+'</div>';
       }
       await refreshPathSeekerNotifications();
     }catch(e){
