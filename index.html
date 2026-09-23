@@ -3673,79 +3673,87 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 })();
 </script>
 
-<!-- =========================================================
-     RMA V72 FINAL DRAWINGS FIX
-     Automatically appended as the LAST renderer so it overrides
-     the older Path Seeker document renderers in V72.
-     ========================================================= -->
-<style id="rma-v72-drawings-fix-css">
-#rmaPathSeekerPortal .rma-v72-doc-summary{margin-bottom:10px;padding:9px 12px;border:1px solid #dce7e1;border-radius:8px;background:#f6fbf8;font-size:13px}
-#rmaPathSeekerPortal .rma-v72-doc-group{margin-bottom:12px}
-#rmaPathSeekerPortal .rma-v72-doc-group-title{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 10px;background:#f7f9f8;border:1px solid #e1e7e3;border-bottom:0;border-radius:8px 8px 0 0}
-#rmaPathSeekerPortal .rma-v72-doc-group-title h4{margin:0;font-size:13px}
-#rmaPathSeekerPortal .rma-v72-doc-list{border:1px solid #e1e7e3;border-radius:0 0 8px 8px;overflow:hidden;background:#fff}
-#rmaPathSeekerPortal .rma-v72-doc-row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:52px;padding:7px 9px;border-bottom:1px solid #edf1ef}
-#rmaPathSeekerPortal .rma-v72-doc-row:last-child{border-bottom:0}
-#rmaPathSeekerPortal .rma-v72-doc-no{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:#f0f5f2;color:#245b43;font-size:12px;font-weight:800}
-#rmaPathSeekerPortal .rma-v72-doc-main{min-width:0}
-#rmaPathSeekerPortal .rma-v72-doc-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:800;color:#17251e}
-#rmaPathSeekerPortal .rma-v72-doc-meta{margin-top:2px;font-size:11px;color:#718078;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#rmaPathSeekerPortal .rma-v72-doc-status{display:inline-block;margin-left:7px;padding:2px 6px;border-radius:999px;font-size:9px;font-weight:800;vertical-align:middle}
-#rmaPathSeekerPortal .rma-v72-accepted{background:#e8f5ed;color:#247044}
-#rmaPathSeekerPortal .rma-v72-rejected{background:#fdecec;color:#a33a3a}
-#rmaPathSeekerPortal .rma-v72-doc-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
-#rmaPathSeekerPortal .rma-v72-doc-actions .btn{margin:0!important;padding:6px 9px!important;min-height:30px;font-size:11px!important;white-space:nowrap}
-#rmaPathSeekerPortal .rma-v72-doc-error{padding:10px 12px;margin:8px 0;border:1px solid #f0caca;border-radius:8px;background:#fff6f6;color:#8b3030;font-size:12px}
-@media(max-width:700px){#rmaPathSeekerPortal .rma-v72-doc-row{grid-template-columns:28px minmax(0,1fr);gap:8px}#rmaPathSeekerPortal .rma-v72-doc-actions{grid-column:2;justify-content:flex-start}#rmaPathSeekerPortal .rma-v72-doc-name{white-space:normal}}
+
+<!-- V73: Final dashboard counter + appointment countdown fix.  No document/navigation changes. -->
+<style id="rma-v73-dashboard-fix-css">
+#rmaPathSeekerPortal .rma-v73-timebox{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+#rmaPathSeekerPortal .rma-v73-time{min-width:58px;padding:9px 8px;border-radius:8px;background:#2e8d78;color:#fff;text-align:center}
+#rmaPathSeekerPortal .rma-v73-time strong{display:block;font-size:18px;line-height:1.1}
+#rmaPathSeekerPortal .rma-v73-time small{display:block;font-size:8px;letter-spacing:.5px;margin-top:4px;text-transform:uppercase}
 </style>
-<script id="rma-v72-final-drawings-fix">
+<script id="rma-v73-dashboard-fix">
 (function(){
-'use strict';
-const PROJECT_ID='d9e2617e-6edc-4c07-891b-7879998d6187';
-const BUCKET='project-documents';
-let rendering=false,lastRender=0;
-function box(){return document.getElementById('psDocuments')}
-function esc(v){if(typeof window.esc==='function')return window.esc(v==null?'':String(v));return String(v==null?'':v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-async function user(){try{const r=await supabaseClient.auth.getUser();return r.data&&r.data.user?r.data.user:null}catch(e){return null}}
-async function url(row){
- const direct=[row.file_url,row.public_url,row.url].filter(Boolean);
- for(const u of direct)if(/^https?:\/\//i.test(String(u)))return String(u);
- const paths=[row.storage_path,row.preview_storage_path,row.file_path,row.path,row.storagePath].filter(Boolean);
- for(const raw of paths){const path=String(raw).trim();if(!path)continue;
-  try{const x=await supabaseClient.storage.from(BUCKET).createSignedUrl(path,3600);if(!x.error&&x.data&&x.data.signedUrl)return x.data.signedUrl}catch(e){}
-  try{const x=supabaseClient.storage.from(BUCKET).getPublicUrl(path);if(x.data&&x.data.publicUrl)return x.data.publicUrl}catch(e){}
- }
- return '';
-}
-async function load(){
- let err=null;
- try{const q=await supabaseClient.from('project_documents').select('*').eq('project_id',PROJECT_ID).order('created_at',{ascending:false}).limit(200);if(!q.error)return Array.isArray(q.data)?q.data:[];err=q.error}catch(e){err=e}
- try{const u=await user();if(u){const q=await supabaseClient.from('project_documents').select('*').eq('client_user_id',u.id).order('created_at',{ascending:false}).limit(200);if(!q.error)return Array.isArray(q.data)?q.data:[];if(!err)err=q.error}}catch(e){if(!err)err=e}
- if(err)throw err;return [];
-}
-function status(r){return String(r.review_status||'accepted').toLowerCase()==='rejected'?'rejected':'accepted'}
-function name(r){return r.document_name||r.title||r.name||'Project Document'}
-function meta(r){const p=[];p.push(r.document_type||r.category||'Drawing / Document');if(r.floor_name)p.push(r.floor_name);if(r.is_final===true||String(r.is_final).toLowerCase()==='true')p.push('Final');return p.join(' • ')}
-async function render(){
- const b=box();if(!b||rendering||Date.now()-lastRender<1200)return false;lastRender=Date.now();rendering=true;b.innerHTML='<div class="muted">Loading drawings and documents...</div>';
- try{
-  const docs=await load();
-  if(!docs.length){b.innerHTML='<div class="rma-v72-doc-error"><b>No project drawings were returned.</b><br>The Path Seeker project is connected, but Supabase returned 0 records from the project_documents table.<br><br><small>Project ID: '+esc(PROJECT_ID)+'</small></div>';return true}
-  const resolved=[];for(const r of docs)resolved.push({row:r,url:await url(r)});
-  const accepted=resolved.filter(x=>status(x.row)!=='rejected'),rejected=resolved.filter(x=>status(x.row)==='rejected');
-  function group(list,title,start){if(!list.length)return '';return '<div class="rma-v72-doc-group"><div class="rma-v72-doc-group-title"><h4>'+title+'</h4><span class="muted">'+list.length+'</span></div><div class="rma-v72-doc-list">'+list.map((x,i)=>{
-   const r=x.row,u=x.url,st=status(r),path=r.storage_path||r.preview_storage_path||r.file_path||r.path||'';
-   const actions=u?'<div class="rma-v72-doc-actions"><a class="btn outline" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">View Drawing</a><a class="btn outline" href="'+esc(u)+'" download="'+esc(name(r))+'">Download Drawing</a></div>':'<div class="rma-v72-doc-error" style="margin:0"><b>File unavailable</b><br><small>'+(path?'Storage path: '+esc(path):'No Storage path is saved for this document.')+'</small></div>';
-   return '<div class="rma-v72-doc-row"><div class="rma-v72-doc-no">'+(start+i)+'</div><div class="rma-v72-doc-main"><div class="rma-v72-doc-name" title="'+esc(name(r))+'">'+esc(name(r))+'<span class="rma-v72-doc-status '+(st==='rejected'?'rma-v72-rejected':'rma-v72-accepted')+'">'+(st==='rejected'?'Rejected':'Accepted')+'</span></div><div class="rma-v72-doc-meta">'+esc(meta(r))+'</div></div>'+actions+'</div>'
-  }).join('')+'</div></div>'}
-  b.innerHTML='<div class="rma-v72-doc-summary"><b>'+docs.length+' project document'+(docs.length===1?'':'s')+' available</b><span class="muted"> • RMA uploaded documents</span></div>'+group(accepted,'Accepted Drawings & Documents',1)+group(rejected,'Rejected Drawings & Documents',accepted.length+1);
-  return true;
- }catch(e){b.innerHTML='<div class="rma-v72-doc-error"><b>Drawings could not be loaded.</b><br>'+esc(e&&e.message?e.message:'Supabase document access error.')+'<br><br><small>Please check project_documents RLS and the project-documents Storage policy.</small></div>';return false}
- finally{rendering=false}
-}
-window.rmaV72ReloadDrawings=function(){lastRender=0;return render()};
-function boot(){if(document.getElementById('rmaPathSeekerPortal')&&box()){render();return true}return false}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,500));else setTimeout(boot,500);
-let attempts=0;const watcher=setInterval(()=>{if(boot()||++attempts>120)clearInterval(watcher)},500);
+  'use strict';
+  var TARGET='2026-09-24T11:00:00+05:30';
+  var countdownTimer=null;
+  var observer=null;
+  var lastBox=null;
+
+  function setMonthly(){
+    var ids=['psV63StatMonthly','psMonthlyCounter'];
+    ids.forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='1 / 2';});
+    var root=document.getElementById('rmaPathSeekerPortal');
+    if(root) root.querySelectorAll('.ps-v63-visit-summary span').forEach(function(el){
+      if(/used/i.test(el.textContent||'')) el.textContent='1 of 2 used';
+    });
+  }
+
+  function renderCountdown(){
+    var old=document.getElementById('psV63Countdown');
+    if(!old) return false;
+
+    /* Replace the countdown node once. This disconnects the old V63/V71
+       intervals from the visible element, leaving this controller as the
+       only writer to the displayed countdown. */
+    if(!old.dataset.rmaV73Replaced){
+      var fresh=old.cloneNode(false);
+      fresh.id='psV63Countdown';
+      fresh.className='rma-v73-timebox';
+      fresh.dataset.rmaV73Replaced='1';
+      old.replaceWith(fresh);
+      old=fresh;
+    }
+    lastBox=old;
+
+    var target=new Date(TARGET).getTime();
+    function tick(){
+      var ms=Math.max(0,target-Date.now());
+      var total=Math.floor(ms/1000);
+      var days=Math.floor(total/86400);
+      var hours=Math.floor((total%86400)/3600);
+      var minutes=Math.floor((total%3600)/60);
+      var seconds=total%60;
+      old.innerHTML=[
+        ['Days',days],['Hours',hours],['Minutes',minutes],['Seconds',seconds]
+      ].map(function(x){
+        return '<div class="rma-v73-time"><strong>'+String(x[1]).padStart(2,'0')+'</strong><small>'+x[0]+'</small></div>';
+      }).join('');
+      if(total<=0 && countdownTimer){clearInterval(countdownTimer);countdownTimer=null;}
+    }
+    if(countdownTimer)clearInterval(countdownTimer);
+    tick();
+    countdownTimer=setInterval(tick,1000);
+    return true;
+  }
+
+  function boot(){
+    setMonthly();
+    renderCountdown();
+    var root=document.getElementById('rmaPathSeekerPortal');
+    if(root && !observer){
+      var stat=root.querySelector('#psV63StatMonthly');
+      if(stat){
+        observer=new MutationObserver(setMonthly);
+        observer.observe(stat,{childList:true,characterData:true,subtree:true});
+      }
+    }
+    return !!document.getElementById('psV63Countdown');
+  }
+
+  var tries=0;
+  var poll=setInterval(function(){
+    if(boot()||++tries>300)clearInterval(poll);
+  },250);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
