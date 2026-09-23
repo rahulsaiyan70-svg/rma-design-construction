@@ -356,24 +356,99 @@ section{padding:78px 0}
 .rma-v44-admin-warning{margin:8px 0;padding:9px 11px;border-radius:8px;background:#fff8e8;border:1px solid #ead9ad;color:#6e5620;font-size:12px}
 @media(max-width:700px){.ps-v44-doc-row{grid-template-columns:28px minmax(0,1fr);gap:7px}.ps-v44-actions{grid-column:2;justify-content:flex-start}.rma-v44-admin-row{grid-template-columns:1fr}.rma-v44-admin-row button{justify-self:start}}
 </style>
-<style id="rma-v44-only-watch-report">
-/* ONLY ADDITIONS TO V44: appointment watch + 15 September report */
-.ps-v44-add-watch{margin:0 0 18px;padding:16px 18px;border:1px solid #dce9e1;border-radius:12px;background:#fff;box-shadow:0 5px 18px #00000008}
-.ps-v44-add-watch-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.ps-v44-add-watch-title{font-weight:900;color:#245b43;font-size:15px}
-.ps-v44-add-watch-sub{font-size:12px;color:#697586;margin-top:2px}
-.ps-v44-add-watch-clock{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
-.ps-v44-add-time{min-width:66px;text-align:center;border:1px solid #dce9e1;border-radius:8px;background:#f7fbf8;padding:7px 8px}
-.ps-v44-add-time strong{display:block;color:#245b43;font-size:20px;line-height:1.05}
-.ps-v44-add-time small{display:block;color:#697586;font-size:9px;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
-.ps-v44-add-report{max-width:900px;margin:22px auto;padding:22px;background:#fff;border:1px solid #dfe7e2;border-radius:12px;box-shadow:0 6px 22px #00000008}
-.ps-v44-add-report-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;flex-wrap:wrap}
-.ps-v44-add-report h3{margin:4px 0 6px;color:#245b43}
-.ps-v44-add-report-date{font-size:13px;color:#697586}
-.ps-v44-add-report-status{display:inline-block;margin-top:8px;padding:5px 9px;border-radius:999px;background:#eaf7ef;color:#176b3a;font-size:11px;font-weight:800}
-.ps-v44-add-report-body{margin-top:16px;padding-top:14px;border-top:1px solid #e7ece9;color:#4f5e57;font-size:13px;line-height:1.7}
-.ps-v44-add-report-body p{margin:0 0 12px}
-@media(max-width:600px){.ps-v44-add-time{flex:1;min-width:58px}.ps-v44-add-report{padding:17px}.ps-v44-add-report .btn{width:100%}}
+
+<style id="rma-v62-client-dashboard">
+/* V62 — client portal dashboard skin. Existing V44 functionality/IDs are preserved. */
+#rmaPathSeekerPortal{background:#f4f8f6!important;min-height:100vh!important;padding:0 0 40px!important;color:#142d24!important}
+#rmaPathSeekerPortal>.container{max-width:1280px!important;padding:0 18px 28px!important}
+#rmaPathSeekerPortal .ps-v62-topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;background:#075a40;color:#fff;padding:14px 18px;border-radius:0 0 14px 14px;box-shadow:0 5px 18px rgba(7,90,64,.16);position:sticky;top:0;z-index:30}
+#rmaPathSeekerPortal .ps-v62-brand{font-weight:900;font-size:20px;letter-spacing:-.03em;line-height:1}
+#rmaPathSeekerPortal .ps-v62-brand small{display:block;font-size:9px;letter-spacing:.12em;opacity:.78;margin-top:4px}
+#rmaPathSeekerPortal .ps-v62-project{display:flex;align-items:center;gap:10px;margin-left:auto;font-size:13px;font-weight:800}
+#rmaPathSeekerPortal .ps-v62-project-badge{width:34px;height:34px;border-radius:10px;background:#d9f0e7;color:#075a40;display:grid;place-items:center;font-weight:900}
+#rmaPathSeekerPortal .ps-v62-user{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800}
+#rmaPathSeekerPortal .ps-v62-avatar{width:32px;height:32px;border-radius:50%;background:#e2f4ed;color:#075a40;display:grid;place-items:center}
+#rmaPathSeekerPortal .ps-v62-layout{display:grid!important;grid-template-columns:220px minmax(0,1fr)!important;gap:18px!important;margin-top:18px!important;align-items:start!important}
+#rmaPathSeekerPortal .ps-v62-sidebar{background:#fff;border:1px solid #dce9e3;border-radius:15px;padding:12px;box-shadow:0 4px 18px rgba(25,55,43,.06);position:sticky;top:78px}
+#rmaPathSeekerPortal .ps-v62-nav{display:flex;flex-direction:column;gap:4px}
+#rmaPathSeekerPortal .ps-v62-nav button{border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:9px;color:#234338;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px}
+#rmaPathSeekerPortal .ps-v62-nav button:hover,#rmaPathSeekerPortal .ps-v62-nav button.active{background:#dff2e9;color:#075a40}
+#rmaPathSeekerPortal .ps-v62-nav .icon{width:22px;text-align:center;font-size:15px}
+#rmaPathSeekerPortal .ps-v62-nav-divider{height:1px;background:#e7efeb;margin:8px 3px}
+#rmaPathSeekerPortal .ps-v62-main{min-width:0}
+#rmaPathSeekerPortal .heading{background:transparent!important;border:0!important;padding:0!important;margin:0 0 14px!important;box-shadow:none!important}
+#rmaPathSeekerPortal .heading .kicker{display:none!important}
+#rmaPathSeekerPortal .heading h2{font-size:26px!important;color:#123a2d!important;margin:0!important}
+#rmaPathSeekerPortal .heading p{font-size:13px!important;color:#6a7b73!important;margin:4px 0 0!important}
+#rmaPathSeekerPortal .backrow{display:none!important}
+#rmaPathSeekerPortal .ps-profile-photo-wrap{display:none!important}
+#rmaPathSeekerPortal .ps-v62-welcome{background:#fff;border:1px solid #dce9e3;border-radius:14px;padding:18px 20px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:18px;box-shadow:0 4px 18px rgba(25,55,43,.05)}
+#rmaPathSeekerPortal .ps-v62-welcome h3{margin:0 0 4px!important;font-size:20px!important;color:#102f25!important}
+#rmaPathSeekerPortal .ps-v62-welcome p{margin:0!important;color:#6a7b73!important;font-size:12px!important}
+#rmaPathSeekerPortal .ps-v62-status{display:flex;gap:8px;flex-wrap:wrap}
+#rmaPathSeekerPortal .ps-v62-pill{padding:6px 10px;border-radius:999px;background:#e0f3ea;color:#146044;font-size:10px;font-weight:900}
+#rmaPathSeekerPortal .ps-v62-dashboard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
+#rmaPathSeekerPortal .ps-v62-stat{background:#fff;border:1px solid #dce9e3;border-radius:13px;padding:14px;box-shadow:0 4px 16px rgba(25,55,43,.04)}
+#rmaPathSeekerPortal .ps-v62-stat .label{font-size:10px;color:#78877f;font-weight:700}
+#rmaPathSeekerPortal .ps-v62-stat strong{display:block;font-size:20px;color:#123a2d;margin-top:5px}
+#rmaPathSeekerPortal .ps-v33-top{display:grid!important;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)!important;gap:14px!important;margin:0 0 14px!important}
+#rmaPathSeekerPortal .ps-v33-profile,#rmaPathSeekerPortal .ps-v33-scope{background:#fff!important;border:1px solid #dce9e3!important;border-radius:14px!important;padding:18px!important;box-shadow:0 4px 18px rgba(25,55,43,.05)!important}
+#rmaPathSeekerPortal .ps-v33-profile .profile-name{font-size:20px!important;font-weight:900!important;color:#123a2d!important;margin:10px 0 3px!important}
+#rmaPathSeekerPortal .ps-v33-limit{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important}
+#rmaPathSeekerPortal .ps-v33-limit .counter{background:#f5faf8!important;border:1px solid #e1ebe6!important;border-radius:9px!important;padding:10px!important}
+#rmaPathSeekerPortal .ps-v33-limit strong{font-size:18px!important;color:#123a2d!important;display:block!important;margin-top:4px}
+#rmaPathSeekerPortal .ps-v33-scope h3{font-size:18px!important;margin:5px 0!important}
+#rmaPathSeekerPortal .ps-v33-scope-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+#rmaPathSeekerPortal .ps-v33-scope-item{background:#f7faf9!important;border:1px solid #e3ece7!important;border-radius:9px!important;padding:10px!important;font-size:11px!important}
+#rmaPathSeekerPortal .ps-v33-section,#rmaPathSeekerPortal .ps-request-box{background:#fff!important;border:1px solid #dce9e3!important;border-radius:14px!important;box-shadow:0 4px 18px rgba(25,55,43,.05)!important;margin:0 0 14px!important;padding:0!important;overflow:hidden}
+#rmaPathSeekerPortal .ps-v33-section-head{padding:15px 17px!important;background:#fff!important;border-bottom:1px solid #e6eee9!important}
+#rmaPathSeekerPortal .ps-v33-section-head h3{margin:0!important;font-size:17px!important;color:#123a2d!important}
+#rmaPathSeekerPortal #psDocuments{padding:0!important}
+#rmaPathSeekerPortal .ps-v44-summary{padding:12px 15px!important;background:#f7faf9!important;border-bottom:1px solid #e5ede9!important}
+#rmaPathSeekerPortal .ps-v44-group{margin:0!important;padding:0 12px 12px!important}
+#rmaPathSeekerPortal .ps-v44-group-title{margin-top:10px!important}
+#rmaPathSeekerPortal .ps-v44-doc-row{min-height:58px!important}
+#rmaPathSeekerPortal .ps-v44-actions .btn{padding:6px 9px!important;font-size:10px!important}
+#rmaPathSeekerPortal .ps-v33-message-grid{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr)!important;gap:14px!important;margin:0 0 14px!important}
+#rmaPathSeekerPortal .ps-notify-box,#rmaPathSeekerPortal .ps-message-box{background:#fff!important;border:1px solid #dce9e3!important;border-radius:14px!important;padding:16px!important;box-shadow:0 4px 18px rgba(25,55,43,.05)!important}
+#rmaPathSeekerPortal .ps-notify-box h3,#rmaPathSeekerPortal .ps-message-box h3{margin:0 0 7px!important;color:#123a2d!important;font-size:17px!important}
+#rmaPathSeekerPortal .ps-v62-report{background:#f5faf8;border:1px solid #dce9e3;border-radius:14px;padding:16px;margin:0 0 14px}
+#rmaPathSeekerPortal .ps-v62-report h3{margin:0 0 6px;color:#123a2d;font-size:17px}
+#rmaPathSeekerPortal .ps-v62-report p{font-size:12px;line-height:1.55;color:#5f7068;margin:8px 0}
+#rmaPathSeekerPortal .ps-v62-watch{background:#fff;border:1px solid #dce9e3;border-radius:14px;padding:15px 17px;margin:0 0 14px;box-shadow:0 4px 18px rgba(25,55,43,.05)}
+#rmaPathSeekerPortal .ps-v62-watch-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+#rmaPathSeekerPortal .ps-v62-watch-title{font-size:15px;font-weight:900;color:#123a2d}
+#rmaPathSeekerPortal .ps-v62-countdown{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+#rmaPathSeekerPortal .ps-v62-time{background:#075a40;color:#fff;border-radius:9px;min-width:64px;padding:8px;text-align:center}
+#rmaPathSeekerPortal .ps-v62-time strong{display:block;font-size:18px;line-height:1}.ps-v62-time small{font-size:8px;opacity:.8;text-transform:uppercase}
+#rmaPathSeekerPortal .ps-v62-report-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+@media(max-width:900px){#rmaPathSeekerPortal .ps-v62-layout{grid-template-columns:1fr!important}.ps-v62-sidebar{position:relative!important;top:auto!important}.ps-v62-nav{display:grid!important;grid-template-columns:repeat(3,1fr)}#rmaPathSeekerPortal .ps-v33-top{grid-template-columns:1fr!important}#rmaPathSeekerPortal .ps-v33-message-grid{grid-template-columns:1fr!important}}
+@media(max-width:600px){#rmaPathSeekerPortal .ps-v62-dashboard-grid{grid-template-columns:1fr!important}#rmaPathSeekerPortal .ps-v62-nav{grid-template-columns:repeat(2,1fr)}#rmaPathSeekerPortal .ps-v33-scope-grid{grid-template-columns:1fr!important}.ps-v62-project{display:none!important}}
+</style>
+
+<style id="rma-v63-exact-single-section">
+#rmaPathSeekerPortal .ps-v63-view{display:none!important}
+#rmaPathSeekerPortal .ps-v63-view.active{display:block!important}
+#rmaPathSeekerPortal .ps-v63-page-title{background:#fff;border:1px solid #dce9e3;border-radius:14px;padding:17px 19px;margin:0 0 14px;box-shadow:0 4px 18px rgba(25,55,43,.05)}
+#rmaPathSeekerPortal .ps-v63-page-title h2{margin:0;color:#123a2d;font-size:23px}
+#rmaPathSeekerPortal .ps-v63-page-title p{margin:4px 0 0;color:#6a7b73;font-size:12px}
+#rmaPathSeekerPortal .ps-v63-quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+#rmaPathSeekerPortal .ps-v63-quick{display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:1px solid #dce9e3;border-radius:13px;padding:14px;cursor:pointer;color:#173b2e;box-shadow:0 4px 16px rgba(25,55,43,.04)}
+#rmaPathSeekerPortal .ps-v63-quick:hover{background:#f1f9f5;border-color:#b9d8c9;transform:translateY(-1px)}
+#rmaPathSeekerPortal .ps-v63-quick .qicon{width:34px;height:34px;border-radius:10px;background:#e0f3ea;color:#075a40;display:grid;place-items:center;font-weight:900;font-size:17px;flex:none}
+#rmaPathSeekerPortal .ps-v63-quick b{display:block;font-size:13px}.ps-v63-quick small{display:block;color:#73827b;font-size:10px;margin-top:3px}.ps-v63-quick .arrow{margin-left:auto;font-size:20px;color:#075a40}
+#rmaPathSeekerPortal .ps-v63-visit-summary{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:14px}
+#rmaPathSeekerPortal .ps-v63-visit-summary>div{background:#fff;border:1px solid #dce9e3;border-radius:12px;padding:13px 14px}.ps-v63-visit-summary b{display:block;color:#123a2d;font-size:11px}.ps-v63-visit-summary span{display:block;font-size:19px;font-weight:900;color:#075a40;margin-top:4px}
+#rmaPathSeekerPortal .ps-v63-visit-summary .btn{align-self:stretch}
+#rmaPathSeekerPortal .ps-v63-view .ps-v33-section,#rmaPathSeekerPortal .ps-v63-view .ps-request-box{margin-bottom:14px}
+@media(max-width:700px){#rmaPathSeekerPortal .ps-v63-quick-grid,#rmaPathSeekerPortal .ps-v63-visit-summary{grid-template-columns:1fr}.ps-v63-visit-summary .btn{min-height:44px}}
+</style>
+
+<style id="rma-v64-nav-fix">
+#rmaPathSeekerPortal .ps-v62-sidebar,#rmaPathSeekerPortal .ps-v62-nav,#rmaPathSeekerPortal .ps-v62-nav button{pointer-events:auto!important;}
+#rmaPathSeekerPortal .ps-v62-nav button{cursor:pointer!important;position:relative!important;z-index:5!important;}
+#rmaPathSeekerPortal .ps-v63-view{display:none!important;}
+#rmaPathSeekerPortal .ps-v63-view.active{display:block!important;}
 </style>
 </head></head>
 <body>
@@ -2056,25 +2131,7 @@ checkExistingSession();
   /* ---------- 5. Path Seeker International School client account ---------- */
   function addPathSeekerPortal(){
     const signin=document.getElementById('page-signin');if(!signin||document.getElementById('rmaPathSeekerPortal'))return;
-    const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="backrow" style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn outline" type="button" onclick="signOutUser()">← Sign Out</button></div><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Private project access for drawings, consultant coordination, site visits and messages to RMA.</p></div><div id="psV44AppointmentWatch" class="ps-v44-add-watch">
-  <div class="ps-v44-add-watch-head">
-    <div><div class="ps-v44-add-watch-title">NEXT SITE VISIT · 24 SEPTEMBER 2026 · 11:00 AM</div><div class="ps-v44-add-watch-sub">Appointment watch</div></div>
-    <span class="rma-v3-badge">UPCOMING</span>
-  </div>
-  <div id="psV44AppointmentClock" class="ps-v44-add-watch-clock" aria-live="polite"></div>
-</div><div class="ps-profile-photo-wrap"><div id="psProfilePhoto" class="ps-profile-photo" aria-label="Client profile photo"><span id="psProfileInitials">PS</span></div><div style="flex:1"><b>Client Profile Photo</b><div class="ps-v33-muted">Your profile photo is shown here when you sign in.</div><div class="ps-profile-photo-actions"><label class="btn outline" style="cursor:pointer">Upload / Change Photo<input id="psProfilePhotoInput" type="file" accept="image/*" style="display:none" onchange="uploadPathSeekerProfilePhoto(event)"></label></div><div id="psProfilePhotoStatus" class="muted" style="margin-top:6px"></div></div></div><div class="ps-v33-top"><div class="ps-v33-profile"><span class="rma-v3-badge">ACTIVE CLIENT</span><div class="profile-name">Path Seeker International School</div><p class="ps-v33-muted">Client profile and project account</p><div class="ps-v33-meta"><div><b>Client</b><br>Path Seeker International School</div><div><b>Project</b><br><span id="psProjectName">Loading...</span></div><div><b>Project Status</b><br><span id="psProjectStatus">Loading...</span></div></div><div class="ps-v33-limit"><div class="counter"><span class="muted">Site visits this month</span><strong id="psMonthlyCounter">0 / 2</strong></div><div class="counter"><span class="muted">Total completed site visits</span><strong id="psTotalVisits">23</strong></div></div><button class="btn dark" style="margin-top:14px" onclick="togglePathSeekerVisitRequest()">Request Site Visit</button></div><div class="ps-v33-scope"><span class="kicker">PROJECT SCOPE</span><h3>Architect &amp; Engineering Consultant</h3><p class="ps-v33-muted">The Path Seeker International School engagement is on a <b>consultation basis only</b>.</p><div class="ps-v33-scope-grid"><div class="ps-v33-scope-item"><b>Architectural Consultation</b><br><small>Planning, drawings, design coordination and architectural guidance.</small></div><div class="ps-v33-scope-item"><b>Engineering Consultation</b><br><small>Structural / technical consultation, review and engineering guidance.</small></div><div class="ps-v33-scope-item"><b>Site Consultation</b><br><small>Site inspections, verification and coordination related to the consultancy scope.</small></div><div class="ps-v33-scope-item"><b>Client Coordination</b><br><small>Discussion of drawings, technical queries, revisions and project requirements.</small></div></div><div class="notice info" style="margin-top:14px"><b>Engagement scope:</b> Architect &amp; Engineering Consultant — consultation basis. Construction execution is not included in this client portal scope unless separately agreed.</div></div></div><div id="psVisitRequestBox" class="ps-request-box hidden ps-v33-section"><div class="ps-v33-section-head"><div><h3>Request a Site Visit</h3><p class="muted">Choose a preferred date and time. Reason / scope is optional. Your request will be recorded for RMA review.</p></div></div><div class="form-grid"><div class="group"><label>Preferred Date *</label><input id="psRequestedDate" type="date"></div><div class="group"><label>Preferred Time</label><input id="psRequestedTime" type="time"></div></div><div class="group"><label>Reason / Scope of Visit <span class="muted">(Optional)</span></label><textarea id="psVisitReason" placeholder="For example: progress inspection, structural discussion, drawing coordination, site verification, etc."></textarea></div><div id="psVisitRequestMessage" class="notice hidden"></div><button type="button" class="btn dark" onclick="submitPathSeekerVisitRequest()">Submit Site Visit Request</button></div><div class="ps-v33-section"><div class="ps-v33-section-head"><h3>Drawings &amp; Documents</h3><span class="muted">All project documents uploaded by RMA</span></div><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div><div id="psV44SiteVisitReport" class="ps-v44-add-report">
-  <div class="ps-v44-add-report-head">
-    <div><span class="kicker">SITE VISIT REPORT</span><h3>15 September 2026 · Site Visit Review</h3><div class="ps-v44-add-report-date">Path Seeker International School · PSIS 261</div><span class="ps-v44-add-report-status">Completed · 1 of 2 September visits used</span></div>
-    <button id="psV44DownloadReport" type="button" class="btn outline">Download Report</button>
-  </div>
-  <div class="ps-v44-add-report-body">
-    <p>After a two-month rainy-season break, work resumed after completion of the combined footing. On the first day back, instructions were given to the contractor in the presence of the client.</p>
-    <p>The beam was originally planned at 3 ft from ground level. After considering suggestions from the client and contractor and the practical feasibility at site, the contractor’s proposal to make the beam 2 ft instead of 1 ft 6 in (18 in) was accepted.</p>
-    <p>For the remaining 18 inches, one foot remains and the arrangement is to go 6 inches deep into the earth. Gravel will be provided first, followed by gravel/lean concrete in 1:4:8 ratio. After lean concrete, PCC will be provided.</p>
-    <p>An 8 mm bars mesh (jali) will be provided horizontally and vertically and linked into the beam so the perimeter/boundary remains interlocked. This is intended to prevent soil, filled up to the 3-ft plinth, from escaping from the lower portion of the beam.</p>
-  </div>
-</div>
-<div class="ps-v33-message-grid"><div class="ps-notify-box"><h3>Notifications</h3><div id="psNotifications"><div class="muted">Loading notifications...</div></div></div><div class="ps-message-box"><h3>Message RMA</h3><p class="muted">Send a request, correction, clarification or change directly to RMA.</p><div class="group"><label>Subject</label><input id="psMessageSubject" placeholder="Subject"></div><div class="group"><label>Message</label><textarea id="psMessageText" placeholder="Write your message here..."></textarea></div><div id="psMessageStatus" class="notice hidden"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn dark" onclick="sendPathSeekerMessage()">Send Message</button><a class="btn outline" href="mailto:RMA.studies07@gmail.com?subject=Path%20Seeker%20Project%20Request">Email RMA</a><a class="btn outline" href="https://wa.me/919622121692?text=Path%20Seeker%20Project%20Request" target="_blank" rel="noopener">WhatsApp RMA</a></div></div></div><div class="ps-v33-section"><h3>Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
+    const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="backrow" style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn outline" type="button" onclick="signOutUser()">← Sign Out</button></div><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Private project access for drawings, consultant coordination, site visits and messages to RMA.</p></div><div class="ps-profile-photo-wrap"><div id="psProfilePhoto" class="ps-profile-photo" aria-label="Client profile photo"><span id="psProfileInitials">PS</span></div><div style="flex:1"><b>Client Profile Photo</b><div class="ps-v33-muted">Your profile photo is shown here when you sign in.</div><div class="ps-profile-photo-actions"><label class="btn outline" style="cursor:pointer">Upload / Change Photo<input id="psProfilePhotoInput" type="file" accept="image/*" style="display:none" onchange="uploadPathSeekerProfilePhoto(event)"></label></div><div id="psProfilePhotoStatus" class="muted" style="margin-top:6px"></div></div></div><div class="ps-v33-top"><div class="ps-v33-profile"><span class="rma-v3-badge">ACTIVE CLIENT</span><div class="profile-name">Path Seeker International School</div><p class="ps-v33-muted">Client profile and project account</p><div class="ps-v33-meta"><div><b>Client</b><br>Path Seeker International School</div><div><b>Project</b><br><span id="psProjectName">Loading...</span></div><div><b>Project Status</b><br><span id="psProjectStatus">Loading...</span></div></div><div class="ps-v33-limit"><div class="counter"><span class="muted">Site visits this month</span><strong id="psMonthlyCounter">0 / 2</strong></div><div class="counter"><span class="muted">Total completed site visits</span><strong id="psTotalVisits">23</strong></div></div><button class="btn dark" style="margin-top:14px" onclick="togglePathSeekerVisitRequest()">Request Site Visit</button></div><div class="ps-v33-scope"><span class="kicker">PROJECT SCOPE</span><h3>Architect &amp; Engineering Consultant</h3><p class="ps-v33-muted">The Path Seeker International School engagement is on a <b>consultation basis only</b>.</p><div class="ps-v33-scope-grid"><div class="ps-v33-scope-item"><b>Architectural Consultation</b><br><small>Planning, drawings, design coordination and architectural guidance.</small></div><div class="ps-v33-scope-item"><b>Engineering Consultation</b><br><small>Structural / technical consultation, review and engineering guidance.</small></div><div class="ps-v33-scope-item"><b>Site Consultation</b><br><small>Site inspections, verification and coordination related to the consultancy scope.</small></div><div class="ps-v33-scope-item"><b>Client Coordination</b><br><small>Discussion of drawings, technical queries, revisions and project requirements.</small></div></div><div class="notice info" style="margin-top:14px"><b>Engagement scope:</b> Architect &amp; Engineering Consultant — consultation basis. Construction execution is not included in this client portal scope unless separately agreed.</div></div></div><div id="psVisitRequestBox" class="ps-request-box hidden ps-v33-section"><div class="ps-v33-section-head"><div><h3>Request a Site Visit</h3><p class="muted">Choose a preferred date and time. Reason / scope is optional. Your request will be recorded for RMA review.</p></div></div><div class="form-grid"><div class="group"><label>Preferred Date *</label><input id="psRequestedDate" type="date"></div><div class="group"><label>Preferred Time</label><input id="psRequestedTime" type="time"></div></div><div class="group"><label>Reason / Scope of Visit <span class="muted">(Optional)</span></label><textarea id="psVisitReason" placeholder="For example: progress inspection, structural discussion, drawing coordination, site verification, etc."></textarea></div><div id="psVisitRequestMessage" class="notice hidden"></div><button type="button" class="btn dark" onclick="submitPathSeekerVisitRequest()">Submit Site Visit Request</button></div><div class="ps-v33-section"><div class="ps-v33-section-head"><h3>Drawings &amp; Documents</h3><span class="muted">All project documents uploaded by RMA</span></div><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div><div class="ps-v33-message-grid"><div class="ps-notify-box"><h3>Notifications</h3><div id="psNotifications"><div class="muted">Loading notifications...</div></div></div><div class="ps-message-box"><h3>Message RMA</h3><p class="muted">Send a request, correction, clarification or change directly to RMA.</p><div class="group"><label>Subject</label><input id="psMessageSubject" placeholder="Subject"></div><div class="group"><label>Message</label><textarea id="psMessageText" placeholder="Write your message here..."></textarea></div><div id="psMessageStatus" class="notice hidden"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn dark" onclick="sendPathSeekerMessage()">Send Message</button><a class="btn outline" href="mailto:RMA.studies07@gmail.com?subject=Path%20Seeker%20Project%20Request">Email RMA</a><a class="btn outline" href="https://wa.me/919622121692?text=Path%20Seeker%20Project%20Request" target="_blank" rel="noopener">WhatsApp RMA</a></div></div></div><div class="ps-v33-section"><h3>Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
   }
   window.addPathSeekerPortal = addPathSeekerPortal;
 
@@ -3062,32 +3119,160 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
   window.rmaV44RefreshDocumentStatus=loadAdminDocumentReviewV44;
 })();
 </script>
-<script id="rma-v44-only-watch-report-runtime">
+
+<script id="rma-v63-exact-section-navigation">
 (function(){
-  function initV44OnlyAdditions(){
-    var clock=document.getElementById('psV44AppointmentClock');
-    if(clock && !clock.dataset.bound){
-      clock.dataset.bound='1';
-      var target=new Date('2026-09-24T11:00:00');
-      function tick(){
-        var diff=Math.max(0,target.getTime()-Date.now()),z=Math.floor(diff/1000);
-        var d=Math.floor(z/86400),h=Math.floor((z%86400)/3600),m=Math.floor((z%3600)/60),sec=z%60;
-        clock.innerHTML=[['Days',d],['Hours',h],['Minutes',m],['Seconds',sec]].map(function(x){return '<div class="ps-v44-add-time"><strong>'+String(x[1]).padStart(2,'0')+'</strong><small>'+x[0]+'</small></div>';}).join('');
-      }
-      tick();setInterval(tick,1000);
+  'use strict';
+  function countdown(box){
+    if(!box)return;
+    var target=new Date('2026-09-24T11:00:00');
+    function tick(){
+      var d=Math.max(0,target.getTime()-Date.now()),z=Math.floor(d/1000),days=Math.floor(z/86400),h=Math.floor(z%86400/3600),m=Math.floor(z%3600/60),s=z%60;
+      box.innerHTML=[['Days',days],['Hours',h],['Minutes',m],['Seconds',s]].map(function(x){return '<div class="ps-v62-time"><strong>'+String(x[1]).padStart(2,'0')+'</strong><small>'+x[0]+'</small></div>';}).join('');
     }
-    var b=document.getElementById('psV44DownloadReport');
-    if(b && !b.dataset.bound){
-      b.dataset.bound='1';
-      b.onclick=function(){
-        var text='RMA DESIGN & CONSTRUCTION\nPATH SEEKER INTERNATIONAL SCHOOL — PSIS 261\n\nSITE VISIT REPORT — 15 SEPTEMBER 2026\nStatus: Completed\nSeptember visits: 1 of 2\n\nSITE VISIT REVIEW / RECORD\n\nAfter a two-month rainy-season break, work resumed after completion of the combined footing. On the first day back, instructions were given to the contractor in the presence of the client.\n\nThe beam was originally planned at 3 ft from ground level. After considering suggestions from the client and contractor and the practical feasibility at site, the contractor’s proposal to make the beam 2 ft instead of 1 ft 6 in (18 in) was accepted.\n\nFor the remaining 18 inches, one foot remains and the arrangement is to go 6 inches deep into the earth. Gravel will be provided first, followed by gravel/lean concrete in 1:4:8 ratio. After lean concrete, PCC will be provided.\n\nAn 8 mm bars mesh (jali) will be provided horizontally and vertically and linked into the beam so the perimeter/boundary remains interlocked. This is intended to prevent soil, filled up to the 3-ft plinth, from escaping from the lower portion of the beam.';
-        var a=document.createElement('a'),u=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));a.href=u;a.download='RMA-Path-Seeker-Site-Visit-Report-2026-09-15.txt';a.click();setTimeout(function(){URL.revokeObjectURL(u)},1000);
-      };
-    }
+    tick(); return setInterval(tick,1000);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV44OnlyAdditions);else initV44OnlyAdditions();
-  setTimeout(initV44OnlyAdditions,800);
-  setTimeout(initV44OnlyAdditions,2000);
+  function makeView(main,key,title,subtitle){
+    var v=document.createElement('section');v.className='ps-v63-view';v.dataset.view=key;
+    if(title)v.innerHTML='<div class="ps-v63-page-title"><h2>'+title+'</h2><p>'+subtitle+'</p></div>';
+    main.appendChild(v); return v;
+  }
+  function build(){
+    var root=document.getElementById('rmaPathSeekerPortal'); if(!root||root.dataset.v63==='1')return;
+    var c=root.querySelector(':scope>.container'); if(!c)return;
+    var heading=c.querySelector('.heading'), photo=c.querySelector('.ps-profile-photo-wrap'), top=c.querySelector('.ps-v33-top'), req=c.querySelector('#psVisitRequestBox');
+    var docs=c.querySelector('#psDocuments')?.closest('.ps-v33-section');
+    var oldGrid=c.querySelector('.ps-v33-message-grid');
+    var notify=oldGrid?.querySelector('.ps-notify-box');
+    var message=oldGrid?.querySelector('.ps-message-box');
+    var history=c.querySelector('#psVisitHistory')?.closest('.ps-v33-section');
+    if(!heading||!top)return;
+    root.dataset.v63='1';
+
+    /* Remove the previous V62 presentation shell; retain all V44 functional elements. */
+    var oldLayout=c.querySelector('.ps-v62-layout');
+    var oldTopbar=c.querySelector('.ps-v62-topbar');
+    if(oldLayout)oldLayout.remove();
+    if(oldTopbar)oldTopbar.remove();
+    if(photo)photo.remove();
+
+    var topbar=document.createElement('div');
+    topbar.className='ps-v62-topbar';
+    topbar.innerHTML='<div class="ps-v62-brand">RMA<small>DESIGN &amp; CONSTRUCTION</small></div><div class="ps-v62-project"><span class="ps-v62-project-badge">⌂</span><span>Path Seeker International School<br><small style="font-weight:500;opacity:.75">Vijaypur, Ramgarh</small></span></div><div class="ps-v62-user"><span>Client</span><span class="ps-v62-avatar">●</span><button class="btn outline" style="background:#fff;color:#075a40;border:0;padding:7px 10px" onclick="signOutUser()">Sign Out</button></div>';
+    c.insertBefore(topbar,c.firstChild);
+
+    var layout=document.createElement('div');layout.className='ps-v62-layout';
+    var side=document.createElement('aside');side.className='ps-v62-sidebar';
+    side.innerHTML='<nav class="ps-v62-nav">'+[
+      ['⌂','Dashboard','dashboard'],['▣','Project Information','project'],['▤','Drawings & Documents','docs'],['▦','Site Visits','visit'],['✉','Messages','msg'],['♧','Notifications','notify']
+    ].map(function(x,i){return '<button type="button" class="'+(i===0?'active':'')+'" data-target="'+x[2]+'"><span class="icon">'+x[0]+'</span>'+x[1]+'</button>';}).join('')+'<div class="ps-v62-nav-divider"></div><button type="button" onclick="signOutUser()"><span class="icon">↪</span>Logout</button></nav>';
+    var main=document.createElement('main');main.className='ps-v62-main';
+    layout.appendChild(side);layout.appendChild(main);c.appendChild(layout);
+
+    /* Dashboard — only dashboard content is visible initially. */
+    var dash=makeView(main,'dashboard','Welcome to Your Project Portal','Your project information, drawings, site visits and RMA communication are available from the menu.');dash.classList.add('active');
+    var welcome=document.createElement('div');welcome.className='ps-v62-welcome';welcome.innerHTML='<div><h3>Path Seeker International School</h3><p>Project ID: <b>PSIS 261</b> · Vijaypur, Ramgarh</p></div><div class="ps-v62-status"><span class="ps-v62-pill">ACTIVE CLIENT</span><span class="ps-v62-pill">G+2 SCHOOL PROJECT</span></div>';dash.appendChild(welcome);
+    var stats=document.createElement('div');stats.className='ps-v62-dashboard-grid';stats.innerHTML='<div class="ps-v62-stat"><span class="label">SITE VISITS THIS MONTH</span><strong id="psV63StatMonthly">0 / 2</strong></div><div class="ps-v62-stat"><span class="label">TOTAL COMPLETED VISITS</span><strong>23</strong></div><div class="ps-v62-stat"><span class="label">PROJECT STATUS</span><strong>Active</strong></div>';dash.appendChild(stats);
+    var watch=document.createElement('div');watch.className='ps-v62-watch';watch.innerHTML='<div class="ps-v62-watch-head"><div><div class="ps-v62-watch-title">Next Site Visit · 24 September 2026 · 11:00 AM</div><div class="muted" style="font-size:11px">Appointment watch</div></div><span class="ps-v62-pill">UPCOMING</span></div><div class="ps-v62-countdown" id="psV63Countdown"></div>';dash.appendChild(watch);countdown(watch.querySelector('#psV63Countdown'));
+    var quick=document.createElement('div');quick.className='ps-v63-quick-grid';quick.innerHTML=[
+      ['project','▣','Project Information','View your project profile and scope.'],
+      ['docs','▤','Drawings & Documents','View or download RMA drawings.'],
+      ['visit','▦','Site Visits','Check visits, reports and appointments.'],
+      ['msg','✉','Messages','Send a message directly to RMA.'],
+      ['notify','♧','Notifications','See your latest RMA updates.']
+    ].map(function(x){return '<button type="button" class="ps-v63-quick" data-target="'+x[0]+'"><span class="qicon">'+x[1]+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span><span class="arrow">→</span></button>';}).join('');dash.appendChild(quick);
+
+    /* Project Information — the old V44 profile/scope is the ONLY content here. */
+    var project=makeView(main,'project','Project Information','Complete information about your Path Seeker International School project.');
+    if(top){
+      var limit=top.querySelector('.ps-v33-limit'); if(limit)limit.remove();
+      var requestBtn=top.querySelector('button[onclick*="togglePathSeekerVisitRequest"]'); if(requestBtn)requestBtn.remove();
+      project.appendChild(top);
+    }
+
+    /* Site Visits — request + history + report, and nothing else. */
+    var visit=makeView(main,'visit','Site Visits','View completed visits, upcoming appointments and request a new site visit.');
+    var visitIntro=document.createElement('div');visitIntro.className='ps-v63-visit-summary';visitIntro.innerHTML='<div><b>September site visits</b><span>1 of 2 used</span></div><div><b>Total completed site visits</b><span>23</span></div><button type="button" class="btn dark" onclick="togglePathSeekerVisitRequest()">Request Site Visit</button>';visit.appendChild(visitIntro);
+    if(req)visit.appendChild(req);
+    if(history)visit.appendChild(history);
+    var report=document.createElement('div');report.className='ps-v62-report';report.innerHTML='<h3>15 September 2026 · Site Visit Report <span class="ps-v62-pill" style="float:right">COMPLETED</span></h3><p>After a two-month rainy-season break, work resumed after completion of the combined footing. On the first day back, instructions were given to the contractor in the presence of the client.</p><p>The beam was originally planned at 3 ft from ground level. Considering suggestions from the client and contractor and the practical feasibility at site, the contractor’s proposal to make the beam 2 ft was accepted instead of 1 ft 6 in (18 in).</p><p>For the remaining 18 in, one foot will remain and the arrangement is to go 6 in deep into the earth. Gravel will be provided first, followed by gravel/lean concrete in 1:4:8 ratio. PCC will then be provided. An 8 mm reinforcement mesh (jali) will be provided horizontally and vertically and linked with the beam so the perimeter/boundary remains interlocked and the soil filled up to the 3-ft plinth does not escape from the lower portion.</p><div class="ps-v62-report-actions"><button class="btn outline" type="button" id="psV63DownloadReport">Download Report</button></div>';visit.appendChild(report);
+    document.getElementById('psV63DownloadReport').onclick=function(){var t='RMA DESIGN & CONSTRUCTION\nPATH SEEKER INTERNATIONAL SCHOOL — PSIS 261\n\nSITE VISIT REPORT — 15 SEPTEMBER 2026\nStatus: Completed\nSeptember visits: 1 of 2\nHistorical completed visits: 23\n\nAfter a two-month rainy-season break, work resumed after completion of the combined footing. On the first day back, instructions were given to the contractor in the presence of the client.\n\nThe beam was originally planned at 3 ft from ground level. Considering suggestions from the client and contractor and the practical feasibility at site, the contractor’s proposal to make the beam 2 ft was accepted instead of 1 ft 6 in (18 in).\n\nFor the remaining 18 in, one foot will remain and the arrangement is to go 6 in deep into the earth. Gravel will be provided first, followed by gravel/lean concrete in 1:4:8 ratio. PCC will then be provided. An 8 mm reinforcement mesh (jali) will be provided horizontally and vertically and linked with the beam so the perimeter/boundary remains interlocked and the soil filled up to the 3-ft plinth does not escape from the lower portion.';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download='RMA-Path-Seeker-Site-Visit-Report-2026-09-15.txt';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},500)};
+
+    /* Drawings */
+    var dv=makeView(main,'docs','Drawings & Documents','View and download project drawings and documents uploaded by RMA.');
+    if(docs)dv.appendChild(docs);
+
+    /* Messages */
+    var mv=makeView(main,'msg','Messages','Send a request, correction, clarification or change directly to RMA.');
+    if(message)mv.appendChild(message);
+
+    /* Notifications */
+    var nv=makeView(main,'notify','Notifications','Stay updated with the latest project, drawing and site visit information.');
+    if(notify)nv.appendChild(notify);
+    if(oldGrid)oldGrid.remove();
+
+    /* Hide the original heading; the dashboard/view titles replace it. */
+    if(heading)heading.remove();
+
+    /* Exact single-view navigation — clicking an icon shows ONLY that view. */
+    function show(key){
+      main.querySelectorAll('.ps-v63-view').forEach(function(v){v.classList.toggle('active',v.dataset.view===key)});
+      side.querySelectorAll('button[data-target]').forEach(function(b){b.classList.toggle('active',b.dataset.target===key)});
+      main.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    side.querySelectorAll('button[data-target]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.target)})});
+    main.querySelectorAll('[data-target]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.target)})});
+
+    var oldStat=document.getElementById('psMonthlyCounter');
+    var newStat=document.getElementById('psV63StatMonthly');
+    if(oldStat&&newStat){
+      newStat.textContent=oldStat.textContent;
+      new MutationObserver(function(){newStat.textContent=oldStat.textContent}).observe(oldStat,{childList:true,characterData:true,subtree:true});
+    }
+    document.getElementById('psProfilePhotoInput')?.closest('.ps-profile-photo-actions')?.remove();
+    show('dashboard');
+  }
+  var old=window.loadPathSeeker;
+  if(old&&!window.rmaV63Wrapped){window.rmaV63Wrapped=true;window.loadPathSeeker=async function(user){await old(user);setTimeout(build,50)}}
+  var timer=setInterval(function(){var r=document.getElementById('rmaPathSeekerPortal');if(r&&!r.classList.contains('hidden'))build()},250);setTimeout(function(){clearInterval(timer)},120000);
+})();
+</script>
+
+
+<script id="rma-v64-nav-runtime">
+(function(){
+  function install(){
+    var root=document.getElementById('rmaPathSeekerPortal');
+    if(!root || root.dataset.v64nav==='1') return;
+    var main=root.querySelector('.ps-v62-main');
+    var side=root.querySelector('.ps-v62-sidebar');
+    if(!main || !side) return;
+    root.dataset.v64nav='1';
+    function show(key){
+      var views=main.querySelectorAll('.ps-v63-view');
+      views.forEach(function(v){v.classList.remove('active'); v.style.display='none';});
+      var target=main.querySelector('.ps-v63-view[data-view="'+key+'"]');
+      if(target){target.classList.add('active'); target.style.display='block';}
+      side.querySelectorAll('[data-target]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-target')===key);});
+      if(target) target.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    side.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-target]');
+      if(!b) return;
+      e.preventDefault(); e.stopPropagation();
+      show(b.getAttribute('data-target'));
+    },true);
+    root.addEventListener('click',function(e){
+      var b=e.target.closest('[data-target]');
+      if(!b || side.contains(b)) return;
+      e.preventDefault(); e.stopPropagation();
+      show(b.getAttribute('data-target'));
+    },true);
+    window.rmaClientPortalShow=function(key){show(key);};
+    show('dashboard');
+  }
+  var t=setInterval(install,150);
+  setTimeout(function(){clearInterval(t);install();},120000);
 })();
 </script>
 </body></html>
