@@ -3778,39 +3778,54 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 
-<!-- V76: Supabase-controlled monthly site-visit allowance -->
-<script id="rma-v76-supabase-monthly-visit-setting">
+<!-- V77: Supabase-controlled monthly site-visit allowance — safe one-time loader -->
+<script id="rma-v77-supabase-monthly-visit-setting">
 (function(){
-'use strict';
-var DEFAULT_LIMIT=2;
-window.RMA_MONTHLY_VISIT_LIMIT=DEFAULT_LIMIT;
-var loaded=false;
-function root(){return document.getElementById('rmaPathSeekerPortal')||document;}
-function apply(limit){
-  limit=Math.max(0,parseInt(limit,10)||DEFAULT_LIMIT);
-  window.RMA_MONTHLY_VISIT_LIMIT=limit;
-  var r=root();
-  ['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){var e=document.getElementById(id);if(e){
-    var txt=e.textContent||'';var m=txt.match(/^(\d+)\s*\//);var used=m?parseInt(m[1],10):0;e.textContent=used+' / '+limit;
-  }});
-  if(r.querySelectorAll) r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){
-    if(/used/i.test(e.textContent||'')){var m=(e.textContent||'').match(/^(\\d+)/);var used=m?m[1]:'0';e.textContent=used+' of '+limit+' used';}
-  });
-}
-async function load(){
-  try{
-    if(!window.supabaseClient)return;
-    var q=await window.supabaseClient.from('rma_settings').select('monthly_site_visit_limit').eq('id','rma').maybeSingle();
-    if(!q.error && q.data && q.data.monthly_site_visit_limit!=null){apply(q.data.monthly_site_visit_limit);loaded=true;}
-    else apply(DEFAULT_LIMIT);
-  }catch(e){apply(DEFAULT_LIMIT);}
-}
-function start(){
-  apply(DEFAULT_LIMIT);
-  load();
-  var rootEl=document.getElementById('rmaPathSeekerPortal');
-  if(rootEl){new MutationObserver(function(){apply(window.RMA_MONTHLY_VISIT_LIMIT);}).observe(rootEl,{childList:true,subtree:true,characterData:true});}
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+  'use strict';
+  var DEFAULT_LIMIT=2;
+  function root(){return document.getElementById('rmaPathSeekerPortal')||document;}
+  function apply(limit){
+    limit=Math.max(0,parseInt(limit,10)||DEFAULT_LIMIT);
+    window.RMA_MONTHLY_VISIT_LIMIT=limit;
+    var r=root();
+    ['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){
+      var e=document.getElementById(id);
+      if(e){
+        var txt=e.textContent||'';
+        var m=txt.match(/^(\d+)\s*\//);
+        var used=m?parseInt(m[1],10):1;
+        e.textContent=used+' / '+limit;
+      }
+    });
+    if(r.querySelectorAll){
+      r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){
+        if(/used/i.test(e.textContent||'')){
+          var m=(e.textContent||'').match(/^(\d+)/);
+          var used=m?m[1]:'1';
+          e.textContent=used+' of '+limit+' used';
+        }
+      });
+    }
+  }
+  async function loadFromSupabase(){
+    try{
+      if(!window.supabaseClient){apply(DEFAULT_LIMIT);return;}
+      var q=await window.supabaseClient.from('rma_settings')
+        .select('monthly_site_visit_limit').eq('id','rma').maybeSingle();
+      if(!q.error && q.data && q.data.monthly_site_visit_limit!=null){
+        apply(q.data.monthly_site_visit_limit);
+      }else{
+        apply(DEFAULT_LIMIT);
+      }
+    }catch(e){apply(DEFAULT_LIMIT);}
+  }
+  function start(){
+    apply(DEFAULT_LIMIT);
+    /* Load once only. No MutationObserver: changing text must never trigger
+       another load or create a browser-freezing mutation loop. */
+    setTimeout(loadFromSupabase,800);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start);
+  else start();
 })();
 </script>
