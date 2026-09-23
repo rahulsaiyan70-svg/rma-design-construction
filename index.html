@@ -3831,3 +3831,70 @@ var n=0,boot=setInterval(function(){if(bind()||++n>160)clearInterval(boot)},250)
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
 </script>
+
+<!-- RMA V76.3 FINAL: PDF + IMAGE document renderer -->
+<style id="rma-v763-image-docs-css">
+#rmaPathSeekerPortal .rma-v763-preview{margin-top:8px;border:1px solid #dfe7e2;border-radius:8px;overflow:hidden;background:#f8fbf9}
+#rmaPathSeekerPortal .rma-v763-preview img{display:block;width:100%;max-height:620px;object-fit:contain;background:#fff}
+#rmaPathSeekerPortal .rma-v763-preview-note{padding:7px 9px;font-size:10px;color:#697b72;background:#f5faf7}
+</style>
+<script id="rma-v763-image-docs">
+(function(){
+'use strict';
+var PROJECT_ID='d9e2617e-6edc-4c07-891b-7879998d6187',BUCKET='project-documents',busy=false;
+function box(){return document.getElementById('psDocuments')}
+function esc(v){return typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]})}
+function looksImage(x,url){
+ var s=[x.mime_type,x.content_type,x.file_type,x.document_type,x.document_name,x.name,x.title,url].filter(Boolean).join(' ').toLowerCase();
+ return /image\/(jpeg|jpg|png|webp|gif|bmp|svg\+xml)/i.test(s)||/\.(jpe?g|png|webp|gif|bmp|svg)(?:$|[?#])/i.test(s);
+}
+function looksPdf(x,url){var s=[x.mime_type,x.content_type,x.file_type,x.document_name,x.name,x.title,url].filter(Boolean).join(' ').toLowerCase();return /application\/pdf/i.test(s)||/\.pdf(?:$|[?#])/i.test(s)}
+async function urlFor(x){
+ var direct=[x.file_url,x.public_url,x.url,x.download_url].filter(Boolean);
+ for(var i=0;i<direct.length;i++)if(/^https?:\/\//i.test(String(direct[i])))return String(direct[i]);
+ var paths=[x.storage_path,x.preview_storage_path,x.file_path,x.path,x.storagePath].filter(Boolean);
+ for(var j=0;j<paths.length;j++){
+  var p=String(paths[j]).replace(/^\/+/, '');
+  try{var a=await supabaseClient.storage.from(BUCKET).createSignedUrl(p,3600);if(a.data&&a.data.signedUrl)return a.data.signedUrl}catch(e){}
+  try{var b=supabaseClient.storage.from(BUCKET).getPublicUrl(p);if(b.data&&b.data.publicUrl)return b.data.publicUrl}catch(e){}
+ }
+ return '';
+}
+async function getDocs(){
+ var q=await supabaseClient.from('project_documents').select('*').eq('project_id',PROJECT_ID).order('created_at',{ascending:false}).limit(200);
+ if(!q.error&&Array.isArray(q.data)&&q.data.length)return q.data;
+ try{var u=await supabaseClient.auth.getUser();var id=u.data&&u.data.user&&u.data.user.id;if(id){var q2=await supabaseClient.from('project_documents').select('*').eq('client_user_id',id).order('created_at',{ascending:false}).limit(200);if(!q2.error&&Array.isArray(q2.data)&&q2.data.length)return q2.data}}catch(e){}
+ return Array.isArray(q.data)?q.data:[];
+}
+async function render(){
+ var b=box();if(!b||busy)return;
+ busy=true;b.innerHTML='<div class="muted" style="padding:12px">Loading drawings and documents...</div>';
+ try{
+  var list=await getDocs();
+  if(!list.length){b.innerHTML='<div class="notice error"><b>No project drawings are available yet.</b><br>No Path Seeker document rows were returned.</div>';return}
+  var rows=[];
+  for(var i=0;i<list.length;i++){
+   var x=list[i]||{},name=x.document_name||x.title||x.name||('Project Document '+(i+1)),u=await urlFor(x);
+   var meta=(x.document_type||x.category||'Drawing / Document')+(x.floor_name?' • '+x.floor_name:'')+(x.is_final?' • Final':'');
+   var image=!!u&&looksImage(x,u),pdf=!!u&&looksPdf(x,u);
+   var preview='';
+   if(image)preview='<div class="rma-v763-preview"><img src="'+esc(u)+'" alt="'+esc(name)+'" loading="lazy"><div class="rma-v763-preview-note">Image preview</div></div>';
+   else if(pdf)preview='<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:800;color:#245b43;padding:7px 0">Preview Drawing</summary><div style="margin-top:6px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden"><iframe src="'+esc(u)+'#toolbar=1&navpanes=0" title="'+esc(name)+'" style="display:block;width:100%;height:500px;border:0"></iframe></div></details>';
+   var actions=u?'<div class="rma-v762-actions"><a class="btn outline" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">View Drawing</a><a class="btn outline" href="'+esc(u)+'" download>Download</a></div>':'<span class="muted" style="font-size:10px">Storage file unavailable</span>';
+   rows.push('<div class="rma-v762-row"><div class="rma-v762-no">'+(i+1)+'</div><div style="min-width:0"><div class="rma-v762-name" title="'+esc(name)+'">'+esc(name)+'</div><div class="rma-v762-meta">'+esc(meta)+'</div>'+preview+'</div>'+actions+'</div>');
+  }
+  b.innerHTML='<div class="rma-v44-summary" style="margin-bottom:0;padding:10px 14px"><b>'+list.length+' project document'+(list.length===1?'':'s')+' available</b><span class="muted"> • PDF and image files supported</span></div><div class="rma-v762-list">'+rows.join('')+'</div>';
+ }catch(e){b.innerHTML='<div class="notice error"><b>Documents could not be loaded.</b><br>'+esc(e&&e.message||'Supabase document access error.')+'</div>'}
+ finally{busy=false}
+}
+function bind(){
+ var root=document.getElementById('rmaPathSeekerPortal'),b=box();if(!root||!b)return false;
+ root.addEventListener('click',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-target="docs"]'):null;if(t)setTimeout(render,250)},true);
+ if(!b.getAttribute('data-v763-loaded')){b.setAttribute('data-v763-loaded','1');setTimeout(render,500)}
+ return true;
+}
+window.rmaV763ReloadDocuments=render;
+var n=0,t=setInterval(function(){if(bind()||++n>120)clearInterval(t)},250);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script>
