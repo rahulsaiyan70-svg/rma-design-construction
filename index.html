@@ -3745,18 +3745,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   window.rmaV79ReloadDocuments=render;
 })();
 </script>
-<!-- RMA V76.1 FINAL DRAWINGS RECOVERY -->
+<!-- RMA V76.2 FINAL DRAWINGS RECOVERY -->
 <style>
-#rmaPathSeekerPortal .rma-v761-list{display:grid;gap:8px;padding:10px 12px 12px}
-#rmaPathSeekerPortal .rma-v761-row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid #e1e9e4;border-radius:8px;background:#fff}
-#rmaPathSeekerPortal .rma-v761-no{width:26px;height:26px;border-radius:6px;background:#eef7f2;color:#245b43;display:grid;place-items:center;font-size:11px;font-weight:900}
-#rmaPathSeekerPortal .rma-v761-name{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#17251e}
-#rmaPathSeekerPortal .rma-v761-meta{font-size:10px;color:#74817b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#rmaPathSeekerPortal .rma-v761-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
-#rmaPathSeekerPortal .rma-v761-actions .btn{padding:6px 9px!important;min-height:30px;font-size:10px!important;white-space:nowrap}
-@media(max-width:700px){#rmaPathSeekerPortal .rma-v761-row{grid-template-columns:28px minmax(0,1fr)}#rmaPathSeekerPortal .rma-v761-actions{grid-column:2;justify-content:flex-start}}
+#rmaPathSeekerPortal .rma-v762-list{display:grid;gap:7px;padding:10px 12px 12px}
+#rmaPathSeekerPortal .rma-v762-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 10px;border:1px solid #e1e9e4;border-radius:8px;background:#fff}
+#rmaPathSeekerPortal .rma-v762-no{width:24px;height:24px;border-radius:6px;background:#eef7f2;color:#245b43;display:grid;place-items:center;font-size:10px;font-weight:900}
+#rmaPathSeekerPortal .rma-v762-name{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#17251e}
+#rmaPathSeekerPortal .rma-v762-meta{font-size:10px;color:#74817b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rmaPathSeekerPortal .rma-v762-actions{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
+#rmaPathSeekerPortal .rma-v762-actions .btn{padding:5px 8px!important;min-height:28px;font-size:10px!important;white-space:nowrap}
+@media(max-width:700px){#rmaPathSeekerPortal .rma-v762-row{grid-template-columns:26px minmax(0,1fr)}#rmaPathSeekerPortal .rma-v762-actions{grid-column:2;justify-content:flex-start}}
 </style>
-<script>
+<script id="rma-v762-drawings-recovery">
 (function(){
 'use strict';
 var PROJECT_ID='d9e2617e-6edc-4c07-891b-7879998d6187';
@@ -3765,44 +3765,68 @@ var LEGACY_PATH="PSIS001/architectural/all floors/PATHSEEKER'S 2ND FLOOR 01.pdf"
 var busy=false;
 function esc(v){return typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>\'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]})}
 function box(){return document.getElementById('psDocuments')}
-async function currentUser(){try{var r=await supabaseClient.auth.getUser();return r.data&&r.data.user||null}catch(e){return null}}
-async function urlFor(x){
- var direct=[x.file_url,x.public_url,x.url].filter(Boolean);
- for(var i=0;i<direct.length;i++)if(/^https?:\/\//i.test(String(direct[i])))return String(direct[i]);
- var paths=[x.storage_path,x.preview_storage_path,x.file_path,x.path,x.storagePath].filter(Boolean);
- for(var j=0;j<paths.length;j++){var p=String(paths[j]);try{var r=await supabaseClient.storage.from(BUCKET).createSignedUrl(p,3600);if(r.data&&r.data.signedUrl)return r.data.signedUrl}catch(e){}try{var q=supabaseClient.storage.from(BUCKET).getPublicUrl(p);if(q.data&&q.data.publicUrl)return q.data.publicUrl}catch(e){}}
+async function user(){try{var r=await supabaseClient.auth.getUser();return r.data&&r.data.user||null}catch(e){return null}}
+async function makeUrl(path){
+ if(!path)return '';
+ path=String(path).replace(/^\/+/, '');
+ try{var s=await supabaseClient.storage.from(BUCKET).createSignedUrl(path,3600);if(s&&s.data&&s.data.signedUrl)return s.data.signedUrl}catch(e){}
+ try{var p=supabaseClient.storage.from(BUCKET).getPublicUrl(path);if(p&&p.data&&p.data.publicUrl)return p.data.publicUrl}catch(e){}
  return '';
 }
-async function getDocs(){
+async function rowUrl(x){
+ var direct=[x.file_url,x.public_url,x.url,x.download_url].filter(Boolean);
+ for(var i=0;i<direct.length;i++)if(/^https?:\/\//i.test(String(direct[i])))return String(direct[i]);
+ var paths=[x.storage_path,x.preview_storage_path,x.file_path,x.path,x.storagePath].filter(Boolean);
+ for(var j=0;j<paths.length;j++){var u=await makeUrl(paths[j]);if(u)return u}
+ return '';
+}
+async function docs(){
  var list=[];
  try{var q=await supabaseClient.from('project_documents').select('*').eq('project_id',PROJECT_ID).order('created_at',{ascending:false}).limit(200);if(!q.error&&Array.isArray(q.data))list=q.data}catch(e){}
- if(!list.length){var u=await currentUser();if(u)try{var q2=await supabaseClient.from('project_documents').select('*').eq('client_user_id',u.id).order('created_at',{ascending:false}).limit(200);if(!q2.error&&Array.isArray(q2.data))list=q2.data}catch(e){}}
+ if(!list.length){var u=await user();if(u)try{var q2=await supabaseClient.from('project_documents').select('*').eq('client_user_id',u.id).order('created_at',{ascending:false}).limit(200);if(!q2.error&&Array.isArray(q2.data))list=q2.data}catch(e){}}
  return list;
 }
 async function render(){
  var b=box();if(!b||busy)return;
  busy=true;b.innerHTML='<div class="muted" style="padding:12px">Loading drawings and documents...</div>';
  try{
-  var list=await getDocs();
-  if(!list.length)list=[{document_name:'Path Seeker project drawing',document_type:'Architectural',floor_name:'All Floors',is_final:true,storage_path:LEGACY_PATH}];
-  var rows=[];
+  var list=await docs();
+  /* Always keep the known Path Seeker drawing available if the database is empty. */
+  if(!list.length)list=[{document_name:'Path Seeker project drawing',document_type:'Architectural Drawing',floor_name:'All Floors',is_final:true,storage_path:LEGACY_PATH}];
+  var rows=[],usable=0;
   for(var i=0;i<list.length;i++){
-   var x=list[i]||{},name=x.document_name||x.title||x.name||'Project Document',u=await urlFor(x);
+   var x=list[i]||{};
+   var name=x.document_name||x.title||x.name||'Project Document';
+   var u=await rowUrl(x);
+   /* If a DB row has no usable URL, try the known legacy file once. */
+   if(!u && i===0)u=await makeUrl(LEGACY_PATH);
+   if(u)usable++;
    var meta=(x.document_type||x.category||'Drawing / Document')+(x.floor_name?' • '+x.floor_name:'')+(x.is_final?' • Final':'');
-   var actions=u?'<div class="rma-v761-actions"><a class="btn outline" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">View Drawing</a><a class="btn outline" href="'+esc(u)+'" download>Download Drawing</a></div>':'<span class="muted" style="font-size:10px">File unavailable</span>';
-   rows.push('<div class="rma-v761-row"><div class="rma-v761-no">'+(i+1)+'</div><div style="min-width:0"><div class="rma-v761-name" title="'+esc(name)+'">'+esc(name)+'</div><div class="rma-v761-meta">'+esc(meta)+'</div></div>'+actions+'</div>');
+   var actions=u?'<div class="rma-v762-actions"><a class="btn outline" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">View Drawing</a><a class="btn outline" href="'+esc(u)+'" download>Download Drawing</a></div>':'<span class="muted" style="font-size:10px">Storage file unavailable</span>';
+   rows.push('<div class="rma-v762-row"><div class="rma-v762-no">'+(i+1)+'</div><div style="min-width:0"><div class="rma-v762-name" title="'+esc(name)+'">'+esc(name)+'</div><div class="rma-v762-meta">'+esc(meta)+'</div></div>'+actions+'</div>');
   }
-  b.innerHTML='<div class="rma-v44-summary" style="margin-bottom:0;padding:12px 15px"><b>'+list.length+' project document'+(list.length===1?'':'s')+' available</b><span class="muted"> • RMA uploaded documents</span></div><div class="rma-v761-list">'+rows.join('')+'</div>';
- }catch(e){b.innerHTML='<div class="notice error" style="margin:12px"><b>Drawings could not be loaded.</b><br>'+esc(e&&e.message||'Document access error.')+'</div>'}
- busy=false;
+  /* If DB rows exist but none can open, append the known legacy drawing as a final recovery row. */
+  if(!usable && list.length){
+   var lu=await makeUrl(LEGACY_PATH);
+   if(lu)rows.push('<div class="rma-v762-row"><div class="rma-v762-no">'+(rows.length+1)+'</div><div style="min-width:0"><div class="rma-v762-name">Path Seeker project drawing</div><div class="rma-v762-meta">Architectural Drawing • All Floors • Final</div></div><div class="rma-v762-actions"><a class="btn outline" href="'+esc(lu)+'" target="_blank" rel="noopener noreferrer">View Drawing</a><a class="btn outline" href="'+esc(lu)+'" download>Download Drawing</a></div></div>');
+  }
+  b.innerHTML='<div class="rma-v44-summary" style="margin-bottom:0;padding:10px 14px"><b>'+list.length+' project document'+(list.length===1?'':'s')+' available</b><span class="muted"> • RMA uploaded documents</span></div><div class="rma-v762-list">'+rows.join('')+'</div>';
+ }catch(e){
+  var u=await makeUrl(LEGACY_PATH).catch(function(){return ''});
+  if(u)b.innerHTML='<div class="rma-v44-summary" style="margin-bottom:0;padding:10px 14px"><b>Path Seeker drawing available</b></div><div class="rma-v762-list"><div class="rma-v762-row"><div class="rma-v762-no">1</div><div><div class="rma-v762-name">Path Seeker project drawing</div><div class="rma-v762-meta">Architectural Drawing • All Floors • Final</div></div><div class="rma-v762-actions"><a class="btn outline" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">View Drawing</a><a class="btn outline" href="'+esc(u)+'" download>Download Drawing</a></div></div></div>';
+  else b.innerHTML='<div class="notice error" style="margin:12px"><b>Drawings could not be loaded.</b><br>'+esc(e&&e.message||'Document access error.')+'</div>';
+ }finally{busy=false}
 }
 function bind(){
  var root=document.getElementById('rmaPathSeekerPortal');if(!root)return false;
- if(root.getAttribute('data-v761-bound')!=='1'){root.setAttribute('data-v761-bound','1');root.addEventListener('click',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-target="docs"]'):null;if(t)setTimeout(render,300)})}
- if(box()&&!box().getAttribute('data-v761-rendered')){box().setAttribute('data-v761-rendered','1');render()}
- return !!box();
+ if(root.getAttribute('data-v762-bound')!=='1'){
+  root.setAttribute('data-v762-bound','1');
+  root.addEventListener('click',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-target="docs"]'):null;if(t)setTimeout(render,200)});
+ }
+ var b=box();if(b&&!b.getAttribute('data-v762-started')){b.setAttribute('data-v762-started','1');render()}
+ return !!b;
 }
-window.rmaV761ReloadDrawings=render;
+window.rmaV762ReloadDrawings=render;
 var n=0,boot=setInterval(function(){if(bind()||++n>160)clearInterval(boot)},250);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
