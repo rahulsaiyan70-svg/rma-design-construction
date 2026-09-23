@@ -3684,63 +3684,33 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
-
-<!-- V79 DOCUMENT RECOVERY: render Path Seeker drawings on demand without polling/observers -->
-<script id="rma-v79-document-recovery">
+<!-- V80 SAFE DOCUMENT DISPLAY: render only when Drawings & Documents is opened. No polling, no observer, no repeated network loop. -->
+<script id="rma-v80-documents-safe">
 (function(){
   'use strict';
-  var PROJECT_ID='d9e2617e-6edc-4c07-891b-7879998d6187';
-  var BUCKET='project-documents';
-  var rendering=false;
-  function esc(v){return typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>\'\"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]})}
-  function box(){return document.getElementById('psDocuments')}
-  async function urlFor(x){
-    var direct=[x.file_url,x.public_url,x.url].filter(Boolean);
-    for(var i=0;i<direct.length;i++) if(/^https?:/i.test(String(direct[i]))) return String(direct[i]);
-    var paths=[x.storage_path,x.preview_storage_path,x.file_path,x.path,x.storagePath].filter(Boolean);
-    for(var j=0;j<paths.length;j++){
-      try{var r=await supabaseClient.storage.from(BUCKET).createSignedUrl(String(paths[j]),3600);if(r.data&&r.data.signedUrl)return r.data.signedUrl}catch(e){}
-      try{var q=supabaseClient.storage.from(BUCKET).getPublicUrl(String(paths[j]));if(q.data&&q.data.publicUrl)return q.data.publicUrl}catch(e){}
-    }
-    return '';
-  }
-  async function render(){
-    var b=box();if(!b||rendering)return;
-    rendering=true;
-    b.innerHTML='<div class="muted">Loading drawings and documents...</div>';
-    try{
-      var q=await supabaseClient.from('project_documents').select('*').eq('project_id',PROJECT_ID).order('created_at',{ascending:false}).limit(200);
-      if(q.error)throw q.error;
-      var list=Array.isArray(q.data)?q.data:[];
-      if(!list.length){
-        b.innerHTML='<div class="notice error"><b>No project drawings are available yet.</b><br>No documents were returned for Path Seeker International School (PSIS 261).</div>';
-        return;
-      }
-      var rows=[];
-      for(var i=0;i<list.length;i++){
-        var x=list[i]||{},name=x.document_name||x.title||x.name||'Project Document';
-        var meta=(x.document_type||x.category||'Drawing / Document')+(x.floor_name?' • '+x.floor_name:'')+(x.is_final?' • Final':'');
-        var u=await urlFor(x);
-        var actions=u?'<div class="rma-v71-doc-actions"><a class="btn outline" href="'+esc(u)+'" target="_blank" rel="noopener">View Drawing</a><a class="btn outline" href="'+esc(u)+'" download>Download Drawing</a></div>':'<div class="notice error" style="margin-top:9px">Drawing record found, but its Storage file could not be opened.</div>';
-        var preview=u&&/\.pdf($|\?)/i.test(u)?'<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:800;color:#245b43;padding:8px 0">Preview Drawing</summary><div style="margin-top:8px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden;background:#fff"><iframe src="'+esc(u)+'#toolbar=1&navpanes=0" title="'+esc(name)+'" style="display:block;width:100%;height:520px;border:0"></iframe></div></details>':'';
-        rows.push('<div class="rma-v71-doc-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap"><div style="min-width:0"><b style="font-size:15px">'+esc(name)+'</b><div class="muted" style="margin-top:3px">'+esc(meta)+'</div></div><span class="role-badge">RMA Document</span></div>'+actions+preview+'</div>');
-      }
-      b.innerHTML='<div class="rma-v44-summary" style="margin-bottom:12px"><b>'+list.length+' project document'+(list.length===1?'':'s')+' available</b><span class="muted"> • RMA uploaded documents</span></div><div style="display:grid;gap:9px">'+rows.join('')+'</div>';
-    }catch(e){
-      b.innerHTML='<div class="notice error"><b>Drawings could not be loaded.</b><br>'+esc(e&&e.message||'Supabase document access error.')+'</div>';
-    }finally{rendering=false}
-  }
+  var bound=false;
   function bind(){
-    var root=document.getElementById('rmaPathSeekerPortal');if(!root||root.getAttribute('data-v79-docbind')==='1')return false;
-    root.setAttribute('data-v79-docbind','1');
+    if(bound)return true;
+    var root=document.getElementById('rmaPathSeekerPortal');
+    if(!root)return false;
+    bound=true;
     root.addEventListener('click',function(e){
-      var t=e.target&&e.target.closest?e.target.closest('[data-target="docs"]'):null;
-      if(t)setTimeout(render,150);
+      var t=e.target&&e.target.closest?e.target.closest('button[data-target="docs"], [data-target="docs"]'):null;
+      if(!t)return;
+      setTimeout(function(){
+        try{
+          if(typeof window.rmaV71ReloadDocuments==='function'){
+            window.rmaV71ReloadDocuments();
+          }else if(typeof window.rmaV70ReloadDocuments==='function'){
+            window.rmaV70ReloadDocuments();
+          }
+        }catch(err){console.warn('Document refresh failed:',err);}
+      },100);
     });
-    setTimeout(render,1200);
     return true;
   }
-  var n=0,boot=setInterval(function(){if(bind()||++n>80)clearInterval(boot)},250);
-  window.rmaV79ReloadDocuments=render;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  var n=0;
+  var wait=setInterval(function(){if(bind()||++n>40)clearInterval(wait);},250);
 })();
 </script>
