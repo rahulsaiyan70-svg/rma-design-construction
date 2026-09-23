@@ -3620,10 +3620,7 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     var a=document.getElementById('psV63StatMonthly');if(a)a.textContent='1 / 2';
     var b=document.getElementById('psMonthlyCounter');if(b)b.textContent='1 / 2';
     var s=root();if(s){s.querySelectorAll('.ps-v63-visit-summary span').forEach(function(x){if(/used/i.test(x.textContent))x.textContent='1 of 2 used'})}
-    if(!counterObserver){
-      var old=document.getElementById('psMonthlyCounter');
-      if(old){counterObserver=new MutationObserver(function(){old.textContent='1 / 2';var n=document.getElementById('psV63StatMonthly');if(n)n.textContent='1 / 2'});counterObserver.observe(old,{childList:true,characterData:true,subtree:true})}
-    }
+    /* Monthly counter is set directly; no MutationObserver is used here. */
   }
 
   function liveWatch(){
@@ -3674,96 +3671,6 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 </script>
 
 <!-- V74 FINAL DASHBOARD PATCH: preserve working V72 documents; fix monthly counter and live countdown only -->
-<script id="rma-v74-dashboard-final-fix">
-(function(){
-  'use strict';
-  var WATCH_TARGET = new Date('2026-09-24T11:00:00+05:30').getTime();
-  var currentWatch = null;
-  var watchTimer = null;
-  var observer = null;
-
-  function setMonthly(){
-    var root=document.getElementById('rmaPathSeekerPortal')||document;
-    var ids=['psV63StatMonthly','psMonthlyCounter'];
-    ids.forEach(function(id){
-      var el=document.getElementById(id);
-      if(el) el.textContent='1 / 2';
-    });
-    if(root.querySelectorAll){
-      root.querySelectorAll('.ps-v63-visit-summary span').forEach(function(el){
-        if(/used/i.test(el.textContent||'')) el.textContent='1 of 2 used';
-      });
-    }
-  }
-
-  function renderWatch(el){
-    if(!el) return;
-    var ms=Math.max(0,WATCH_TARGET-Date.now());
-    var total=Math.floor(ms/1000);
-    var days=Math.floor(total/86400);
-    var hours=Math.floor((total%86400)/3600);
-    var minutes=Math.floor((total%3600)/60);
-    var seconds=total%60;
-    el.innerHTML=[
-      ['Days',days],
-      ['Hours',hours],
-      ['Minutes',minutes],
-      ['Seconds',seconds]
-    ].map(function(x){
-      return '<div class="ps-v62-time"><strong>'+String(x[1]).padStart(2,'0')+'</strong><small>'+x[0]+'</small></div>';
-    }).join('');
-  }
-
-  function takeControl(){
-    var old=document.getElementById('psV63Countdown');
-    if(!old) return false;
-
-    /* The original portal has older countdown intervals which write into this
-       element. Replace the element itself once, so those old intervals continue
-       writing to their detached element and cannot overwrite our live watch. */
-    if(old.getAttribute('data-rma-v74-owned')!=='1'){
-      var fresh=old.cloneNode(false);
-      fresh.setAttribute('data-rma-v74-owned','1');
-      old.parentNode.replaceChild(fresh,old);
-      currentWatch=fresh;
-    }else{
-      currentWatch=old;
-    }
-    renderWatch(currentWatch);
-    if(!watchTimer) watchTimer=setInterval(function(){
-      if(!currentWatch || !document.body.contains(currentWatch)){
-        watchTimer=null;
-        return;
-      }
-      renderWatch(currentWatch);
-    },1000);
-    return true;
-  }
-
-  function boot(){
-    setMonthly();
-    takeControl();
-  }
-
-  observer=new MutationObserver(function(){
-    setMonthly();
-    takeControl();
-  });
-
-  function start(){
-    var root=document.getElementById('rmaPathSeekerPortal')||document.body;
-    if(root) observer.observe(root,{childList:true,subtree:true,characterData:true});
-    boot();
-    setInterval(setMonthly,1000);
-    setInterval(takeControl,1000);
-  }
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start);
-  else start();
-})();
-</script>
-
-
 <!-- V75: ONLY dashboard counter + appointment watch. V72 document code is intentionally untouched. -->
 <script id="rma-v75-dashboard-watch-only">
 (function(){
