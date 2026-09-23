@@ -3305,194 +3305,145 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 })();
 </script>
 
-<style id="rma-v66-navfix">
-#rmaPathSeekerPortal .rma-v63-main-panel [data-v63-section]{display:none!important}
-#rmaPathSeekerPortal .rma-v63-main-panel [data-v63-section].rma-v66-active{display:block!important}
+
+
+
+<style id="rma-v69-client-portal-fix">
+/* V69: one navigation system only; Project Information starts active. */
+#rmaPathSeekerPortal .ps-v63-view{display:none!important}
+#rmaPathSeekerPortal .ps-v63-view.active{display:block!important}
+#rmaPathSeekerPortal .rma-v69-client-card{margin-top:14px;padding:18px;border:1px solid #e2e7e5;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(20,50,40,.04)}
+#rmaPathSeekerPortal .rma-v69-client-card h3{margin:0 0 5px}
+#rmaPathSeekerPortal .rma-v69-client-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+#rmaPathSeekerPortal .rma-v69-client-field{padding:10px 12px;border:1px solid #e5e9e7;border-radius:10px;background:#fbfcfc}
+#rmaPathSeekerPortal .rma-v69-client-field small{display:block;color:#68747d;font-size:11px;margin-bottom:3px}
+#rmaPathSeekerPortal .rma-v69-client-field b{display:block;color:#26332f;font-size:13px;line-height:1.35;word-break:break-word}
+#rmaPathSeekerPortal .rma-v69-contact{margin-top:12px;padding:11px 12px;border-radius:10px;background:#eef7f3;color:#31564a;font-size:12px;line-height:1.5}
+@media(max-width:700px){#rmaPathSeekerPortal .rma-v69-client-grid{grid-template-columns:1fr}}
 </style>
-<script id="rma-v66-navfix">
+<script id="rma-v69-client-portal-fix">
 (function(){
   'use strict';
-
-  function portalRoot(){
-    return document.getElementById('rmaPathSeekerPortal') ||
-           document.querySelector('[id*="PathSeekerPortal"]');
-  }
-
-  function normalize(v){
-    return String(v||'').toLowerCase().replace(/&amp;/g,'&').replace(/[^a-z0-9]+/g,'');
-  }
-
-  function findPanel(root, key){
-    var k=normalize(key);
-    var all=root.querySelectorAll('[data-v63-section], [data-section], .rma-v63-section, .ps-v63-section');
-    for(var i=0;i<all.length;i++){
-      var el=all[i];
-      var id=normalize(el.id);
-      var data=normalize(el.getAttribute('data-v63-section')||el.getAttribute('data-section'));
-      var txt=normalize((el.querySelector('h1,h2,h3,h4,.section-title')||{}).textContent);
-      if(id===k || data===k || txt.indexOf(k)>=0) return el;
-    }
-    return null;
-  }
-
-  var aliases={
-    dashboard:['dashboard','home'],
-    projectinformation:['projectinformation','projectinfo'],
-    drawingsdocuments:['drawingsdocuments','drawings','documents'],
-    sitevisits:['sitevisits','sitevisit'],
-    messages:['messages','messagerma','message'],
-    notifications:['notifications','notification']
+  var PROJECT={
+    clientId:'PSIS 261',
+    clientName:'Path Seeker International School',
+    phone:'9419118424',
+    email:'pathseekers.vijaypur@gmail.com',
+    address:'Ramgarh, Jammu & Kashmir, India',
+    projectName:'Path Seeker International School Project',
+    projectId:'PSIS 261',
+    location:'Vijaypur, Ramgarh',
+    plot:'120 ft × 54 ft',
+    built:'6480 sqft',
+    structure:'G + 2 (Framed)',
+    status:'Ongoing',
+    start:'15 July 2026',
+    completion:'30 December 2026',
+    scope:'Architect & Engineering Consultant — consultation basis only.',
+    rmaPhone:'+91 96221 21692',
+    rmaEmail:'RMA.studies07@gmail.com'
   };
 
-  function keyFromButton(btn){
-    var raw=btn.getAttribute('data-section') ||
-            btn.getAttribute('data-target') ||
-            btn.getAttribute('data-view') ||
-            btn.getAttribute('aria-label') ||
-            btn.textContent;
-    var n=normalize(raw);
-    for(var key in aliases){
-      if(aliases[key].some(function(a){return n.indexOf(normalize(a))>=0;})) return key;
-    }
-    return null;
-  }
+  function root(){return document.getElementById('rmaPathSeekerPortal');}
+  function main(){var r=root();return r&&r.querySelector('.ps-v62-main');}
+  function side(){var r=root();return r&&r.querySelector('.ps-v62-sidebar');}
 
-  function collectPanels(root){
-    var panels=[];
-    root.querySelectorAll('[data-v63-section], [data-section], .rma-v63-section, .ps-v63-section').forEach(function(el){
-      if(panels.indexOf(el)<0) panels.push(el);
+  function show(key){
+    var m=main(), s=side();
+    if(!m||!s) return false;
+    var view=m.querySelector('.ps-v63-view[data-view="'+CSS.escape(key)+'"]');
+    if(!view) return false;
+    m.querySelectorAll('.ps-v63-view').forEach(function(v){
+      var active=v===view;
+      v.classList.toggle('active',active);
+      v.style.setProperty('display',active?'block':'none','important');
+      v.setAttribute('aria-hidden',active?'false':'true');
     });
-    return panels;
-  }
-
-  function show(root,key,clicked){
-    var panels=collectPanels(root);
-    var wanted=null;
-    panels.forEach(function(p){
-      var id=normalize(p.id);
-      var data=normalize(p.getAttribute('data-v63-section')||p.getAttribute('data-section'));
-      var title=normalize((p.querySelector('h1,h2,h3,h4,.section-title')||{}).textContent);
-      var match = id===key || data===key || title.indexOf(key)>=0;
-      p.classList.toggle('rma-v66-active',match);
-      if(match) wanted=p;
+    s.querySelectorAll('button[data-target]').forEach(function(b){
+      var active=b.getAttribute('data-target')===key;
+      b.classList.toggle('active',active);
+      if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
     });
-    root.querySelectorAll('[data-section], [data-target], [data-view]').forEach(function(b){
-      var bk=keyFromButton(b);
-      if(bk) b.classList.toggle('active',bk===key);
-      if(bk===key) b.setAttribute('aria-current','page');
-      else b.removeAttribute('aria-current');
-    });
-    if(wanted){
-      wanted.style.display='block';
-      root.dataset.rmaV66Section=key;
-    }
+    try{sessionStorage.setItem('rmaPathSeekerActiveView',key)}catch(e){}
+    return true;
   }
 
   function wire(){
-    var root=portalRoot();
-    if(!root || root.dataset.rmaV66Wired==='1') return;
-    root.dataset.rmaV66Wired='1';
-
-    root.addEventListener('click',function(e){
-      var btn=e.target.closest('[data-section],[data-target],[data-view],button,a');
-      if(!btn || !root.contains(btn)) return;
-      var key=keyFromButton(btn);
-      if(!key) return;
-      var navLike = btn.closest('nav,.sidebar,.rma-v63-sidebar,.rma-v63-nav,[class*="sidebar"],[class*="nav"]');
-      if(navLike || btn.hasAttribute('data-section') || btn.hasAttribute('data-target') || btn.hasAttribute('data-view')){
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        show(root,key,btn);
-      }
-    },true);
-
-    // Initial state.
-    show(root, root.dataset.rmaV66Section || 'dashboard', null);
-  }
-
-  function startWatch(){
-    var nodes=document.querySelectorAll(
-      '#psV58Countdown,#psV55Countdown,#psV57Countdown,#psV49Countdown,#psV47Countdown,'+
-      '[id*="Countdown"],[id*="countdown"],[data-countdown]'
-    );
-    nodes.forEach(function(box){
-      if(box.dataset.rmaV66Clock==='1') return;
-      // Do not assume or replace an existing clock if it is already ticking.
-      // Only add a clock to an empty/static watch element.
-      var raw=box.getAttribute('data-target') || box.getAttribute('data-countdown-target');
-      var target=raw ? new Date(raw) : new Date('2026-09-24T11:00:00');
-      if(isNaN(target.getTime())) return;
-      box.dataset.rmaV66Clock='1';
-      function tick(){
-        var diff=Math.max(0,target.getTime()-Date.now());
-        var total=Math.floor(diff/1000);
-        var d=Math.floor(total/86400);
-        var h=Math.floor((total%86400)/3600);
-        var m=Math.floor((total%3600)/60);
-        var sec=total%60;
-        var parts=[
-          ['Days',d],['Hours',h],['Minutes',m],['Seconds',sec]
-        ];
-        box.innerHTML=parts.map(function(x){
-          return '<div class="ps-v58-time"><strong>'+String(x[1]).padStart(2,'0')+
-                 '</strong><small>'+x[0]+'</small></div>';
-        }).join('');
-      }
-      tick();
-      box._rmaV66Timer=setInterval(tick,1000);
+    var r=root(),m=main(),s=side();
+    if(!r||!m||!s||!m.querySelector('.ps-v63-view')) return false;
+    window.rmaClientPortalShow=show;
+    // Disable the old inline navigation handlers without deleting the UI.
+    s.querySelectorAll('button[data-target]').forEach(function(b){
+      b.onclick=function(e){e.preventDefault();e.stopPropagation();show(b.getAttribute('data-target'));return false;};
+      b.dataset.rmaV69='1';
     });
-  }
-
-  function boot(){
-    wire();
-    startWatch();
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
-  else boot();
-  setTimeout(boot,300);
-  setTimeout(boot,1200);
-})();
-</script>
-
-
-<style id="rma-v68-project-info">
-/* V68: make the existing V63 Project Information view the initial view. */
-#rmaPathSeekerPortal .ps-v63-view{display:none!important}
-#rmaPathSeekerPortal .ps-v63-view.active{display:block!important}
-</style>
-<script id="rma-v68-project-info">
-(function(){
-  'use strict';
-  function activateProject(){
-    var root=document.getElementById('rmaPathSeekerPortal');
-    if(!root) return false;
-    var main=root.querySelector('.ps-v62-main');
-    var side=root.querySelector('.ps-v62-sidebar');
-    var project=main && main.querySelector('.ps-v63-view[data-view="project"]');
-    var button=side && side.querySelector('button[data-target="project"]');
-    if(!project || !button) return false;
-    if(typeof window.rmaClientPortalShow==='function'){
-      window.rmaClientPortalShow('project');
-    }else{
-      main.querySelectorAll('.ps-v63-view').forEach(function(v){
-        var active=v.getAttribute('data-view')==='project';
-        v.classList.toggle('active',active);
-        v.style.setProperty('display',active?'block':'none','important');
-      });
-      side.querySelectorAll('button[data-target]').forEach(function(b){
-        b.classList.toggle('active',b.getAttribute('data-target')==='project');
-      });
+    m.querySelectorAll('[data-target]').forEach(function(b){
+      b.onclick=function(e){e.preventDefault();e.stopPropagation();show(b.getAttribute('data-target'));return false;};
+      b.dataset.rmaV69='1';
+    });
+    // Delegated capture handler guarantees sidebar/quick buttons continue to work.
+    if(r.dataset.rmaV69Delegated!=='1'){
+      r.addEventListener('click',function(e){
+        var b=e.target.closest('button[data-target]');
+        if(!b||!r.contains(b)) return;
+        var key=b.getAttribute('data-target');
+        if(m.querySelector('.ps-v63-view[data-view="'+CSS.escape(key)+'"]')){
+          e.preventDefault();e.stopImmediatePropagation();show(key);
+        }
+      },true);
+      r.dataset.rmaV69Delegated='1';
     }
-    root.dataset.initialProjectInfo='1';
     return true;
   }
+
+  function addProjectDetails(){
+    var r=root(),m=main();
+    if(!r||!m) return false;
+    var p=m.querySelector('.ps-v63-view[data-view="project"]');
+    if(!p) return false;
+    if(p.querySelector('.rma-v69-client-card')) return true;
+    var card=document.createElement('div');
+    card.className='rma-v69-client-card';
+    card.innerHTML=
+      '<h3>Client &amp; Project Details</h3>'+
+      '<p class="muted" style="margin:0">Complete client account and project information.</p>'+
+      '<div class="rma-v69-client-grid">'+
+        field('Client ID',PROJECT.clientId)+
+        field('Client Phone',PROJECT.phone)+
+        field('Client Email',PROJECT.email)+
+        field('Project Name',PROJECT.projectName)+
+        field('Project ID',PROJECT.projectId)+
+        field('Project Location',PROJECT.location)+
+        field('Project Address',PROJECT.address)+
+        field('Plot Size',PROJECT.plot)+
+        field('Total Built-up Area',PROJECT.built)+
+        field('Structure',PROJECT.structure)+
+        field('Project Status',PROJECT.status)+
+        field('Start Date',PROJECT.start)+
+        field('Expected Completion',PROJECT.completion)+
+        field('Monthly Site Visits', '2 complimentary visits')+
+        field('Total Completed Site Visits', '23')+
+        field('Engagement',PROJECT.scope)+
+      '</div>'+ 
+      '<div class="rma-v69-contact"><b>RMA Design &amp; Construction</b><br>Phone: '+PROJECT.rmaPhone+' &nbsp; • &nbsp; Email: '+PROJECT.rmaEmail+'</div>';
+    // Keep the existing Project Scope content and add the complete client information below it.
+    p.appendChild(card);
+    return true;
+  }
+  function field(label,value){return '<div class="rma-v69-client-field"><small>'+label+'</small><b>'+value+'</b></div>';}
+
+  function boot(){
+    if(wire()){
+      addProjectDetails();
+      // Explicit requirement: Project Information is the first view on login.
+      show('project');
+      return true;
+    }
+    return false;
+  }
+
   var tries=0;
-  var timer=setInterval(function(){
-    if(activateProject() || ++tries>120) clearInterval(timer);
-  },100);
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',activateProject);
-  else activateProject();
+  var timer=setInterval(function(){if(boot()||++tries>1200)clearInterval(timer)},100);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
-
-</body></html>
