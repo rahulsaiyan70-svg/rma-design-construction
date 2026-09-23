@@ -3673,87 +3673,73 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 })();
 </script>
 
-
-<!-- V73: Final dashboard counter + appointment countdown fix.  No document/navigation changes. -->
-<style id="rma-v73-dashboard-fix-css">
-#rmaPathSeekerPortal .rma-v73-timebox{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
-#rmaPathSeekerPortal .rma-v73-time{min-width:58px;padding:9px 8px;border-radius:8px;background:#2e8d78;color:#fff;text-align:center}
-#rmaPathSeekerPortal .rma-v73-time strong{display:block;font-size:18px;line-height:1.1}
-#rmaPathSeekerPortal .rma-v73-time small{display:block;font-size:8px;letter-spacing:.5px;margin-top:4px;text-transform:uppercase}
-</style>
-<script id="rma-v73-dashboard-fix">
+<!-- V74 FINAL DASHBOARD PATCH: preserve working V72 documents; fix monthly counter and live countdown only -->
+<script id="rma-v74-dashboard-final-fix">
 (function(){
   'use strict';
-  var TARGET='2026-09-24T11:00:00+05:30';
-  var countdownTimer=null;
-  var observer=null;
-  var lastBox=null;
+  var WATCH_TARGET = new Date('2026-09-24T11:00:00+05:30').getTime();
+  var currentWatch = null;
+  var watchTimer = null;
 
   function setMonthly(){
-    var ids=['psV63StatMonthly','psMonthlyCounter'];
-    ids.forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='1 / 2';});
-    var root=document.getElementById('rmaPathSeekerPortal');
-    if(root) root.querySelectorAll('.ps-v63-visit-summary span').forEach(function(el){
-      if(/used/i.test(el.textContent||'')) el.textContent='1 of 2 used';
+    var root=document.getElementById('rmaPathSeekerPortal')||document;
+    ['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.textContent='1 / 2';
     });
+    if(root.querySelectorAll){
+      root.querySelectorAll('.ps-v63-visit-summary span').forEach(function(el){
+        if(/used/i.test(el.textContent||'')) el.textContent='1 of 2 used';
+      });
+    }
   }
 
-  function renderCountdown(){
+  function renderWatch(el){
+    if(!el) return;
+    var ms=Math.max(0,WATCH_TARGET-Date.now());
+    var total=Math.floor(ms/1000);
+    var days=Math.floor(total/86400);
+    var hours=Math.floor((total%86400)/3600);
+    var minutes=Math.floor((total%3600)/60);
+    var seconds=total%60;
+    el.innerHTML=[
+      ['Days',days],['Hours',hours],['Minutes',minutes],['Seconds',seconds]
+    ].map(function(x){
+      return '<div class="ps-v62-time"><strong>'+String(x[1]).padStart(2,'0')+'</strong><small>'+x[0]+'</small></div>';
+    }).join('');
+  }
+
+  function takeControl(){
     var old=document.getElementById('psV63Countdown');
     if(!old) return false;
-
-    /* Replace the countdown node once. This disconnects the old V63/V71
-       intervals from the visible element, leaving this controller as the
-       only writer to the displayed countdown. */
-    if(!old.dataset.rmaV73Replaced){
+    if(old.getAttribute('data-rma-v74-owned')!=='1'){
       var fresh=old.cloneNode(false);
-      fresh.id='psV63Countdown';
-      fresh.className='rma-v73-timebox';
-      fresh.dataset.rmaV73Replaced='1';
-      old.replaceWith(fresh);
-      old=fresh;
+      fresh.setAttribute('data-rma-v74-owned','1');
+      old.parentNode.replaceChild(fresh,old);
+      currentWatch=fresh;
+    }else{
+      currentWatch=old;
     }
-    lastBox=old;
-
-    var target=new Date(TARGET).getTime();
-    function tick(){
-      var ms=Math.max(0,target-Date.now());
-      var total=Math.floor(ms/1000);
-      var days=Math.floor(total/86400);
-      var hours=Math.floor((total%86400)/3600);
-      var minutes=Math.floor((total%3600)/60);
-      var seconds=total%60;
-      old.innerHTML=[
-        ['Days',days],['Hours',hours],['Minutes',minutes],['Seconds',seconds]
-      ].map(function(x){
-        return '<div class="rma-v73-time"><strong>'+String(x[1]).padStart(2,'0')+'</strong><small>'+x[0]+'</small></div>';
-      }).join('');
-      if(total<=0 && countdownTimer){clearInterval(countdownTimer);countdownTimer=null;}
+    renderWatch(currentWatch);
+    if(!watchTimer){
+      watchTimer=setInterval(function(){
+        if(!currentWatch || !document.body.contains(currentWatch)){
+          watchTimer=null;
+          return;
+        }
+        renderWatch(currentWatch);
+      },1000);
     }
-    if(countdownTimer)clearInterval(countdownTimer);
-    tick();
-    countdownTimer=setInterval(tick,1000);
     return true;
   }
 
-  function boot(){
+  function start(){
     setMonthly();
-    renderCountdown();
-    var root=document.getElementById('rmaPathSeekerPortal');
-    if(root && !observer){
-      var stat=root.querySelector('#psV63StatMonthly');
-      if(stat){
-        observer=new MutationObserver(setMonthly);
-        observer.observe(stat,{childList:true,characterData:true,subtree:true});
-      }
-    }
-    return !!document.getElementById('psV63Countdown');
+    takeControl();
+    setInterval(setMonthly,1000);
+    setInterval(takeControl,1000);
   }
-
-  var tries=0;
-  var poll=setInterval(function(){
-    if(boot()||++tries>300)clearInterval(poll);
-  },250);
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start);
+  else start();
 })();
 </script>
