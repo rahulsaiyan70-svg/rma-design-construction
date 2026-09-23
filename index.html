@@ -1102,7 +1102,17 @@ function showPage(name){
   if(name==="construction"){
     setTimeout(()=>updateConstructionPrice(),50);
   }
-  if(name==="signin"){ setTimeout(()=>checkExistingSession(),80); }
+  if(name==="signin"){
+    const login=document.getElementById("authLoginSection");
+    const client=document.getElementById("clientPortal");
+    const staff=document.getElementById("staffPortal");
+    const ps=document.getElementById("rmaPathSeekerPortal");
+    /* Always restore the Sign In box when the Sign In page is opened. */
+    if(login && client?.classList.contains("hidden") && staff?.classList.contains("hidden") && ps?.classList.contains("hidden")){
+      login.classList.remove("hidden");
+    }
+    setTimeout(()=>checkExistingSession(),80);
+  }
 }
 function toggleMenu(){
   const n=document.getElementById("navlinks");
