@@ -2311,7 +2311,7 @@ checkExistingSession();
       const q=await supabaseClient.from('bookings').select('id,service_type').gte('created_at',start.toISOString()).ilike('client_name','%Path Seeker%');
       if(q.error) throw q.error;
       const used=(q.data||[]).filter(x=>String(x.service_type||'').toLowerCase().includes('site visit')).length;
-      if(used>=2){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='The monthly limit of two site visits has already been reached. Please contact RMA if an additional visit is required.';return;}
+      if(used>=Number(window.RMA_MONTHLY_VISIT_LIMIT||2)){msg.className='notice error';msg.classList.remove('hidden');msg.textContent='The monthly limit of '+Number(window.RMA_MONTHLY_VISIT_LIMIT||2)+' site visits has already been reached. Please contact RMA if an additional visit is required.';return;}
     }catch(e){ console.warn('Monthly Path Seeker visit count could not be checked:',e); }
     const requestId='RMA-PSV-'+Date.now().toString().slice(-8);
     const scope=JSON.stringify({reason:reason||null,requested_date:date,requested_time:time||null,source:'Path Seeker Client Portal'});
@@ -3680,10 +3680,12 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
   var WATCH_TARGET = new Date('2026-09-24T11:00:00+05:30').getTime();
   var currentWatch = null;
   var watchTimer = null;
+  var observer = null;
 
   function setMonthly(){
     var root=document.getElementById('rmaPathSeekerPortal')||document;
-    ['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){
+    var ids=['psV63StatMonthly','psMonthlyCounter'];
+    ids.forEach(function(id){
       var el=document.getElementById(id);
       if(el) el.textContent='1 / 2';
     });
@@ -3703,7 +3705,10 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     var minutes=Math.floor((total%3600)/60);
     var seconds=total%60;
     el.innerHTML=[
-      ['Days',days],['Hours',hours],['Minutes',minutes],['Seconds',seconds]
+      ['Days',days],
+      ['Hours',hours],
+      ['Minutes',minutes],
+      ['Seconds',seconds]
     ].map(function(x){
       return '<div class="ps-v62-time"><strong>'+String(x[1]).padStart(2,'0')+'</strong><small>'+x[0]+'</small></div>';
     }).join('');
@@ -3712,6 +3717,10 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
   function takeControl(){
     var old=document.getElementById('psV63Countdown');
     if(!old) return false;
+
+    /* The original portal has older countdown intervals which write into this
+       element. Replace the element itself once, so those old intervals continue
+       writing to their detached element and cannot overwrite our live watch. */
     if(old.getAttribute('data-rma-v74-owned')!=='1'){
       var fresh=old.cloneNode(false);
       fresh.setAttribute('data-rma-v74-owned','1');
@@ -3721,25 +3730,87 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
       currentWatch=old;
     }
     renderWatch(currentWatch);
-    if(!watchTimer){
-      watchTimer=setInterval(function(){
-        if(!currentWatch || !document.body.contains(currentWatch)){
-          watchTimer=null;
-          return;
-        }
-        renderWatch(currentWatch);
-      },1000);
-    }
+    if(!watchTimer) watchTimer=setInterval(function(){
+      if(!currentWatch || !document.body.contains(currentWatch)){
+        watchTimer=null;
+        return;
+      }
+      renderWatch(currentWatch);
+    },1000);
     return true;
   }
 
-  function start(){
+  function boot(){
     setMonthly();
     takeControl();
+  }
+
+  observer=new MutationObserver(function(){
+    setMonthly();
+    takeControl();
+  });
+
+  function start(){
+    var root=document.getElementById('rmaPathSeekerPortal')||document.body;
+    if(root) observer.observe(root,{childList:true,subtree:true,characterData:true});
+    boot();
     setInterval(setMonthly,1000);
     setInterval(takeControl,1000);
   }
+
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start);
   else start();
+})();
+</script>
+
+
+<!-- V75: ONLY dashboard counter + appointment watch. V72 document code is intentionally untouched. -->
+<script id="rma-v75-dashboard-watch-only">
+(function(){
+'use strict';
+var TARGET=new Date('2026-09-24T11:00:00+05:30').getTime(),timer=null;
+function root(){return document.getElementById('rmaPathSeekerPortal')||document;}
+function counter(){var r=root();['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent='1 / 2';});if(r.querySelectorAll)r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){if(/used/i.test(e.textContent||''))e.textContent='1 of 2 used';});}
+function watch(){var e=document.getElementById('psV63Countdown');if(!e)return false;var total=Math.max(0,Math.floor((TARGET-Date.now())/1000)),d=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60),s=total%60;e.innerHTML='<div class="ps-v62-time"><strong>'+String(d).padStart(2,'0')+'</strong><small>Days</small></div><div class="ps-v62-time"><strong>'+String(h).padStart(2,'0')+'</strong><small>Hours</small></div><div class="ps-v62-time"><strong>'+String(m).padStart(2,'0')+'</strong><small>Minutes</small></div><div class="ps-v62-time"><strong>'+String(s).padStart(2,'0')+'</strong><small>Seconds</small></div>';return true;}
+function start(){counter();watch();if(timer)clearInterval(timer);timer=setInterval(function(){counter();watch();},1000);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+</script>
+
+
+<!-- V76: Supabase-controlled monthly site-visit allowance -->
+<script id="rma-v76-supabase-monthly-visit-setting">
+(function(){
+'use strict';
+var DEFAULT_LIMIT=2;
+window.RMA_MONTHLY_VISIT_LIMIT=DEFAULT_LIMIT;
+var loaded=false;
+function root(){return document.getElementById('rmaPathSeekerPortal')||document;}
+function apply(limit){
+  limit=Math.max(0,parseInt(limit,10)||DEFAULT_LIMIT);
+  window.RMA_MONTHLY_VISIT_LIMIT=limit;
+  var r=root();
+  ['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){var e=document.getElementById(id);if(e){
+    var txt=e.textContent||'';var m=txt.match(/^(\d+)\s*\//);var used=m?parseInt(m[1],10):0;e.textContent=used+' / '+limit;
+  }});
+  if(r.querySelectorAll) r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){
+    if(/used/i.test(e.textContent||'')){var m=(e.textContent||'').match(/^(\\d+)/);var used=m?m[1]:'0';e.textContent=used+' of '+limit+' used';}
+  });
+}
+async function load(){
+  try{
+    if(!window.supabaseClient)return;
+    var q=await window.supabaseClient.from('rma_settings').select('monthly_site_visit_limit').eq('id','rma').maybeSingle();
+    if(!q.error && q.data && q.data.monthly_site_visit_limit!=null){apply(q.data.monthly_site_visit_limit);loaded=true;}
+    else apply(DEFAULT_LIMIT);
+  }catch(e){apply(DEFAULT_LIMIT);}
+}
+function start(){
+  apply(DEFAULT_LIMIT);
+  load();
+  var rootEl=document.getElementById('rmaPathSeekerPortal');
+  if(rootEl){new MutationObserver(function(){apply(window.RMA_MONTHLY_VISIT_LIMIT);}).observe(rootEl,{childList:true,subtree:true,characterData:true});}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
