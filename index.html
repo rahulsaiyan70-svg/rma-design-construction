@@ -1358,7 +1358,9 @@ async function rmaGenerateAndSendGSTInvoice(invoiceData){
   const {data:{session}} = await supabaseClient.auth.getSession();
   const headers={"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY};
   if(session?.access_token) headers.Authorization="Bearer "+session.access_token;
-  const r=await fetch(RMA_GST_INVOICE_URL,{method:"POST",headers,body:JSON.stringify({
+  let r;
+  try{
+    r=await fetch(RMA_GST_INVOICE_URL,{method:"POST",headers,body:JSON.stringify({
     ...invoiceData,
     supplier:{
       legal_name:"Rahul Bhatti",
@@ -1370,8 +1372,11 @@ async function rmaGenerateAndSendGSTInvoice(invoiceData){
       phone:"+91 96221 21692"
     }
   })});
+  }catch(e){
+    throw new Error('GST invoice server could not be reached. The generate-gst-invoice Edge Function must be deployed to Supabase and allow browser CORS.');
+  }
   const d=await r.json().catch(()=>({}));
-  if(!r.ok || !d.success) throw new Error(d.error||('GST invoice server returned HTTP '+r.status+'. Please deploy the generate-gst-invoice Edge Function.'));
+  if(!r.ok || !d.success) throw new Error(d.error||('GST invoice server returned HTTP '+r.status+'. Check the Edge Function deployment and Supabase secrets.'));
   return d;
 }
 
