@@ -2443,6 +2443,73 @@ window.payServiceWithRazorpay=payServiceWithRazorpay;
 window.RAZORPAY_KEY_ID=RAZORPAY_KEY_ID;
 </script>
 
+<!-- RMA SITE-VISIT PAYMENT SUCCESS WINDOW -->
+<style id="rma-site-visit-success-css">
+#rmaSiteVisitSuccess{position:fixed;inset:0;z-index:999999;display:none;align-items:center;justify-content:center;background:rgba(18,35,28,.62);padding:20px;backdrop-filter:blur(4px)}
+#rmaSiteVisitSuccess .rma-sv-success-card{width:min(620px,100%);background:#fff;border-radius:22px;box-shadow:0 25px 80px rgba(0,0,0,.28);padding:34px 30px;text-align:center;border:1px solid #dfe9e3}
+#rmaSiteVisitSuccess .rma-sv-check{width:68px;height:68px;margin:0 auto 15px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e6f5ec;color:#24764f;font-size:34px;font-weight:800}
+#rmaSiteVisitSuccess h2{margin:0 0 10px;color:#183c2d;font-size:28px}
+#rmaSiteVisitSuccess p{color:#50645b;line-height:1.55;margin:8px 0}
+#rmaSiteVisitSuccess .rma-sv-booking{margin:20px 0;padding:15px;border-radius:13px;background:#f4f8f5;text-align:left}
+#rmaSiteVisitSuccess .rma-sv-booking div{display:flex;justify-content:space-between;gap:15px;padding:6px 0;border-bottom:1px solid #e4ece7}
+#rmaSiteVisitSuccess .rma-sv-booking div:last-child{border-bottom:0}
+#rmaSiteVisitSuccess .rma-sv-booking span{color:#63756d}.rma-sv-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}.rma-sv-actions button,.rma-sv-actions a{min-width:180px;text-decoration:none}.rma-sv-bill-status{font-size:13px;margin-top:10px;color:#63756d}.rma-sv-warning{margin-top:14px;padding:11px 13px;border-radius:10px;background:#fff5e8;color:#80551a;font-size:13px}
+</style>
+<div id="rmaSiteVisitSuccess" aria-hidden="true">
+  <div class="rma-sv-success-card">
+    <div class="rma-sv-check">✓</div>
+    <h2>Payment Received</h2>
+    <p><strong>Your payment has been received and your temporary appointment is booked.</strong></p>
+    <p>Our team will contact you and tell you the exact timing of the site visit.</p>
+    <div class="rma-sv-booking">
+      <div><span>Booking ID</span><strong id="rmaSvBookingId">—</strong></div>
+      <div><span>Payment ID</span><strong id="rmaSvPaymentId">—</strong></div>
+      <div><span>Amount Paid</span><strong id="rmaSvAmount">—</strong></div>
+      <div><span>GST Bill</span><strong id="rmaSvInvoiceNo">Preparing…</strong></div>
+    </div>
+    <div class="rma-sv-actions">
+      <button type="button" class="btn gold" id="rmaSvBillBtn" onclick="rmaGetSiteVisitGSTBill()">Get GST Bill</button>
+      <button type="button" class="btn outline" onclick="rmaCloseSiteVisitSuccess()">Back to Website</button>
+    </div>
+    <div id="rmaSvBillStatus" class="rma-sv-bill-status">Your GST bill will also be sent to your email when an email address was provided.</div>
+    <div id="rmaSvWarning" class="rma-sv-warning" style="display:none"></div>
+  </div>
+</div>
+<script id="rma-site-visit-success-js">
+(function(){
+  window.rmaShowSiteVisitSuccess=function(data){
+    var root=document.getElementById('rmaSiteVisitSuccess');if(!root)return;
+    document.getElementById('rmaSvBookingId').textContent=data.bookingId||'—';
+    document.getElementById('rmaSvPaymentId').textContent=data.paymentId||'—';
+    document.getElementById('rmaSvAmount').textContent='₹'+Number(data.total||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    document.getElementById('rmaSvInvoiceNo').textContent='Preparing…';
+    document.getElementById('rmaSvWarning').style.display=data.warning?'block':'none';
+    document.getElementById('rmaSvWarning').textContent=data.warning||'';
+    var b=document.getElementById('rmaSvBillBtn');b.disabled=false;b.textContent='Get GST Bill';
+    root.style.display='flex';root.setAttribute('aria-hidden','false');
+  };
+  window.rmaUpdateGSTBillButton=function(inv,errorText){
+    var b=document.getElementById('rmaSvBillBtn'),n=document.getElementById('rmaSvInvoiceNo'),s=document.getElementById('rmaSvBillStatus');
+    if(inv&&inv.invoice_number){
+      n.textContent=inv.invoice_number;
+      if(inv.download_url){b.disabled=false;b.textContent='Get GST Bill';b.dataset.url=inv.download_url;}
+      s.textContent=inv.email_sent?'GST bill is ready to download and has also been emailed to the client.':'GST bill is ready to download from this page.';
+    }else{
+      n.textContent='Not ready';b.disabled=false;b.textContent='Get GST Bill';b.dataset.url='';s.textContent=errorText||'Click Get GST Bill to try again.';
+    }
+  };
+  window.rmaGetSiteVisitGSTBill=async function(){
+    var b=document.getElementById('rmaSvBillBtn');
+    if(b.dataset.url){window.open(b.dataset.url,'_blank','noopener');return;}
+    var payload=window.__rmaSiteVisitInvoicePayload;if(!payload){alert('GST bill details are not available. Please contact RMA Design & Construction.');return;}
+    b.disabled=true;b.textContent='Preparing GST Bill…';
+    try{var inv=await rmaGenerateAndSendGSTInvoice(payload);window.__rmaSiteVisitInvoiceResult=inv;rmaUpdateGSTBillButton(inv);if(inv.download_url)window.open(inv.download_url,'_blank','noopener');}
+    catch(e){b.disabled=false;b.textContent='Get GST Bill';document.getElementById('rmaSvBillStatus').textContent=e?.message||'GST bill could not be prepared right now. Please try again later.';}
+  };
+  window.rmaCloseSiteVisitSuccess=function(){var root=document.getElementById('rmaSiteVisitSuccess');if(root){root.style.display='none';root.setAttribute('aria-hidden','true');}};
+})();
+</script>
+
 <!-- RMA V29 — CLEAN SINGLE SITE-VISIT + PAYMENT FLOW -->
 
 <script>
@@ -2454,7 +2521,30 @@ const ALLOWED=['Jammu & Kashmir','Punjab','Haryana','Chandigarh','Delhi'];
 const JK=['Jammu','Samba','Kathua','Udhampur','Reasi','Rajouri','Poonch','Doda','Kishtwar','Ramban','Srinagar','Budgam','Ganderbal','Pulwama','Shopian','Kulgam','Anantnag','Baramulla','Kupwara','Bandipora'];
 const rate=d=>d<=10?1500:d<=20?2000:d<=40?2500:d<=50?3500:d<=75?4000:5000;
 const money=n=>'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-let visitReady=false, visitDistance=null, paymentBusy=false;
+let visitReady=false, visitDistance=null, paymentBusy=false, siteVisitCouponApplied=false;
+const RMA_TEMP_COUPON='TEMP@1';
+const RMA_TEMP_COUPON_AMOUNT=5;
+function rmaIndiaToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+function rmaCouponIsValidToday(){return rmaIndiaToday()==='2026-09-24';}
+function siteVisitPricing(distance){
+ const baseFee=rate(distance),baseGst=baseFee*.18,baseTotal=baseFee+baseGst;
+ if(siteVisitCouponApplied){
+   const finalTotal=RMA_TEMP_COUPON_AMOUNT;
+   const taxable=Number((finalTotal/1.18).toFixed(2));
+   const gst=Number((finalTotal-taxable).toFixed(2));
+   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:Number((baseTotal-finalTotal).toFixed(2)),coupon:RMA_TEMP_COUPON};
+ }
+ return {baseFee,baseGst,baseTotal,fee:baseFee,gst:Number(baseGst.toFixed(2)),total:Number(baseTotal.toFixed(2)),discount:0,coupon:''};
+}
+function applySiteVisitCoupon(){
+ const input=document.getElementById('r29_coupon'),code=(input?.value||'').trim();
+ if(code.toUpperCase()!==RMA_TEMP_COUPON){siteVisitCouponApplied=false;msg('r29_couponMsg','Invalid coupon code.','error');if(visitDistance!==null)showFee(visitDistance);return;}
+ if(!rmaCouponIsValidToday()){siteVisitCouponApplied=false;msg('r29_couponMsg','This coupon is valid only on 24 September 2026.','error');if(visitDistance!==null)showFee(visitDistance);return;}
+ siteVisitCouponApplied=true;
+ msg('r29_couponMsg','Coupon applied. Final amount is ₹5.00 for today only.','success');
+ if(visitDistance!==null)showFee(visitDistance);
+}
+
 function msg(id,text,type='info'){const e=document.getElementById(id);if(!e)return;e.className='notice '+type;e.classList.remove('hidden');e.textContent=text;}
 function buildVisit(){
  if(!page)return;
@@ -2476,7 +2566,8 @@ function buildVisit(){
 <div id="r29_locationMsg" class="notice info" style="margin-top:10px">Enter the project PIN and verify it, or use My Location.</div>
 <input type="hidden" id="r29_lat"><input type="hidden" id="r29_lng">
 </div>
-<div class="v29-price"><div class="v29-line"><span>Road Distance</span><strong id="r29_distance">—</strong></div><div class="v29-line"><span>Site Visit Fee</span><strong id="r29_fee">—</strong></div><div class="v29-line"><span>GST 18%</span><strong id="r29_gst">—</strong></div><div class="v29-line v29-total"><span>Total Payable</span><strong id="r29_total">—</strong></div></div>
+<div class="v29-price"><div class="v29-line"><span>Road Distance</span><strong id="r29_distance">—</strong></div><div class="v29-line"><span>Site Visit Fee</span><strong id="r29_fee">—</strong></div><div class="v29-line"><span>GST 18%</span><strong id="r29_gst">—</strong></div><div class="v29-line" id="r29_discount_row" style="display:none"><span>Coupon Discount</span><strong id="r29_discount">—</strong></div><div class="v29-line v29-total"><span>Total Payable</span><strong id="r29_total">—</strong></div></div>
+<div class="r29-coupon-box" style="margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8"><label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon?</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="r29_coupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none"><button type="button" class="btn outline" id="r29_couponBtn">Apply Coupon</button></div><div id="r29_couponMsg" class="notice hidden" style="margin-top:9px"></div></div>
 <div id="r29_message" class="notice hidden" style="margin-top:12px"></div>
 <button type="button" class="btn gold full" id="r29_pay">Pay &amp; Book Site Visit with Razorpay</button>
 </form></div></div>`;
@@ -2484,19 +2575,21 @@ function buildVisit(){
  const form=document.getElementById('rmaV29VisitForm');
  document.getElementById('r29_pinBtn').onclick=verifyPin;
  document.getElementById('r29_gps').onclick=useGPS;
+ document.getElementById('r29_couponBtn').onclick=applySiteVisitCoupon;
+ document.getElementById('r29_coupon').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applySiteVisitCoupon();}});
  document.getElementById('r29_pay').onclick=payVisit;
  document.getElementById('r29_pin').addEventListener('change',()=>{if(/^\d{6}$/.test(document.getElementById('r29_pin').value.trim()))verifyPin();});
  document.getElementById('r29_address').addEventListener('input',()=>{visitReady=false;visitDistance=null;clearDistance();});
  form.addEventListener('submit',e=>{e.preventDefault();payVisit();});
 }
-function clearDistance(){document.getElementById('r29_distance').textContent='—';document.getElementById('r29_fee').textContent='—';document.getElementById('r29_gst').textContent='—';document.getElementById('r29_total').textContent='—';}
+function clearDistance(){document.getElementById('r29_distance').textContent='—';document.getElementById('r29_fee').textContent='—';document.getElementById('r29_gst').textContent='—';document.getElementById('r29_total').textContent='—';const dr=document.getElementById('r29_discount_row');if(dr)dr.style.display='none';}
 async function getPinInfo(pin){const r=await fetch('https://api.postalpincode.in/pincode/'+pin);if(!r.ok)throw Error('PIN service is unavailable.');const d=await r.json();const po=d?.[0]?.PostOffice?.[0];if(!po)throw Error('PIN code could not be found.');return po;}
 async function geocode(q){const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q='+encodeURIComponent(q),{headers:{Accept:'application/json'}});if(!r.ok)throw Error('Location lookup failed.');const d=await r.json();if(!d.length)throw Error('Project location could not be found.');return{lat:+d[0].lat,lng:+d[0].lon};}
 async function roadDistance(lat,lng){
  const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${BASE_LNG},${BASE_LAT};${lng},${lat}?overview=false`);
  if(!r.ok)throw Error('Road distance could not be calculated.');const d=await r.json();if(!d.routes?.length)throw Error('No road route found.');return d.routes[0].distance/1000;
 }
-function showFee(d){const fee=rate(d),gst=fee*.18,total=fee+gst;document.getElementById('r29_distance').textContent=d.toFixed(2)+' km';document.getElementById('r29_fee').textContent=money(fee);document.getElementById('r29_gst').textContent=money(gst);document.getElementById('r29_total').textContent=money(total);}
+function showFee(d){const p=siteVisitPricing(d);document.getElementById('r29_distance').textContent=d.toFixed(2)+' km';document.getElementById('r29_fee').textContent=money(p.fee);document.getElementById('r29_gst').textContent=money(p.gst);document.getElementById('r29_total').textContent=money(p.total);const dr=document.getElementById('r29_discount_row');if(dr){dr.style.display=p.discount>0?'flex':'none';document.getElementById('r29_discount').textContent=p.discount>0?'-'+money(p.discount):'—';}}
 async function setLocation(lat,lng,label){
  document.getElementById('r29_lat').value=lat.toFixed(6);document.getElementById('r29_lng').value=lng.toFixed(6);document.getElementById('r29_coords').value=lat.toFixed(6)+', '+lng.toFixed(6);
  visitDistance=await roadDistance(lat,lng);visitReady=true;showFee(visitDistance);msg('r29_locationMsg',label+' Road distance from RMA base: '+visitDistance.toFixed(2)+' km.','success');
@@ -2516,14 +2609,44 @@ async function payVisit(){
  const form=document.getElementById('rmaV29VisitForm'),btn=document.getElementById('r29_pay');if(!form.reportValidity())return;
  if(!visitReady||visitDistance===null){msg('r29_message','Please verify the Project PIN or use My Location first so the road distance and fee can be calculated.','error');return}
  if(!window.Razorpay){msg('r29_message','Razorpay Checkout could not be loaded. Please refresh the page and try again.','error');return}
- const fee=rate(visitDistance),gst=fee*.18,total=fee+gst,requestId='RMA-V-'+Date.now().toString().slice(-9);
+ const pricing=siteVisitPricing(visitDistance);
+ const fee=pricing.fee,gst=pricing.gst,total=pricing.total,requestId='RMA-V-'+Date.now().toString().slice(-9);
  const name=document.getElementById('r29_name').value.trim(),mobile=document.getElementById('r29_mobile').value.trim(),email=document.getElementById('r29_email').value.trim();
  paymentBusy=true;btn.disabled=false;msg('r29_message','Creating secure Razorpay order...');
  try{
-   const order=await rmaCreateRazorpayOrder(total,requestId,'RMA Site Visit Fee',{request_id:requestId,service_type:'Site Visit',distance_km:String(visitDistance.toFixed(2)),base_pin:BASE_PIN});
+   const order=await rmaCreateRazorpayOrder(total,requestId,'RMA Site Visit Fee',{request_id:requestId,service_type:'Site Visit',distance_km:String(visitDistance.toFixed(2)),base_pin:BASE_PIN,coupon_code:pricing.coupon,coupon_valid_today:rmaCouponIsValidToday(),original_total:String(pricing.baseTotal.toFixed(2)),discount:String(pricing.discount.toFixed(2)),final_total:String(total.toFixed(2))});
    const rz=new window.Razorpay({key:window.RAZORPAY_KEY_ID,order_id:order.order_id,amount:order.amount,currency:order.currency||'INR',name:'RMA Design & Construction',description:'RMA Site Visit Fee',prefill:{name,email,contact:mobile},theme:{color:'#2e7d5b'},modal:{ondismiss:()=>{paymentBusy=false;msg('r29_message','Payment window closed. No payment was confirmed.','info');}},handler:async response=>{
-      try{msg('r29_message','Verifying payment securely...');await rmaVerifyRazorpayPayment(response);const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG})};await insertBooking(payload);msg('r29_message','Payment verified. Generating GST invoice...');const inv=await rmaGenerateAndSendGSTInvoice({payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature||'',order_id:response.razorpay_order_id||'',receipt:requestId,invoice_type:'site_visit',customer:{name,email:email||'',mobile,address:document.getElementById('r29_address').value.trim(),state:'Jammu and Kashmir'},description:'RMA Site Visit Fee',taxable_amount:Number(fee.toFixed(2)),gst_rate:18,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),notes:{distance_km:Number(visitDistance.toFixed(2)),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value}});paymentBusy=false;btn.textContent='Site Visit Booked';btn.disabled=true;msg('r29_message','Payment verified, site visit booked and GST invoice sent. Invoice No.: '+inv.invoice_number,'success');}
-      catch(e){paymentBusy=false;btn.disabled=false;msg('r29_message',e.message||'Payment verification or booking failed.','error');}
+      try{
+        msg('r29_message','Payment received. Verifying securely...');
+        await rmaVerifyRazorpayPayment(response);
+        const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG,coupon_code:pricing.coupon,original_total:pricing.baseTotal,discount:pricing.discount,final_total:total})};
+        await insertBooking(payload);
+        paymentBusy=false;
+        btn.textContent='Site Visit Booked';
+        btn.disabled=true;
+        const invoicePayload={payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature||'',order_id:response.razorpay_order_id||'',receipt:requestId,invoice_type:'site_visit',customer:{name,email:email||'',mobile,address:document.getElementById('r29_address').value.trim(),state:'Jammu and Kashmir'},description:'RMA Site Visit Fee',taxable_amount:Number(fee.toFixed(2)),gst_rate:18,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),notes:{distance_km:Number(visitDistance.toFixed(2)),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,coupon_code:pricing.coupon,original_total:Number(pricing.baseTotal.toFixed(2)),discount:Number(pricing.discount.toFixed(2)),final_total:Number(total.toFixed(2))}};
+        window.__rmaSiteVisitInvoicePayload=invoicePayload;
+        window.__rmaSiteVisitInvoiceResult=null;
+        rmaShowSiteVisitSuccess({bookingId:requestId,paymentId:response.razorpay_payment_id,total:total});
+        try{
+          msg('r29_message','Payment received. Preparing your GST bill...','info');
+          const inv=await rmaGenerateAndSendGSTInvoice(invoicePayload);
+          window.__rmaSiteVisitInvoiceResult=inv;
+          rmaUpdateGSTBillButton(inv);
+        }catch(invoiceError){
+          console.error('GST invoice generation:',invoiceError);
+          rmaUpdateGSTBillButton(null, invoiceError?.message||'GST bill is not ready yet. Please try again from this page.');
+        }
+      }catch(e){
+        paymentBusy=false;
+        if(response?.razorpay_payment_id){
+          btn.disabled=true;
+          rmaShowSiteVisitSuccess({bookingId:requestId,paymentId:response.razorpay_payment_id,total:total,warning:e.message||'Payment was received, but booking confirmation needs to be completed by our team.'});
+        }else{
+          btn.disabled=false;
+          msg('r29_message',e.message||'Payment verification or booking failed.','error');
+        }
+      }
    }});rz.open();
  }catch(e){paymentBusy=false;btn.disabled=false;msg('r29_message',e.message||'Unable to start Razorpay payment.','error');}
 }
