@@ -1371,7 +1371,7 @@ async function rmaGenerateAndSendGSTInvoice(invoiceData){
     }
   })});
   const d=await r.json().catch(()=>({}));
-  if(!r.ok || !d.success) throw new Error(d.error||"GST invoice could not be generated.");
+  if(!r.ok || !d.success) throw new Error(d.error||('GST invoice server returned HTTP '+r.status+'. Please deploy the generate-gst-invoice Edge Function.'));
   return d;
 }
 
@@ -2612,6 +2612,7 @@ async function payVisit(){
  const pricing=siteVisitPricing(visitDistance);
  const fee=pricing.fee,gst=pricing.gst,total=pricing.total,requestId='RMA-V-'+Date.now().toString().slice(-9);
  const name=document.getElementById('r29_name').value.trim(),mobile=document.getElementById('r29_mobile').value.trim(),email=document.getElementById('r29_email').value.trim();
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg('r29_message','Please enter a valid customer Gmail / email address so we can send your GST bill.','error');return;}
  paymentBusy=true;btn.disabled=false;msg('r29_message','Creating secure Razorpay order...');
  try{
    const order=await rmaCreateRazorpayOrder(total,requestId,'RMA Site Visit Fee',{request_id:requestId,service_type:'Site Visit',distance_km:String(visitDistance.toFixed(2)),base_pin:BASE_PIN,coupon_code:pricing.coupon,coupon_valid_today:rmaCouponIsValidToday(),original_total:String(pricing.baseTotal.toFixed(2)),discount:String(pricing.discount.toFixed(2)),final_total:String(total.toFixed(2))});
@@ -3493,5 +3494,82 @@ function counter(){var r=root();['psV63StatMonthly','psMonthlyCounter'].forEach(
 function watch(){var e=document.getElementById('psV63Countdown');if(!e)return false;var total=Math.max(0,Math.floor((TARGET-Date.now())/1000)),d=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60),s=total%60;e.innerHTML='<div class="ps-v62-time"><strong>'+String(d).padStart(2,'0')+'</strong><small>Days</small></div><div class="ps-v62-time"><strong>'+String(h).padStart(2,'0')+'</strong><small>Hours</small></div><div class="ps-v62-time"><strong>'+String(m).padStart(2,'0')+'</strong><small>Minutes</small></div><div class="ps-v62-time"><strong>'+String(s).padStart(2,'0')+'</strong><small>Seconds</small></div>';return true;}
 function start(){counter();watch();if(timer)clearInterval(timer);timer=setInterval(function(){counter();watch();},1000);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+</script>
+
+
+<!-- RMA FINAL FIX: Path Seeker drawings + customer GST email linkage -->
+<style id="rma-final-drawings-fix-css">
+#rmaPathSeekerPortal .rma-final-doc-card{border:1px solid #dfe7e2;border-radius:10px;padding:14px;background:#fff}
+#rmaPathSeekerPortal .rma-final-doc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#rmaPathSeekerPortal .rma-final-doc-preview{margin-top:10px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden;background:#fff}
+#rmaPathSeekerPortal .rma-final-doc-preview iframe{display:block;width:100%;height:560px;border:0}
+</style>
+<script id="rma-final-drawings-fix-js">
+(function(){
+  'use strict';
+  const PROJECT_ID='d9e2617e-6edc-4c07-891b-7879998d6187';
+  const BUCKET='project-documents';
+  function e(v){return typeof window.esc==='function'?window.esc(v==null?'':String(v)):String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  async function currentUser(){try{return (await supabaseClient.auth.getUser()).data?.user||null}catch(_){return null}}
+  async function fileUrl(path){
+    if(!path)return '';
+    try{const r=await supabaseClient.storage.from(BUCKET).createSignedUrl(path,3600);if(r.data?.signedUrl)return r.data.signedUrl;}catch(_){ }
+    try{const r=supabaseClient.storage.from(BUCKET).getPublicUrl(path);if(r.data?.publicUrl)return r.data.publicUrl;}catch(_){ }
+    return '';
+  }
+  async function queryDocs(){
+    const fields='id,project_id,client_user_id,document_name,document_type,floor_name,storage_path,preview_storage_path,is_final,created_at,review_status';
+    const attempts=[];
+    attempts.push(supabaseClient.from('project_documents').select(fields).eq('project_id',PROJECT_ID).order('created_at',{ascending:false}).limit(200));
+    const u=await currentUser();
+    if(u) attempts.push(supabaseClient.from('project_documents').select(fields).eq('client_user_id',u.id).order('created_at',{ascending:false}).limit(200));
+    for(const qPromise of attempts){
+      try{const q=await qPromise;if(!q.error && Array.isArray(q.data) && q.data.length)return q.data;}catch(_){ }
+    }
+    try{const q=await supabaseClient.from('project_documents').select('*').eq('project_id',PROJECT_ID).order('created_at',{ascending:false}).limit(200);if(!q.error&&Array.isArray(q.data))return q.data;}catch(_){ }
+    return [];
+  }
+  async function render(){
+    const box=document.getElementById('psDocuments');
+    if(!box)return false;
+    box.innerHTML='<div class="muted">Loading drawings and documents...</div>';
+    try{
+      const docs=await queryDocs();
+      if(!docs.length){
+        box.innerHTML='<div class="notice error"><b>No drawings are being returned from Supabase.</b><br>Please check the Path Seeker project document records and Storage access.</div>';
+        return true;
+      }
+      const parts=[];
+      for(const x of docs){
+        const path=x.storage_path||x.preview_storage_path||'';
+        const url=await fileUrl(path);
+        const name=e(x.document_name||'Project Document');
+        const meta=e((x.document_type||'Drawing / Document')+(x.floor_name?' • '+x.floor_name:'')+(x.is_final?' • Final':''));
+        const status=String(x.review_status||'accepted').toLowerCase()==='rejected'?'Rejected':'Available';
+        const actions=url?'<div class="rma-final-doc-actions"><a class="btn outline" href="'+e(url)+'" target="_blank" rel="noopener">View Drawing</a><a class="btn outline" href="'+e(url)+'" download>Download Drawing</a></div><details class="rma-final-doc-preview"><summary style="cursor:pointer;padding:10px;font-weight:800;color:#245b43">Preview Drawing</summary><iframe src="'+e(url)+'#toolbar=1&navpanes=0" title="'+name+'"></iframe></details>':'<div class="notice error" style="margin-top:10px">Drawing record exists, but its Storage file could not be opened.<br><small>Storage path: '+e(path||'not set')+'</small></div>';
+        parts.push('<div class="rma-final-doc-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap"><div><b>'+name+'</b><div class="muted" style="margin-top:3px">'+meta+'</div></div><span class="role-badge">'+status+'</span></div>'+actions+'</div>');
+      }
+      box.innerHTML='<div class="rma-v44-summary" style="margin-bottom:12px"><b>'+docs.length+' project document'+(docs.length===1?'':'s')+' available</b><span class="muted"> • Automatically loaded from Supabase</span></div><div style="display:grid;gap:10px">'+parts.join('')+'</div>';
+    }catch(err){
+      box.innerHTML='<div class="notice error"><b>Drawings could not be loaded.</b><br>'+e(err?.message||'Supabase document access error.')+'</div>';
+    }
+    return true;
+  }
+  async function boot(){
+    const portal=document.getElementById('rmaPathSeekerPortal');
+    if(!portal || portal.classList.contains('hidden') || !document.getElementById('psDocuments'))return false;
+    await render();
+    return true;
+  }
+  const old=window.loadPathSeeker;
+  if(old && !window.__rmaFinalDocsWrapped){
+    window.__rmaFinalDocsWrapped=true;
+    window.loadPathSeeker=async function(user){await old(user);setTimeout(render,150);setTimeout(render,1200);};
+  }
+  window.rmaReloadPathSeekerDrawings=render;
+  let tries=0;
+  const timer=setInterval(async()=>{if(await boot()||++tries>120)clearInterval(timer);},250);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
 })();
 </script>
