@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- V75 STABLE DEMO: V74 self-observing dashboard patch removed. V72/V75 document code preserved. -->
+
 
 <html lang="en">
 <head>
@@ -908,7 +910,7 @@ section{padding:78px 0}
 <div class="container">
 <div class="info-grid">
 <div class="panel"><h3>Professional Services</h3><ul><li>Architectural Planning</li><li>Structural Design</li><li>Municipality / Approval Drawings</li><li>Estimation &amp; BOQ</li><li>Survey / Plotting</li><li>Construction Services</li></ul></div>
-<div class="panel"><h3>Contact</h3><p>Email: <a href="mailto:RMA.studies07@gmail.com">RMA.studies07@gmail.com</a></p><p>Phone: <a href="tel:+919622121692">+91 96221 21692</a></p><p>Instagram: <b>@arch_rahulbhatti</b></p><p>YouTube: <b>@rmadnc</b></p><p style="margin-top:12px">Use the Service Enquiry page for design/construction requests and Book a Site Visit for location-based consultation.</p></div>
+<div class="panel"><h3>Contact</h3><p>Email: <a href="mailto:rma.studies07@gmail.com">rma.studies07@gmail.com</a></p><p>Phone: <a href="tel:+919622121692">+91 96221 21692</a></p><p>Instagram: <b>@arch_rahulbhatti</b></p><p>YouTube: <b>@rmadnc</b></p><p style="margin-top:12px">Use the Service Enquiry page for design/construction requests and Book a Site Visit for location-based consultation.</p></div>
 </div>
 </div>
 </section>
@@ -917,7 +919,7 @@ section{padding:78px 0}
 <div class="container footergrid">
 <div><h3>RMA Design &amp; Construction</h3><p>Architectural Planning • Structural Design • Construction • Consultancy</p><p>Jammu &amp; Kashmir, India</p></div>
 <div><h3>Services</h3><p>Architectural Planning</p><p>Structural Design</p><p>Municipality Approval</p><p>Estimation &amp; BOQ</p><p>Survey / Plotting</p></div>
-<div><h3>Contact</h3><p>Email: <a href="mailto:RMA.studies07@gmail.com">RMA.studies07@gmail.com</a></p><p>Phone: <a href="tel:+919622121692">+91 96221 21692</a></p><p>Instagram: @arch_rahulbhatti</p><p>YouTube: @rmadnc</p></div>
+<div><h3>Contact</h3><p>Email: <a href="mailto:rma.studies07@gmail.com">rma.studies07@gmail.com</a></p><p>Phone: <a href="tel:+919622121692">+91 96221 21692</a></p><p>Instagram: @arch_rahulbhatti</p><p>YouTube: @rmadnc</p></div>
 </div>
 <div class="container footbottom">© 2026 RMA Design &amp; Construction. All Rights Reserved.</div>
 </footer>
@@ -1100,7 +1102,17 @@ function showPage(name){
   if(name==="construction"){
     setTimeout(()=>updateConstructionPrice(),50);
   }
-  if(name==="signin"){ setTimeout(()=>checkExistingSession(),80); }
+  if(name==="signin"){
+    /* Explicit Sign In navigation must never be overridden by a saved session. */
+    const login=document.getElementById('authLoginSection');
+    const client=document.getElementById('clientPortal');
+    const staff=document.getElementById('staffPortal');
+    const ps=document.getElementById('rmaPathSeekerPortal');
+    if(login){ login.classList.remove('hidden'); login.style.removeProperty('display'); }
+    [client,staff,ps].forEach(function(el){if(el)el.classList.add('hidden');});
+    const title=document.getElementById('authPageTitle');if(title)title.textContent='Sign In';
+    const btn=document.getElementById('signinNavBtn');if(btn)btn.textContent='Sign In';
+  }
 }
 function toggleMenu(){
   const n=document.getElementById("navlinks");
@@ -1338,6 +1350,31 @@ const RAZORPAY_KEY_ID = "rzp_live_TefvEpMCdEf0Il";
 window.RAZORPAY_KEY_ID = RAZORPAY_KEY_ID;
 const RMA_CREATE_ORDER_URL = SUPABASE_URL + "/functions/v1/create-razorpay-order";
 const RMA_VERIFY_PAYMENT_URL = SUPABASE_URL + "/functions/v1/verify-razorpay-payment";
+const RMA_GST_INVOICE_URL = SUPABASE_URL + "/functions/v1/generate-gst-invoice";
+const RMA_GSTIN = "01CBCPB0524K1ZG";
+const RMA_INVOICE_FROM = "rma.studies07@gmail.com";
+
+async function rmaGenerateAndSendGSTInvoice(invoiceData){
+  const {data:{session}} = await supabaseClient.auth.getSession();
+  const headers={"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY};
+  if(session?.access_token) headers.Authorization="Bearer "+session.access_token;
+  const r=await fetch(RMA_GST_INVOICE_URL,{method:"POST",headers,body:JSON.stringify({
+    ...invoiceData,
+    supplier:{
+      legal_name:"Rahul Bhatti",
+      trade_name:"RMA Design & Construction",
+      gstin:RMA_GSTIN,
+      address:"1st Floor, Building No. 21, Choudhary Niwas, Road/Street 2, Ambika Vihar, Jammu, Jammu & Kashmir - 180011",
+      state:"Jammu and Kashmir",
+      email:RMA_INVOICE_FROM,
+      phone:"+91 96221 21692"
+    }
+  })});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok || !d.success) throw new Error(d.error||"GST invoice could not be generated.");
+  return d;
+}
+
 
 async function rmaCreateRazorpayOrder(amount, receipt, description, notes={}){
   const {data:{session}} = await supabaseClient.auth.getSession();
@@ -1386,8 +1423,25 @@ async function openRazorpayPayment({amount,receipt,description,name,email,contac
         try{
           box.className="notice info";box.classList.remove("hidden");box.textContent="Verifying payment securely...";
           await rmaVerifyRazorpayPayment(response);
-          box.className="notice success";box.classList.remove("hidden");box.innerHTML="<b>Payment verified successfully.</b><br>Payment ID: <b>"+response.razorpay_payment_id+"</b>";
-          return response;
+          box.textContent="Payment verified. Generating GST invoice...";
+          const taxable=Number((Number(amount)/1.18).toFixed(2));
+          const gst=Number((Number(amount)-taxable).toFixed(2));
+          const inv=await rmaGenerateAndSendGSTInvoice({
+            payment_id:response.razorpay_payment_id,
+            razorpay_signature:response.razorpay_signature||"",
+            order_id:response.razorpay_order_id||"",
+            receipt,
+            invoice_type:"service",
+            customer:{name:name||"",email:email||"",mobile:contact||"",address:notes?.project_address||"",state:notes?.customer_state||""},
+            description,
+            taxable_amount:taxable,
+            gst_rate:18,
+            gst_amount:gst,
+            total_amount:Number(amount),
+            notes
+          });
+          box.className="notice success";box.classList.remove("hidden");box.innerHTML="<b>Payment verified and GST invoice generated.</b><br>Invoice No.: <b>"+inv.invoice_number+"</b><br>Payment ID: <b>"+response.razorpay_payment_id+"</b><br><small>The GST invoice has been sent to the customer email.</small>";
+          return {...response,invoice:inv};
         }catch(err){
           console.error(err);
           box.className="notice error";box.classList.remove("hidden");box.textContent=err.message||"Payment verification failed.";
@@ -2131,7 +2185,7 @@ checkExistingSession();
   /* ---------- 5. Path Seeker International School client account ---------- */
   function addPathSeekerPortal(){
     const signin=document.getElementById('page-signin');if(!signin||document.getElementById('rmaPathSeekerPortal'))return;
-    const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="backrow" style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn outline" type="button" onclick="signOutUser()">← Sign Out</button></div><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Private project access for drawings, consultant coordination, site visits and messages to RMA.</p></div><div class="ps-profile-photo-wrap"><div id="psProfilePhoto" class="ps-profile-photo" aria-label="Client profile photo"><span id="psProfileInitials">PS</span></div><div style="flex:1"><b>Client Profile Photo</b><div class="ps-v33-muted">Your profile photo is shown here when you sign in.</div><div class="ps-profile-photo-actions"><label class="btn outline" style="cursor:pointer">Upload / Change Photo<input id="psProfilePhotoInput" type="file" accept="image/*" style="display:none" onchange="uploadPathSeekerProfilePhoto(event)"></label></div><div id="psProfilePhotoStatus" class="muted" style="margin-top:6px"></div></div></div><div class="ps-v33-top"><div class="ps-v33-profile"><span class="rma-v3-badge">ACTIVE CLIENT</span><div class="profile-name">Path Seeker International School</div><p class="ps-v33-muted">Client profile and project account</p><div class="ps-v33-meta"><div><b>Client</b><br>Path Seeker International School</div><div><b>Project</b><br><span id="psProjectName">Loading...</span></div><div><b>Project Status</b><br><span id="psProjectStatus">Loading...</span></div></div><div class="ps-v33-limit"><div class="counter"><span class="muted">Site visits this month</span><strong id="psMonthlyCounter">1 / 3</strong></div><div class="counter"><span class="muted">Total completed site visits</span><strong id="psTotalVisits">23</strong></div></div><button class="btn dark" style="margin-top:14px" onclick="togglePathSeekerVisitRequest()">Request Site Visit</button></div><div class="ps-v33-scope"><span class="kicker">PROJECT SCOPE</span><h3>Architect &amp; Engineering Consultant</h3><p class="ps-v33-muted">The Path Seeker International School engagement is on a <b>consultation basis only</b>.</p><div class="ps-v33-scope-grid"><div class="ps-v33-scope-item"><b>Architectural Consultation</b><br><small>Planning, drawings, design coordination and architectural guidance.</small></div><div class="ps-v33-scope-item"><b>Engineering Consultation</b><br><small>Structural / technical consultation, review and engineering guidance.</small></div><div class="ps-v33-scope-item"><b>Site Consultation</b><br><small>Site inspections, verification and coordination related to the consultancy scope.</small></div><div class="ps-v33-scope-item"><b>Client Coordination</b><br><small>Discussion of drawings, technical queries, revisions and project requirements.</small></div></div><div class="notice info" style="margin-top:14px"><b>Engagement scope:</b> Architect &amp; Engineering Consultant — consultation basis. Construction execution is not included in this client portal scope unless separately agreed.</div></div></div><div id="psVisitRequestBox" class="ps-request-box hidden ps-v33-section"><div class="ps-v33-section-head"><div><h3>Request a Site Visit</h3><p class="muted">Choose a preferred date and time. Reason / scope is optional. Your request will be recorded for RMA review.</p></div></div><div class="form-grid"><div class="group"><label>Preferred Date *</label><input id="psRequestedDate" type="date"></div><div class="group"><label>Preferred Time</label><input id="psRequestedTime" type="time"></div></div><div class="group"><label>Reason / Scope of Visit <span class="muted">(Optional)</span></label><textarea id="psVisitReason" placeholder="For example: progress inspection, structural discussion, drawing coordination, site verification, etc."></textarea></div><div id="psVisitRequestMessage" class="notice hidden"></div><button type="button" class="btn dark" onclick="submitPathSeekerVisitRequest()">Submit Site Visit Request</button></div><div class="ps-v33-section"><div class="ps-v33-section-head"><h3>Drawings &amp; Documents</h3><span class="muted">All project documents uploaded by RMA</span></div><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div><div class="ps-v33-message-grid"><div class="ps-notify-box"><h3>Notifications</h3><div id="psNotifications"><div class="muted">Loading notifications...</div></div></div><div class="ps-message-box"><h3>Message RMA</h3><p class="muted">Send a request, correction, clarification or change directly to RMA.</p><div class="group"><label>Subject</label><input id="psMessageSubject" placeholder="Subject"></div><div class="group"><label>Message</label><textarea id="psMessageText" placeholder="Write your message here..."></textarea></div><div id="psMessageStatus" class="notice hidden"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn dark" onclick="sendPathSeekerMessage()">Send Message</button><a class="btn outline" href="mailto:RMA.studies07@gmail.com?subject=Path%20Seeker%20Project%20Request">Email RMA</a><a class="btn outline" href="https://wa.me/919622121692?text=Path%20Seeker%20Project%20Request" target="_blank" rel="noopener">WhatsApp RMA</a></div></div></div><div class="ps-v33-section"><h3>Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
+    const sec=document.createElement('section');sec.id='rmaPathSeekerPortal';sec.className='hidden';sec.innerHTML=`<div class="container"><div class="backrow" style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn outline" type="button" onclick="signOutUser()">← Sign Out</button></div><div class="heading"><span class="kicker">PATH SEEKER INTERNATIONAL SCHOOL</span><h2>Client Project Portal</h2><p>Private project access for drawings, consultant coordination, site visits and messages to RMA.</p></div><div class="ps-profile-photo-wrap"><div id="psProfilePhoto" class="ps-profile-photo" aria-label="Client profile photo"><span id="psProfileInitials">PS</span></div><div style="flex:1"><b>Client Profile Photo</b><div class="ps-v33-muted">Your profile photo is shown here when you sign in.</div><div class="ps-profile-photo-actions"><label class="btn outline" style="cursor:pointer">Upload / Change Photo<input id="psProfilePhotoInput" type="file" accept="image/*" style="display:none" onchange="uploadPathSeekerProfilePhoto(event)"></label></div><div id="psProfilePhotoStatus" class="muted" style="margin-top:6px"></div></div></div><div class="ps-v33-top"><div class="ps-v33-profile"><span class="rma-v3-badge">ACTIVE CLIENT</span><div class="profile-name">Path Seeker International School</div><p class="ps-v33-muted">Client profile and project account</p><div class="ps-v33-meta"><div><b>Client</b><br>Path Seeker International School</div><div><b>Project</b><br><span id="psProjectName">Loading...</span></div><div><b>Project Status</b><br><span id="psProjectStatus">Loading...</span></div></div><div class="ps-v33-limit"><div class="counter"><span class="muted">Site visits this month</span><strong id="psMonthlyCounter">0 / 2</strong></div><div class="counter"><span class="muted">Total completed site visits</span><strong id="psTotalVisits">23</strong></div></div><button class="btn dark" style="margin-top:14px" onclick="togglePathSeekerVisitRequest()">Request Site Visit</button></div><div class="ps-v33-scope"><span class="kicker">PROJECT SCOPE</span><h3>Architect &amp; Engineering Consultant</h3><p class="ps-v33-muted">The Path Seeker International School engagement is on a <b>consultation basis only</b>.</p><div class="ps-v33-scope-grid"><div class="ps-v33-scope-item"><b>Architectural Consultation</b><br><small>Planning, drawings, design coordination and architectural guidance.</small></div><div class="ps-v33-scope-item"><b>Engineering Consultation</b><br><small>Structural / technical consultation, review and engineering guidance.</small></div><div class="ps-v33-scope-item"><b>Site Consultation</b><br><small>Site inspections, verification and coordination related to the consultancy scope.</small></div><div class="ps-v33-scope-item"><b>Client Coordination</b><br><small>Discussion of drawings, technical queries, revisions and project requirements.</small></div></div><div class="notice info" style="margin-top:14px"><b>Engagement scope:</b> Architect &amp; Engineering Consultant — consultation basis. Construction execution is not included in this client portal scope unless separately agreed.</div></div></div><div id="psVisitRequestBox" class="ps-request-box hidden ps-v33-section"><div class="ps-v33-section-head"><div><h3>Request a Site Visit</h3><p class="muted">Choose a preferred date and time. Reason / scope is optional. Your request will be recorded for RMA review.</p></div></div><div class="form-grid"><div class="group"><label>Preferred Date *</label><input id="psRequestedDate" type="date"></div><div class="group"><label>Preferred Time</label><input id="psRequestedTime" type="time"></div></div><div class="group"><label>Reason / Scope of Visit <span class="muted">(Optional)</span></label><textarea id="psVisitReason" placeholder="For example: progress inspection, structural discussion, drawing coordination, site verification, etc."></textarea></div><div id="psVisitRequestMessage" class="notice hidden"></div><button type="button" class="btn dark" onclick="submitPathSeekerVisitRequest()">Submit Site Visit Request</button></div><div class="ps-v33-section"><div class="ps-v33-section-head"><h3>Drawings &amp; Documents</h3><span class="muted">All project documents uploaded by RMA</span></div><div id="psDocuments" class="rma-v3-list"><div class="muted">Documents uploaded by RMA will appear here.</div></div></div><div class="ps-v33-message-grid"><div class="ps-notify-box"><h3>Notifications</h3><div id="psNotifications"><div class="muted">Loading notifications...</div></div></div><div class="ps-message-box"><h3>Message RMA</h3><p class="muted">Send a request, correction, clarification or change directly to RMA.</p><div class="group"><label>Subject</label><input id="psMessageSubject" placeholder="Subject"></div><div class="group"><label>Message</label><textarea id="psMessageText" placeholder="Write your message here..."></textarea></div><div id="psMessageStatus" class="notice hidden"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn dark" onclick="sendPathSeekerMessage()">Send Message</button><a class="btn outline" href="mailto:rma.studies07@gmail.com?subject=Path%20Seeker%20Project%20Request">Email RMA</a><a class="btn outline" href="https://wa.me/919622121692?text=Path%20Seeker%20Project%20Request" target="_blank" rel="noopener">WhatsApp RMA</a></div></div></div><div class="ps-v33-section"><h3>Site Visit Record</h3><div id="psVisitHistory" class="rma-v3-list"><div class="muted">Loading visit history...</div></div></div></div>`;signin.appendChild(sec);
   }
   window.addPathSeekerPortal = addPathSeekerPortal;
 
@@ -2222,20 +2276,19 @@ checkExistingSession();
       document.getElementById('psVisitHistory').innerHTML=rows.length?rows.map(x=>{let scope='No reason provided';let reqDate='';try{const j=JSON.parse(x.visit_scope||'');if(j){scope=j.reason||scope;reqDate=j.requested_date||'';}}catch(e){}return '<div class="ps-status-row"><div><b>'+esc(x.project_address||'Site Visit')+'</b><br><small>'+new Date(x.created_at).toLocaleDateString('en-IN')+(reqDate?' • Requested '+esc(reqDate):'')+'</small><br><small>'+esc(scope)+'</small></div><span class="role-badge">Request recorded</span></div>';}).join(''):'<div class="muted">No site visit requests yet.</div>';
     }catch(e){document.getElementById('psMonthlyCounter').textContent='— / 2';}
 
-    /*
-     * DOCUMENT LOADING MOVED TO THE SINGLE V80 DOCUMENT LOADER AT THE END
-     * OF THIS FILE.
-     *
-     * The old loader queried project_documents and then generated a signed
-     * Storage URL for every document sequentially. That made portal startup
-     * wait for every PDF/image and also conflicted with later V70/V71/V79/V762/V763
-     * document renderers.
-     */
     try{
+      /* STABLE DOCUMENT LOADER: one source, bounded retries, parallel signed URLs. */
+      const documentProjectId='d9e2617e-6edc-4c07-891b-7879998d6187';
+      let docs=null,lastErr=null;
+      for(let attempt=0;attempt<3;attempt++){
+        try{const q=await supabaseClient.from('project_documents').select('id,project_id,document_name,document_type,floor_name,storage_path,preview_storage_path,is_final,created_at,review_status').eq('project_id',documentProjectId).order('created_at',{ascending:false}).limit(200);if(q.error)throw q.error;docs=q.data||[];if(docs.length||attempt===2)break;}catch(err){lastErr=err;if(attempt<2)await new Promise(r=>setTimeout(r,700*(attempt+1)));}
+      }
+      if(!docs)throw lastErr||new Error('Could not read project documents.');
+      const urls=await Promise.all(docs.map(async x=>{if(!x.storage_path)return '';try{const r=await supabaseClient.storage.from('project-documents').createSignedUrl(x.storage_path,3600);if(r.data?.signedUrl)return r.data.signedUrl;}catch(e){}try{const r=await supabaseClient.storage.from('project-documents').getPublicUrl(x.storage_path);return r.data?.publicUrl||'';}catch(e){return '';}}));
+      const rendered=docs.map((x,i)=>{const u=urls[i]||'',name=esc(x.document_name||'Project Document'),meta=esc(x.document_type||'Drawing / Document')+(x.floor_name?' • '+esc(x.floor_name):'')+(x.is_final?' • Final':'');const actions=u?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn outline" href="'+esc(u)+'" target="_blank" rel="noopener">Open / View Drawing</a><a class="btn outline" href="'+esc(u)+'" download>Download PDF</a></div>':'<div class="notice error" style="margin-top:10px"><b>Drawing record found, but Storage access is unavailable.</b></div>';const preview=u?'<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:800;color:#245b43;padding:8px 0">Preview Drawing</summary><div style="margin-top:8px;border:1px solid #dfe4e8;border-radius:8px;overflow:hidden;background:#fff"><iframe src="'+esc(u)+'#toolbar=1&navpanes=0" title="'+name+'" style="display:block;width:100%;height:520px;border:0"></iframe></div></details>':'';return '<div class="ps-v41-doc-card" style="border:1px solid #dfe7e2;border-radius:10px;padding:15px;background:#fff"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="min-width:0"><b style="font-size:15px">'+name+'</b><div class="muted" style="margin-top:3px">'+meta+'</div></div><span class="role-badge">RMA Document</span></div>'+actions+preview+'</div>';});
+      const docBox=document.getElementById('psDocuments');if(docBox)docBox.innerHTML=docs.length?'<div class="ps-v41-doc-summary" style="margin-bottom:12px;padding:11px 13px;border-radius:9px;background:#f4fbf7;border:1px solid #dce9e1"><b>'+docs.length+' project document'+(docs.length===1?'':'s')+' available</b><span class="muted"> • Automatically loaded from Supabase</span></div><div style="display:grid;gap:10px">'+rendered.join('')+'</div>':'<div class="notice info"><b>No drawings are currently assigned to this Path Seeker project.</b><br>The portal returned 0 document records.</div>';
       await refreshPathSeekerNotifications();
-    }catch(e){
-      console.warn('Path Seeker notification refresh skipped:', e);
-    }
+    }catch(e){console.warn('Path Seeker documents load failed',e);const box=document.getElementById('psDocuments');if(box)box.innerHTML='<div class="notice error"><b>Project documents could not be loaded.</b><br>'+esc(e?.message||'Please check the project_documents RLS policy and project-document Storage access.')+'</div>';}
   }
 
   window.loadPathSeeker = loadPathSeeker;
@@ -2316,7 +2369,7 @@ checkExistingSession();
       document.getElementById('psMessageText').value='';
     }catch(e){
       console.error('Path Seeker message save failed:',e);
-      const body=encodeURIComponent(message),subj=encodeURIComponent(subject);window.location.href='mailto:RMA.studies07@gmail.com?subject='+subj+'&body='+body;
+      const body=encodeURIComponent(message),subj=encodeURIComponent(subject);window.location.href='mailto:rma.studies07@gmail.com?subject='+subj+'&body='+body;
       box.className='notice info';box.classList.remove('hidden');box.textContent='The Supabase message table could not accept this record, so your email app has been opened as a backup. Please also run the client_messages SQL setup.';
     }
   }
@@ -2469,7 +2522,7 @@ async function payVisit(){
  try{
    const order=await rmaCreateRazorpayOrder(total,requestId,'RMA Site Visit Fee',{request_id:requestId,service_type:'Site Visit',distance_km:String(visitDistance.toFixed(2)),base_pin:BASE_PIN});
    const rz=new window.Razorpay({key:window.RAZORPAY_KEY_ID,order_id:order.order_id,amount:order.amount,currency:order.currency||'INR',name:'RMA Design & Construction',description:'RMA Site Visit Fee',prefill:{name,email,contact:mobile},theme:{color:'#2e7d5b'},modal:{ondismiss:()=>{paymentBusy=false;msg('r29_message','Payment window closed. No payment was confirmed.','info');}},handler:async response=>{
-      try{msg('r29_message','Verifying payment securely...');await rmaVerifyRazorpayPayment(response);const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG})};await insertBooking(payload);paymentBusy=false;btn.textContent='Site Visit Booked';btn.disabled=true;msg('r29_message','Payment verified and your site visit has been booked successfully. Payment ID: '+response.razorpay_payment_id,'success');}
+      try{msg('r29_message','Verifying payment securely...');await rmaVerifyRazorpayPayment(response);const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG})};await insertBooking(payload);msg('r29_message','Payment verified. Generating GST invoice...');const inv=await rmaGenerateAndSendGSTInvoice({payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature||'',order_id:response.razorpay_order_id||'',receipt:requestId,invoice_type:'site_visit',customer:{name,email:email||'',mobile,address:document.getElementById('r29_address').value.trim(),state:'Jammu and Kashmir'},description:'RMA Site Visit Fee',taxable_amount:Number(fee.toFixed(2)),gst_rate:18,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),notes:{distance_km:Number(visitDistance.toFixed(2)),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value}});paymentBusy=false;btn.textContent='Site Visit Booked';btn.disabled=true;msg('r29_message','Payment verified, site visit booked and GST invoice sent. Invoice No.: '+inv.invoice_number,'success');}
       catch(e){paymentBusy=false;btn.disabled=false;msg('r29_message',e.message||'Payment verification or booking failed.','error');}
    }});rz.open();
  }catch(e){paymentBusy=false;btn.disabled=false;msg('r29_message',e.message||'Unable to start Razorpay payment.','error');}
@@ -2495,7 +2548,7 @@ async function payService(){
  try{
    const order=await rmaCreateRazorpayOrder(amount,requestId,'RMA Professional Service Payment',{request_id:requestId,service_type:keys.join(',')});
    const rz=new window.Razorpay({key:window.RAZORPAY_KEY_ID,order_id:order.order_id,amount:order.amount,currency:order.currency||'INR',name:'RMA Design & Construction',description:'RMA Professional Service Payment',prefill:{name,email,contact:mobile},theme:{color:'#2e7d5b'},modal:{ondismiss:()=>msg('rmaV29ServiceMsg','Payment window closed. No payment was confirmed.','info')},handler:async response=>{
-     try{msg('rmaV29ServiceMsg','Verifying payment securely...');await rmaVerifyRazorpayPayment(response);const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Paid Service Request — '+keys.join(', '),project_address:document.getElementById('s_project_address')?.value.trim()||'Service request',latitude:null,longitude:null,distance_km:0,visit_fee:amount,gst_amount:0,total_amount:amount,status:'paid',visit_scope:JSON.stringify({selected_services:keys,payment_id:response.razorpay_payment_id,payment_status:'paid'})};await insertBooking(payload);btn.textContent='Payment Completed';btn.disabled=true;msg('rmaV29ServiceMsg','Payment verified and your service request has been submitted successfully. Payment ID: '+response.razorpay_payment_id,'success');}
+     try{msg('rmaV29ServiceMsg','Verifying payment securely...');await rmaVerifyRazorpayPayment(response);const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Paid Service Request — '+keys.join(', '),project_address:document.getElementById('s_project_address')?.value.trim()||'Service request',latitude:null,longitude:null,distance_km:0,visit_fee:amount,gst_amount:0,total_amount:amount,status:'paid',visit_scope:JSON.stringify({selected_services:keys,payment_id:response.razorpay_payment_id,payment_status:'paid'})};await insertBooking(payload);msg('rmaV29ServiceMsg','Payment verified. Generating GST invoice...');const taxable=Number((amount/1.18).toFixed(2));const gst=Number((amount-taxable).toFixed(2));const inv=await rmaGenerateAndSendGSTInvoice({payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature||'',order_id:response.razorpay_order_id||'',receipt:requestId,invoice_type:'service',customer:{name,email:email||'',mobile,address:document.getElementById('s_project_address')?.value.trim()||'Service request',state:''},description:'RMA Professional Service — '+keys.join(', '),taxable_amount:taxable,gst_rate:18,gst_amount:gst,total_amount:amount,notes:{selected_services:keys}});btn.textContent='Payment Completed';btn.disabled=true;msg('rmaV29ServiceMsg','Payment verified, service request submitted and GST invoice sent. Invoice No.: '+inv.invoice_number,'success');}
      catch(e){btn.disabled=false;msg('rmaV29ServiceMsg',e.message||'Payment verification or submission failed.','error');}
    }});rz.open();
  }catch(e){btn.disabled=false;msg('rmaV29ServiceMsg',e.message||'Unable to start Razorpay payment.','error');}
@@ -2559,11 +2612,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 (function(){
 'use strict';
 const V36_ADMIN_USERNAME='rmaadmin';
-const V36_ADMIN_EMAIL='RMA.studies07@gmail.com';
+const V36_ADMIN_EMAIL='rma.studies07@gmail.com';
 const V36_CLIENT_ID='PSIS261';
 const V36_CLIENT_NAME='Path Seeker International School';
 const V36_SITE_PHONE='+91 96221 21692';
-const V36_SITE_EMAIL='RMA.studies07@gmail.com';
+const V36_SITE_EMAIL='rma.studies07@gmail.com';
 const V36_CLIENT_PHONE='9419118424';
 const V36_CLIENT_EMAIL='pathseekers.vijaypur@gmail.com';
 const V36_WA='919622121692';
@@ -2765,7 +2818,7 @@ window.rmaV36Init=v36Init;
 <script id="rma-v40-fixes">
 (function(){
   'use strict';
-  const V40_CLIENT_ID='PSIS261', V40_CLIENT_NAME='Path Seeker International School', V40_CLIENT_PHONE='9419118424', V40_CLIENT_EMAIL='pathseekers.vijaypur@gmail.com', V40_ADDRESS='Ramgarh, Jammu & Kashmir, India', V40_RMA_PHONE='+91 96221 21692', V40_RMA_EMAIL='RMA.studies07@gmail.com';
+  const V40_CLIENT_ID='PSIS261', V40_CLIENT_NAME='Path Seeker International School', V40_CLIENT_PHONE='9419118424', V40_CLIENT_EMAIL='pathseekers.vijaypur@gmail.com', V40_ADDRESS='Ramgarh, Jammu & Kashmir, India', V40_RMA_PHONE='+91 96221 21692', V40_RMA_EMAIL='rma.studies07@gmail.com';
   const e=s=>{const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML};
   const q=s=>document.querySelector(s);
   const qa=s=>[...document.querySelectorAll(s)];
@@ -2968,92 +3021,6 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 </script>
 
 
-<script id="rma-v44-documents-js">
-(function(){
-  'use strict';
-  const PS_PROJECT_ID='d9e2617e-6edc-4c07-891b-7879998d6187';
-
-  const escV44=(v)=>{
-    if(typeof window.esc==='function')return window.esc(v==null?'':String(v));
-    return String(v==null?'':v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-  };
-
-  async function getDocsV44(){
-    const q=await supabaseClient.from('project_documents')
-      .select('id,project_id,document_name,document_type,floor_name,storage_path,preview_storage_path,is_final,created_at,review_status')
-      .eq('project_id',PS_PROJECT_ID)
-      .order('created_at',{ascending:true})
-      .limit(200);
-    if(q.error) throw q.error;
-    return q.data||[];
-  }
-
-  async function loadAdminDocumentReviewV44(){
-    const box=document.getElementById('rmaV44DocumentReview');
-    if(!box)return;
-    box.innerHTML='<div class="muted">Loading project documents...</div>';
-    try{
-      const docs=await getDocsV44();
-      box.innerHTML=
-        '<div class="rma-v44-admin-warning"><b>RMA control:</b> Set each drawing/document to Accepted or Rejected. Accepted documents are shown first in the client portal; rejected documents are shown in the rejected section below.</div>'+
-        '<div>'+docs.map((x,i)=>
-          '<div class="rma-v44-admin-row">'+
-            '<div><div class="rma-v44-admin-name">'+(i+1)+'. '+escV44(x.document_name||'Project Document')+'</div>'+
-            '<div class="rma-v44-admin-meta">'+escV44((x.document_type||'Drawing / Document')+(x.floor_name?' • '+x.floor_name:'')+(x.is_final?' • Final':''))+'</div></div>'+
-            '<select id="rmaV44Status_'+escV44(x.id)+'">'+
-              '<option value="accepted" '+(String(x.review_status||'accepted')==='accepted'?'selected':'')+'>Accepted</option>'+
-              '<option value="rejected" '+(String(x.review_status||'accepted')==='rejected'?'selected':'')+'>Rejected</option>'+
-            '</select>'+
-            '<button class="btn outline" type="button" onclick="rmaV44SaveDocumentStatus(\''+escV44(x.id)+'\')">Save Status</button>'+
-          '</div>').join('')+
-        '</div>'+
-        (docs.length?'':'<div class="muted">No Path Seeker project documents found.</div>');
-    }catch(e){
-      box.innerHTML='<div class="notice error"><b>Document status control could not load.</b><br>'+
-        escV44(e?.message||'Run the V44 SQL migration first.')+'</div>';
-    }
-  }
-
-  window.rmaV44SaveDocumentStatus=async function(id){
-    const status=document.getElementById('rmaV44Status_'+id)?.value||'accepted';
-    try{
-      const r=await supabaseClient.from('project_documents').update({review_status:status}).eq('id',id);
-      if(r.error)throw r.error;
-      await loadAdminDocumentReviewV44();
-      if(typeof window.toast36==='function')window.toast36('Drawing status updated.','success');
-      else alert('Drawing status updated.');
-    }catch(e){
-      alert('Could not update drawing status: '+(e?.message||'Please run the V44 SQL migration and check the staff/admin RLS policy.'));
-    }
-  };
-
-  function ensureAdminDocumentReviewV44(){
-    if(document.getElementById('rmaV44DocumentReviewPanel'))return true;
-    const staff=document.getElementById('staffSiteVisitRequests');
-    if(!staff)return false;
-    const container=staff.closest('.container')||staff.parentElement?.parentElement;
-    if(!container)return false;
-
-    const panel=document.createElement('div');
-    panel.id='rmaV44DocumentReviewPanel';
-    panel.className='form-panel';
-    panel.style.marginTop='20px';
-    panel.innerHTML='<h2>Path Seeker Drawing Status</h2>'+
-      '<p class="form-note">RMA admin/staff control. Set the review status for every project drawing or document.</p>'+
-      '<div id="rmaV44DocumentReview"></div>';
-    container.appendChild(panel);
-    loadAdminDocumentReviewV44();
-    return true;
-  }
-
-  window.rmaV44RefreshDocumentStatus=loadAdminDocumentReviewV44;
-
-  let n=0;
-  const adminTimer=setInterval(()=>{
-    if(ensureAdminDocumentReviewV44()||++n>120)clearInterval(adminTimer);
-  },500);
-})();
-</script>
 
 <script id="rma-v63-exact-section-navigation">
 (function(){
@@ -3107,7 +3074,7 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     /* Dashboard — only dashboard content is visible initially. */
     var dash=makeView(main,'dashboard','Welcome to Your Project Portal','Your project information, drawings, site visits and RMA communication are available from the menu.');dash.classList.add('active');
     var welcome=document.createElement('div');welcome.className='ps-v62-welcome';welcome.innerHTML='<div><h3>Path Seeker International School</h3><p>Project ID: <b>PSIS 261</b> · Vijaypur, Ramgarh</p></div><div class="ps-v62-status"><span class="ps-v62-pill">ACTIVE CLIENT</span><span class="ps-v62-pill">G+2 SCHOOL PROJECT</span></div>';dash.appendChild(welcome);
-    var stats=document.createElement('div');stats.className='ps-v62-dashboard-grid';stats.innerHTML='<div class="ps-v62-stat"><span class="label">SITE VISITS THIS MONTH</span><strong id="psV63StatMonthly">1 / 3</strong></div><div class="ps-v62-stat"><span class="label">TOTAL COMPLETED VISITS</span><strong>23</strong></div><div class="ps-v62-stat"><span class="label">PROJECT STATUS</span><strong>Active</strong></div>';dash.appendChild(stats);
+    var stats=document.createElement('div');stats.className='ps-v62-dashboard-grid';stats.innerHTML='<div class="ps-v62-stat"><span class="label">SITE VISITS THIS MONTH</span><strong id="psV63StatMonthly">0 / 2</strong></div><div class="ps-v62-stat"><span class="label">TOTAL COMPLETED VISITS</span><strong>23</strong></div><div class="ps-v62-stat"><span class="label">PROJECT STATUS</span><strong>Active</strong></div>';dash.appendChild(stats);
     var watch=document.createElement('div');watch.className='ps-v62-watch';watch.innerHTML='<div class="ps-v62-watch-head"><div><div class="ps-v62-watch-title">Next Site Visit · 24 September 2026 · 11:00 AM</div><div class="muted" style="font-size:11px">Appointment watch</div></div><span class="ps-v62-pill">UPCOMING</span></div><div class="ps-v62-countdown" id="psV63Countdown"></div>';dash.appendChild(watch);countdown(watch.querySelector('#psV63Countdown'));
     var quick=document.createElement('div');quick.className='ps-v63-quick-grid';quick.innerHTML=[
       ['project','▣','Project Information','View your project profile and scope.'],
@@ -3127,7 +3094,7 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 
     /* Site Visits — request + history + report, and nothing else. */
     var visit=makeView(main,'visit','Site Visits','View completed visits, upcoming appointments and request a new site visit.');
-    var visitIntro=document.createElement('div');visitIntro.className='ps-v63-visit-summary';visitIntro.innerHTML='<div><b>September site visits</b><span>1 of 3 used</span></div><div><b>Total completed site visits</b><span>23</span></div><button type="button" class="btn dark" onclick="togglePathSeekerVisitRequest()">Request Site Visit</button>';visit.appendChild(visitIntro);
+    var visitIntro=document.createElement('div');visitIntro.className='ps-v63-visit-summary';visitIntro.innerHTML='<div><b>September site visits</b><span>1 of 2 used</span></div><div><b>Total completed site visits</b><span>23</span></div><button type="button" class="btn dark" onclick="togglePathSeekerVisitRequest()">Request Site Visit</button>';visit.appendChild(visitIntro);
     if(req)visit.appendChild(req);
     if(history)visit.appendChild(history);
     var report=document.createElement('div');report.className='ps-v62-report';report.innerHTML='<h3>15 September 2026 · Site Visit Report <span class="ps-v62-pill" style="float:right">COMPLETED</span></h3><p>After a two-month rainy-season break, work resumed after completion of the combined footing. On the first day back, instructions were given to the contractor in the presence of the client.</p><p>The beam was originally planned at 3 ft from ground level. Considering suggestions from the client and contractor and the practical feasibility at site, the contractor’s proposal to make the beam 2 ft was accepted instead of 1 ft 6 in (18 in).</p><p>For the remaining 18 in, one foot will remain and the arrangement is to go 6 in deep into the earth. Gravel will be provided first, followed by gravel/lean concrete in 1:4:8 ratio. PCC will then be provided. An 8 mm reinforcement mesh (jali) will be provided horizontally and vertically and linked with the beam so the perimeter/boundary remains interlocked and the soil filled up to the 3-ft plinth does not escape from the lower portion.</p><div class="ps-v62-report-actions"><button class="btn outline" type="button" id="psV63DownloadReport">Download Report</button></div>';visit.appendChild(report);
@@ -3276,7 +3243,7 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     completion:'30 December 2026',
     scope:'Architect & Engineering Consultant — consultation basis only.',
     rmaPhone:'+91 96221 21692',
-    rmaEmail:'RMA.studies07@gmail.com'
+    rmaEmail:'rma.studies07@gmail.com'
   };
 
   function root(){return document.getElementById('rmaPathSeekerPortal');}
@@ -3384,432 +3351,24 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 </script>
 
 
-<style id="rma-v70-doc-notify-fix">
-#rmaPathSeekerPortal .rma-v70-doc-card{border:1px solid #dfe7e2;border-radius:10px;padding:14px;background:#fff}
-#rmaPathSeekerPortal .rma-v70-doc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-#rmaPathSeekerPortal .rma-v70-notice{padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#f5fbf8;margin-bottom:9px}
-</style>
-
 
 
 <!-- V71 FINAL CLIENT PORTAL FIX: documents + live appointment watch + monthly visit counter -->
+<style id="rma-v71-final-fix-css">
+#rmaPathSeekerPortal .rma-v71-doc-card{border:1px solid #dfe7e2;border-radius:10px;padding:14px;background:#fff}
+#rmaPathSeekerPortal .rma-v71-doc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#rmaPathSeekerPortal .rma-v71-doc-actions a{display:inline-flex;align-items:center;justify-content:center}
+</style>
 
-
-
-<!-- V74 FINAL DASHBOARD PATCH: preserve working V72 documents; fix monthly counter and live countdown only -->
-<!-- V76: dashboard appointment watch + site visits counter 1/3. V72/V79 document code untouched. -->
-<script id="rma-v76-dashboard-watch-sitevisit">
+<!-- V75: ONLY dashboard counter + appointment watch. V72 document code is intentionally untouched. -->
+<script id="rma-v75-dashboard-watch-only">
 (function(){
 'use strict';
 var TARGET=new Date('2026-09-24T11:00:00+05:30').getTime(),timer=null;
 function root(){return document.getElementById('rmaPathSeekerPortal')||document;}
-function counter(){var r=root();['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent='1 / 3';});if(r.querySelectorAll)r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){if(/used/i.test(e.textContent||''))e.textContent='1 of 3 used';});}
+function counter(){var r=root();['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent='1 / 2';});if(r.querySelectorAll)r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){if(/used/i.test(e.textContent||''))e.textContent='1 of 2 used';});}
 function watch(){var e=document.getElementById('psV63Countdown');if(!e)return false;var total=Math.max(0,Math.floor((TARGET-Date.now())/1000)),d=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60),s=total%60;e.innerHTML='<div class="ps-v62-time"><strong>'+String(d).padStart(2,'0')+'</strong><small>Days</small></div><div class="ps-v62-time"><strong>'+String(h).padStart(2,'0')+'</strong><small>Hours</small></div><div class="ps-v62-time"><strong>'+String(m).padStart(2,'0')+'</strong><small>Minutes</small></div><div class="ps-v62-time"><strong>'+String(s).padStart(2,'0')+'</strong><small>Seconds</small></div>';return true;}
 function start(){counter();watch();if(timer)clearInterval(timer);timer=setInterval(function(){counter();watch();},1000);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
-})();
-</script>
-
-
-<!-- RMA V76 FINAL PATCH: live appointment watch + September site visits 1/3 -->
-<!-- V79 DOCUMENT RECOVERY: render Path Seeker drawings on demand without polling/observers -->
-
-<!-- RMA V76.2 FINAL DRAWINGS RECOVERY -->
-<style>
-#rmaPathSeekerPortal .rma-v762-list{display:grid;gap:7px;padding:10px 12px 12px}
-#rmaPathSeekerPortal .rma-v762-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 10px;border:1px solid #e1e9e4;border-radius:8px;background:#fff}
-#rmaPathSeekerPortal .rma-v762-no{width:24px;height:24px;border-radius:6px;background:#eef7f2;color:#245b43;display:grid;place-items:center;font-size:10px;font-weight:900}
-#rmaPathSeekerPortal .rma-v762-name{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#17251e}
-#rmaPathSeekerPortal .rma-v762-meta{font-size:10px;color:#74817b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#rmaPathSeekerPortal .rma-v762-actions{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
-#rmaPathSeekerPortal .rma-v762-actions .btn{padding:5px 8px!important;min-height:28px;font-size:10px!important;white-space:nowrap}
-@media(max-width:700px){#rmaPathSeekerPortal .rma-v762-row{grid-template-columns:26px minmax(0,1fr)}#rmaPathSeekerPortal .rma-v762-actions{grid-column:2;justify-content:flex-start}}
-</style>
-
-
-<style id="rma-v80-document-css">
-#rmaPathSeekerPortal .rma-v80-preview-details{margin-top:6px}
-#rmaPathSeekerPortal .rma-v80-preview-details summary{cursor:pointer;font-weight:800;color:#245b43;padding:6px 0;font-size:11px}
-#rmaPathSeekerPortal .rma-v80-preview{margin-top:6px;border:1px solid #dfe7e2;border-radius:8px;overflow:hidden;background:#fff}
-#rmaPathSeekerPortal .rma-v80-preview img{display:block;width:100%;max-height:620px;object-fit:contain;background:#fff}
-#rmaPathSeekerPortal .rma-v80-preview iframe{display:block;width:100%;height:500px;border:0}
-#rmaPathSeekerPortal .rma-v80-preview-note{padding:6px 8px;font-size:10px;color:#697b72;background:#f5faf7}
-#rmaPathSeekerPortal .ps-v44-doc-row{min-height:58px}
-#rmaPathSeekerPortal .ps-v44-actions{align-self:center}
-#rmaPathSeekerPortal .rma-v80-action{white-space:nowrap}
-@media(max-width:700px){
-  #rmaPathSeekerPortal .rma-v80-action{font-size:10px!important}
-}
-</style>
-
-<!-- RMA V80 DOCUMENT LOADER
-     One database query on portal open.
-     Storage URLs are created only when the client clicks View/Download/Preview.
-     This prevents the portal from waiting for every PDF/image during startup. -->
-<script id="rma-v80-document-loader">
-(function(){
-  'use strict';
-
-  const PROJECT_ID='d9e2617e-6edc-4c07-891b-7879998d6187';
-  const BUCKET='project-documents';
-  const LEGACY_PATH="PSIS001/architectural/all floors/PATHSEEKER'S 2ND FLOOR 01.pdf";
-
-  let renderPromise=null;
-  let bound=false;
-  const urlCache=new Map();
-
-  function esc(v){
-    if(typeof window.esc==='function')return window.esc(v==null?'':String(v));
-    return String(v==null?'':v).replace(/[&<>'"]/g,c=>({
-      '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
-    }[c]));
-  }
-
-  function box(){return document.getElementById('psDocuments')}
-  function root(){return document.getElementById('rmaPathSeekerPortal')}
-
-  async function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-
-  async function getReadyUser(){
-    for(let i=0;i<16;i++){
-      try{
-        const s=await supabaseClient.auth.getSession();
-        const u=s?.data?.session?.user;
-        if(u)return u;
-      }catch(e){}
-      try{
-        const g=await supabaseClient.auth.getUser();
-        const u=g?.data?.user;
-        if(u)return u;
-      }catch(e){}
-      await sleep(250);
-    }
-    return null;
-  }
-
-  async function getDocs(){
-    const fields='id,project_id,client_user_id,document_name,document_type,floor_name,storage_path,preview_storage_path,is_final,created_at,review_status,mime_type,content_type,file_type,file_url,public_url,url,download_url';
-    let q=await supabaseClient.from('project_documents')
-      .select(fields)
-      .eq('project_id',PROJECT_ID)
-      .order('created_at',{ascending:false})
-      .limit(200);
-
-    if(!q.error && Array.isArray(q.data) && q.data.length)return q.data;
-
-    const u=await getReadyUser();
-    if(u){
-      const q2=await supabaseClient.from('project_documents')
-        .select(fields)
-        .eq('client_user_id',u.id)
-        .order('created_at',{ascending:false})
-        .limit(200);
-      if(!q2.error && Array.isArray(q2.data) && q2.data.length)return q2.data;
-    }
-
-    if(q.error)throw q.error;
-    return Array.isArray(q.data)?q.data:[];
-  }
-
-  function directUrl(x){
-    const direct=[x.file_url,x.public_url,x.url,x.download_url].filter(Boolean);
-    for(const u of direct){
-      if(/^https?:/i.test(String(u)))return String(u);
-    }
-    return '';
-  }
-
-  async function signedUrl(path){
-    if(!path)return '';
-    path=String(path).replace(/^\/+/,'');
-    if(urlCache.has(path))return urlCache.get(path);
-
-    try{
-      const r=await supabaseClient.storage.from(BUCKET).createSignedUrl(path,3600);
-      if(r.data?.signedUrl){
-        urlCache.set(path,r.data.signedUrl);
-        return r.data.signedUrl;
-      }
-    }catch(e){}
-
-    try{
-      const r=supabaseClient.storage.from(BUCKET).getPublicUrl(path);
-      if(r.data?.publicUrl){
-        urlCache.set(path,r.data.publicUrl);
-        return r.data.publicUrl;
-      }
-    }catch(e){}
-
-    return '';
-  }
-
-  async function urlFor(x){
-    const direct=directUrl(x);
-    if(direct)return direct;
-    return await signedUrl(x.storage_path||x.preview_storage_path||x.file_path||x.path||x.storagePath||'');
-  }
-
-  function looksImage(x){
-    const s=[
-      x.mime_type,x.content_type,x.file_type,x.document_name,x.name,x.title,
-      x.storage_path,x.preview_storage_path
-    ].filter(Boolean).join(' ').toLowerCase();
-    return /image\/(jpeg|jpg|png|webp|gif|bmp|svg\+xml)/i.test(s) ||
-           /\.(jpe?g|png|webp|gif|bmp|svg)(?:$|[?#])/i.test(s);
-  }
-
-  function looksPdf(x){
-    const s=[
-      x.mime_type,x.content_type,x.file_type,x.document_name,x.name,x.title,
-      x.storage_path,x.preview_storage_path
-    ].filter(Boolean).join(' ').toLowerCase();
-    return /application\/pdf/i.test(s)||/\.pdf(?:$|[?#])/i.test(s);
-  }
-
-  async function openDocument(index,mode){
-    const data=window.__rmaV80Docs||[];
-    const x=data[index];
-    if(!x)return;
-
-    let url=directUrl(x);
-    if(!url)url=await signedUrl(x.storage_path||x.preview_storage_path||x.file_path||x.path||x.storagePath||'');
-
-    if(!url && index===0)url=await signedUrl(LEGACY_PATH);
-
-    if(!url){
-      alert('This drawing could not be opened. Please try again in a few seconds.');
-      return;
-    }
-
-    if(mode==='view'){
-      const w=window.open(url,'_blank','noopener,noreferrer');
-      if(!w)window.location.href=url;
-      return;
-    }
-
-    if(mode==='download'){
-      const a=document.createElement('a');
-      a.href=url;
-      a.download=x.document_name||'RMA-Project-Document';
-      a.target='_blank';
-      a.rel='noopener';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-  }
-
-  async function loadPreview(details,index){
-    if(details.getAttribute('data-preview-loaded')==='1')return;
-    details.setAttribute('data-preview-loaded','1');
-
-    const host=details.querySelector('.rma-v80-preview-host');
-    if(!host)return;
-
-    const x=(window.__rmaV80Docs||[])[index];
-    if(!x)return;
-
-    host.innerHTML='<div class="muted" style="padding:10px">Opening preview...</div>';
-
-    let url=directUrl(x);
-    if(!url)url=await signedUrl(x.storage_path||x.preview_storage_path||x.file_path||x.path||x.storagePath||'');
-    if(!url && index===0)url=await signedUrl(LEGACY_PATH);
-
-    if(!url){
-      host.innerHTML='<div class="notice error" style="margin:8px">Preview could not be opened. Please use View Drawing or try again.</div>';
-      return;
-    }
-
-    if(looksImage(x)){
-      host.innerHTML='<div class="rma-v80-preview"><img src="'+esc(url)+'" alt="'+esc(x.document_name||'Project drawing')+'" loading="lazy"><div class="rma-v80-preview-note">Image preview</div></div>';
-    }else if(looksPdf(x)){
-      host.innerHTML='<div class="rma-v80-preview"><iframe src="'+esc(url)+'#toolbar=1&navpanes=0" title="'+esc(x.document_name||'Project drawing')+'"></iframe></div>';
-    }else{
-      host.innerHTML='<div class="muted" style="padding:10px">Preview is not available for this file type. Use View Drawing.</div>';
-    }
-  }
-
-  function renderRows(docs){
-    window.__rmaV80Docs=docs;
-
-    const boxEl=box();
-    if(!boxEl)return;
-
-    const accepted=[],rejected=[];
-    docs.forEach(x=>{
-      const status=String(x.review_status||'accepted').toLowerCase()==='rejected'?'rejected':'accepted';
-      (status==='rejected'?rejected:accepted).push(x);
-    });
-
-    function group(list,title,startNo){
-      if(!list.length){
-        return '<div class="ps-v44-group">'+
-          '<div class="ps-v44-group-title"><h4>'+title+'</h4><span class="muted">0</span></div>'+
-          '<div class="ps-v44-empty">No documents in this section.</div></div>';
-      }
-
-      return '<div class="ps-v44-group">'+
-        '<div class="ps-v44-group-title"><h4>'+title+'</h4><span class="muted">'+list.length+'</span></div>'+
-        '<div style="border:1px solid #e1e7e3;border-radius:8px;overflow:hidden">'+
-        list.map((x,i)=>{
-          const index=docs.indexOf(x);
-          const name=x.document_name||x.title||x.name||'Project Document';
-          const meta=(x.document_type||x.category||'Drawing / Document')+
-            (x.floor_name?' • '+x.floor_name:'')+
-            (x.is_final?' • Final':'');
-          const status=title.startsWith('Rejected')?'rejected':'accepted';
-
-          return '<div class="ps-v44-doc-row '+(status==='rejected'?'ps-v44-rejected-row':'')+'">'+
-            '<div class="ps-v44-doc-no">'+(startNo+i)+'</div>'+
-            '<div class="ps-v44-doc-main">'+
-              '<div class="ps-v44-doc-name" title="'+esc(name)+'">'+esc(name)+
-                '<span class="ps-v44-status '+(status==='rejected'?'ps-v44-rejected':'ps-v44-accepted')+'">'+
-                  (status==='rejected'?'Rejected':'Accepted')+
-                '</span>'+
-              '</div>'+
-              '<div class="ps-v44-doc-meta">'+esc(meta)+'</div>'+
-              '<details class="rma-v80-preview-details" data-index="'+index+'">'+
-                '<summary>Preview Drawing</summary>'+
-                '<div class="rma-v80-preview-host"></div>'+
-              '</details>'+
-            '</div>'+
-            '<div class="ps-v44-actions">'+
-              '<button class="btn outline rma-v80-action" type="button" data-action="view" data-index="'+index+'">View Drawing</button>'+
-              '<button class="btn outline rma-v80-action" type="button" data-action="download" data-index="'+index+'">Download</button>'+
-            '</div>'+
-          '</div>';
-        }).join('')+
-        '</div></div>';
-    }
-
-    boxEl.innerHTML=
-      '<div class="ps-v44-summary">'+
-        '<b>'+docs.length+' project document'+(docs.length===1?'':'s')+' available</b>'+
-        '<span class="muted"> • PDF and image files supported</span>'+
-      '</div>'+
-      group(accepted,'Accepted Drawings & Documents',1)+
-      group(rejected,'Rejected Drawings & Documents',accepted.length+1);
-  }
-
-  async function render(){
-    if(renderPromise)return renderPromise;
-
-    renderPromise=(async()=>{
-      const b=box();
-      if(!b)return false;
-
-      b.innerHTML='<div class="muted" style="padding:12px">Loading drawings and documents...</div>';
-
-      try{
-        const docs=await getDocs();
-
-        if(!docs.length){
-          b.innerHTML='<div class="notice error"><b>No project drawings are available yet.</b><br>'+
-            'The Path Seeker project is connected, but no document records were returned.</div>';
-          return false;
-        }
-
-        renderRows(docs);
-        return true;
-      }catch(e){
-        console.error('RMA V80 document load failed:',e);
-        b.innerHTML='<div class="notice error"><b>Drawings could not be loaded.</b><br>'+
-          esc(e?.message||'Supabase document access error.')+
-          '<br><button type="button" class="btn outline" data-rma-v80-retry style="margin-top:8px">Retry</button></div>';
-        return false;
-      }finally{
-        renderPromise=null;
-      }
-    })();
-
-    return renderPromise;
-  }
-
-  function bind(){
-    const r=root();
-    if(!r)return false;
-
-    if(!bound){
-      bound=true;
-
-      r.addEventListener('click',async e=>{
-        const action=e.target?.closest?.('.rma-v80-action');
-        if(action){
-          e.preventDefault();
-          await openDocument(Number(action.dataset.index),action.dataset.action);
-          return;
-        }
-
-        if(e.target?.closest?.('[data-rma-v80-retry]')){
-          e.preventDefault();
-          await render();
-          return;
-        }
-      });
-
-      r.addEventListener('toggle',e=>{
-        const details=e.target?.closest?.('.rma-v80-preview-details');
-        if(details && details.open)loadPreview(details,Number(details.dataset.index));
-      },true);
-    }
-
-    return !!box();
-  }
-
-  async function afterLogin(){
-    // Give Supabase Auth time to restore the browser session before touching
-    // project_documents. This removes the intermittent "portal could not load"
-    // race seen immediately after sign-in.
-    const u=await getReadyUser();
-    if(!u)return false;
-
-    bind();
-
-    for(let i=0;i<20;i++){
-      if(box())break;
-      await sleep(100);
-    }
-
-    return await render();
-  }
-
-  function wrapLoader(){
-    if(window.__rmaV80LoadWrapped||typeof window.loadPathSeeker!=='function')return false;
-    window.__rmaV80LoadWrapped=true;
-
-    const old=window.loadPathSeeker;
-    window.loadPathSeeker=async function(user){
-      const ready=await getReadyUser();
-      const result=await old(ready||user);
-      // The original portal may finish a fraction later; render only after it exists.
-      await afterLogin();
-      return result;
-    };
-    return true;
-  }
-
-  // Handle a direct visit to an already-open authenticated portal.
-  async function boot(){
-    wrapLoader();
-    bind();
-
-    const portal=root();
-    if(portal && !portal.classList.contains('hidden')){
-      await afterLogin();
-    }
-  }
-
-  let tries=0;
-  const t=setInterval(()=>{
-    if(wrapLoader()||++tries>80)clearInterval(t);
-  },250);
-
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',boot,{once:true});
-  }else{
-    setTimeout(boot,50);
-  }
-
-  window.rmaV80ReloadDocuments=render;
 })();
 </script>
