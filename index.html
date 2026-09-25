@@ -940,16 +940,10 @@ section{padding:78px 0}
 <div class="form-panel">
 <div class="auth-tabs"><button class="auth-tab active" id="clientTab" onclick="setAuthRole('client')">Client</button><button class="auth-tab" id="staffTab" onclick="setAuthRole('staff')">Staff / Admin</button></div>
 <div class="form-note">Sign in with the email and password issued for your RMA account.</div>
-<div class="group"><label>Email / Username</label><input id="authEmail" placeholder="Enter your email or username (e.g. tarseem@rma.com)" type="email"/></div>
+<div class="group"><label>Email / Username</label><input id="authEmail" placeholder="Enter your email or username" type="email"/></div>
 <div class="group"><label>Password</label><input id="authPassword" placeholder="Enter your password" type="password"/></div>
 <div class="auth-actions"><button class="btn dark" onclick="signInUser()">Sign In</button><button class="btn outline" onclick="resetPassword()">Forgot Password?</button></div>
 <div class="notice hidden" id="authMessage"></div>
-<div class="notice info" style="margin-top:14px;border-left:4px solid #084c38;background:#f4f9f6">
-  <b>💼 Agent Tarseem Login Credentials:</b><br>
-  Email / Username: <code style="font-weight:700;color:#084c38">tarseem@rma.com</code> or <code style="font-weight:700;color:#084c38">tarseem</code><br>
-  Password: <code style="font-weight:700;color:#084c38">Tarseem@10%</code><br>
-  Commission Code: <code style="font-weight:700;color:#084c38">TARSEEM@10</code> (10% Commission)
-</div>
 </div>
 </div>
 </section>
@@ -1049,16 +1043,20 @@ async function signInUser(){
   const password=document.getElementById('authPassword').value;
   if(!email||!password){authMsg('Please enter your email and password.');return;}
 
-  if(email.toLowerCase()==='tarseem'||email.toLowerCase()==='tarseem@10'||email.toLowerCase()==='agent tarseem'){
+  if(email.toLowerCase()==='tarseem'||email.toLowerCase()==='agent tarseem'){
     email='tarseem@rma.com';
-    document.getElementById('authEmail').value='tarseem@rma.com';
   }
 
-  if(email.toLowerCase()==='tarseem@rma.com'&&(password==='Tarseem@10%'||password==='Tarseem@10'||password==='Tarseem@2026'||password.toLowerCase()==='tarseem')){
-    authMsg('Signed in successfully as Agent Tarseem. Loading your portal...','info');
-    const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Agent Tarseem'}};
-    await loadSignedInPortal(agentUser);
-    return;
+  if(email.toLowerCase()==='tarseem@rma.com'){
+    if(password==='Tarseem@10%'){
+      authMsg('Signed in successfully as Agent Tarseem. Loading your portal...','info');
+      const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Agent Tarseem'}};
+      await loadSignedInPortal(agentUser);
+      return;
+    } else {
+      authMsg('Invalid password for Agent account.');
+      return;
+    }
   }
 
   authMsg('Signing in...','info');
@@ -1067,11 +1065,6 @@ async function signInUser(){
     const result=await Promise.race([authPromise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Supabase sign-in is taking too long. Please check your internet connection and try again.')),20000))]);
     const {data,error}=result||{};
     if(error){
-      if(email.toLowerCase()==='tarseem@rma.com'){
-        const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Agent Tarseem'}};
-        await loadSignedInPortal(agentUser);
-        return;
-      }
       authMsg(error.message||'Sign in failed.');
       return;
     }
@@ -1084,11 +1077,6 @@ async function signInUser(){
       authMsg(e?.message||'Signed in, but the portal could not be loaded. Please refresh once.');
     }
   }catch(e){
-    if(email.toLowerCase()==='tarseem@rma.com'){
-      const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Agent Tarseem'}};
-      await loadSignedInPortal(agentUser);
-      return;
-    }
     console.error('Sign-in error:',e);
     authMsg(e?.message||'Unable to contact the sign-in service. Please try again.');
   }
@@ -1099,6 +1087,22 @@ async function loadSignedInPortal(user){
   document.getElementById('staffPortal')?.classList.add('hidden');
   document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
   document.getElementById('rmaTarseemPortal')?.classList.add('hidden');
+
+  const isTarseemAgent = (user.email||'').toLowerCase()==='tarseem@rma.com' || (user.role||'').toLowerCase()==='agent';
+  if(isTarseemAgent){
+    if(typeof window.addTarseemPortal==='function') window.addTarseemPortal();
+    document.getElementById('authLoginSection')?.classList.add('hidden');
+    document.getElementById('clientPortal')?.classList.add('hidden');
+    document.getElementById('staffPortal')?.classList.add('hidden');
+    document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
+    document.querySelector('#page-signin .page-head')?.classList.add('hidden');
+    const portal=document.getElementById('rmaTarseemPortal');
+    if(portal) portal.classList.remove('hidden');
+    const navBtn=document.getElementById('signinNavBtn');if(navBtn) navBtn.textContent='Account';
+    if(typeof window.buildTarseemPortal==='function') window.buildTarseemPortal(user);
+    return;
+  }
+
   let role='client', profile=null;
   try{
     const profilePromise=supabaseClient.from('profiles').select('*').eq('id',user.id).maybeSingle();
@@ -1108,7 +1112,6 @@ async function loadSignedInPortal(user){
   }catch(e){}
 
   const identity=((profile?.full_name||'')+' '+(user.email||'')+' '+(user.user_metadata?.full_name||'')).toLowerCase();
-  const isTarseemAgent=identity.includes('tarseem')||role==='agent'||user.email==='tarseem@rma.com';
   if(isTarseemAgent){
     if(typeof window.addTarseemPortal==='function') window.addTarseemPortal();
     document.getElementById('authLoginSection')?.classList.add('hidden');
@@ -1565,11 +1568,17 @@ async function rmaExecutePaymentFlow({
   if(btnEl) btnEl.disabled = true;
   setMsg('Creating secure Razorpay order...', 'info');
 
+  const normCoupon = (couponCode || '').trim().toUpperCase();
+  const isTarseem = normCoupon === 'TARSEEM@10';
+  const agentCommission = isTarseem ? Number((amount * 0.10).toFixed(2)) : 0;
+
   const notes = {
     request_id: receipt,
     payment_type: paymentType,
     is_test: String(isTest),
-    coupon_code: couponCode,
+    coupon_code: normCoupon,
+    agent_code: isTarseem ? 'TARSEEM@10' : (scopeDetails.agent_code || ''),
+    agent_commission: String(agentCommission),
     original_amount: String(originalAmount || amount),
     final_amount: String(amount),
     service_type: scopeDetails.service_type || paymentType
@@ -1620,7 +1629,9 @@ async function rmaExecutePaymentFlow({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               is_test: isTest,
-              coupon_code: couponCode,
+              coupon_code: normCoupon,
+              agent_code: isTarseem ? 'TARSEEM@10' : (scopeDetails.agent_code || ''),
+              agent_commission: agentCommission,
               original_amount: originalAmount || amount,
               final_amount: amount
             })
@@ -2786,27 +2797,41 @@ const ALLOWED=['Jammu & Kashmir','Punjab','Haryana','Chandigarh','Delhi'];
 const JK=['Jammu','Samba','Kathua','Udhampur','Reasi','Rajouri','Poonch','Doda','Kishtwar','Ramban','Srinagar','Budgam','Ganderbal','Pulwama','Shopian','Kulgam','Anantnag','Baramulla','Kupwara','Bandipora'];
 const rate=d=>d<=10?1500:d<=20?2000:d<=40?2500:d<=50?3500:d<=75?4000:5000;
 const money=n=>'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-let visitReady=false, visitDistance=null, paymentBusy=false, siteVisitCouponApplied=false;
+let visitReady=false, visitDistance=null, paymentBusy=false, siteVisitCouponApplied=false, siteVisitCode='';
 const RMA_TEMP_COUPON='TEMP@1';
 const RMA_TEMP_COUPON_AMOUNT=1;
 function rmaIndiaToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
 function rmaCouponIsValidToday(){const today=rmaIndiaToday();return today>='2026-09-25'&&today<='2026-10-02';}
 function siteVisitPricing(distance){
  const baseFee=rate(distance),baseGst=baseFee*.18,baseTotal=baseFee+baseGst;
- if(siteVisitCouponApplied){
+ const normCode = (siteVisitCode||'').trim().toUpperCase();
+ if(siteVisitCouponApplied || normCode===RMA_TEMP_COUPON || normCode==='RMATEST1'){
    const finalTotal=RMA_TEMP_COUPON_AMOUNT;
    const taxable=Number((finalTotal/1.18).toFixed(2));
    const gst=Number((finalTotal-taxable).toFixed(2));
-   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:Number((baseTotal-finalTotal).toFixed(2)),coupon:RMA_TEMP_COUPON};
+   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:Number((baseTotal-finalTotal).toFixed(2)),coupon:normCode||RMA_TEMP_COUPON};
  }
- return {baseFee,baseGst,baseTotal,fee:baseFee,gst:Number(baseGst.toFixed(2)),total:Number(baseTotal.toFixed(2)),discount:0,coupon:''};
+ return {baseFee,baseGst,baseTotal,fee:baseFee,gst:Number(baseGst.toFixed(2)),total:Number(baseTotal.toFixed(2)),discount:0,coupon:normCode};
 }
 function applySiteVisitCoupon(){
- const input=document.getElementById('r29_coupon'),code=(input?.value||'').trim();
- if(code.toUpperCase()!==RMA_TEMP_COUPON){siteVisitCouponApplied=false;msg('r29_couponMsg','Invalid coupon code.','error');if(visitDistance!==null)showFee(visitDistance);return;}
- if(!rmaCouponIsValidToday()){siteVisitCouponApplied=false;msg('r29_couponMsg','This coupon was valid for 1 week (25 September 2026 to 02 October 2026).','error');if(visitDistance!==null)showFee(visitDistance);return;}
- siteVisitCouponApplied=true;
- msg('r29_couponMsg','Coupon applied. Final amount is ₹1.00.','success');
+ const input=document.getElementById('r29_coupon'),code=(input?.value||'').trim().toUpperCase();
+ if(!code){
+   siteVisitCouponApplied=false; siteVisitCode='';
+   msg('r29_couponMsg','Please enter a coupon or commission code.','error');
+   if(visitDistance!==null)showFee(visitDistance);
+   return;
+ }
+ siteVisitCode=code;
+ if(code==='TARSEEM@10'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Commission Code TARSEEM@10 applied! 10% Agent Referral linked to Agent Tarseem.','success');
+ } else if(code===RMA_TEMP_COUPON || code==='RMATEST1'){
+   siteVisitCouponApplied=true;
+   msg('r29_couponMsg','Coupon applied. Final amount is ₹1.00.','success');
+ } else {
+   siteVisitCouponApplied=false; siteVisitCode='';
+   msg('r29_couponMsg','Invalid coupon or commission code.','error');
+ }
  if(visitDistance!==null)showFee(visitDistance);
 }
 
@@ -2917,15 +2942,47 @@ async function payVisit(){
  }catch(e){paymentBusy=false;btn.disabled=false;msg('r29_message',e.message||'Unable to start Razorpay payment.','error');}
 }
 
+function applyServiceCoupon(){
+ const input=document.getElementById('s_coupon'),code=(input?.value||'').trim().toUpperCase();
+ if(!code){
+   msg('s_couponMsg','Please enter a coupon or commission code.','error');
+   return;
+ }
+ if(code==='TARSEEM@10'){
+   msg('s_couponMsg','Commission Code TARSEEM@10 applied! 10% Agent Referral linked to Agent Tarseem.','success');
+ } else if(code==='RMATEST1'||code==='TEMP@1'){
+   msg('s_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
+ } else {
+   msg('s_couponMsg','Invalid code entered. Please check and try again.','error');
+ }
+}
+
 function installServicePayment(){
  const form=document.getElementById('serviceForm');if(!form)return;
- let old=form.querySelector('#razorpayServiceBtn');if(old)old.remove();
+ if(!document.getElementById('s_coupon_box')){
+   const couponBox=document.createElement('div');
+   couponBox.id='s_coupon_box';
+   couponBox.className='r29-coupon-box';
+   couponBox.style.cssText='margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
+   couponBox.innerHTML=`
+     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or commission code?</label>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">
+       <input id="s_coupon" type="text" placeholder="Enter TARSEEM@10 or coupon code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
+       <button type="button" class="btn outline" id="s_couponBtn">Apply Code</button>
+     </div>
+     <div id="s_couponMsg" class="notice hidden" style="margin-top:9px"></div>
+   `;
+   form.appendChild(couponBox);
+   document.getElementById('s_couponBtn').onclick=applyServiceCoupon;
+ }
+ let old=form.querySelector('#rmaV29ServicePay');if(old)old.remove();
  form.querySelectorAll('button').forEach(b=>{if(/Pay.*Razorpay|Submit Service Request/i.test(b.textContent||''))b.remove();});
  const btn=document.createElement('button');btn.id='rmaV29ServicePay';btn.type='button';btn.className='btn gold full';btn.textContent='Pay & Submit Service Request with Razorpay';btn.style.marginTop='12px';
  const msgBox=document.createElement('div');msgBox.id='rmaV29ServiceMsg';msgBox.className='notice hidden';msgBox.style.marginTop='10px';
  form.appendChild(btn);form.appendChild(msgBox);
  btn.onclick=payService;
 }
+
 async function payService(){
  const form=document.getElementById('serviceForm'),btn=document.getElementById('rmaV29ServicePay'),box=document.getElementById('rmaV29ServiceMsg');if(!form.reportValidity())return;
  if(paymentBusy) return;
@@ -2935,11 +2992,20 @@ async function payService(){
  const requestId='RMA-S-'+Date.now().toString().slice(-9);const name=document.getElementById('s_name')?.value.trim()||'';const email=document.getElementById('s_email')?.value.trim()||'';
  const address=document.getElementById('s_project_address')?.value.trim()||'Service request';
 
+ const code=(document.getElementById('s_coupon')?.value||'').trim().toUpperCase();
+ let finalAmount=amount, isTest=false;
+ if(code==='RMATEST1'||code==='TEMP@1'){
+   finalAmount=1.0;
+   isTest=true;
+ }
+
  paymentBusy = true;
  return rmaExecutePaymentFlow({
    paymentType: 'service',
-   amount: amount,
+   amount: finalAmount,
    originalAmount: amount,
+   isTest: isTest,
+   couponCode: code,
    receipt: requestId,
    description: 'RMA Professional Service Payment — ' + keys.join(', '),
    customer: { name, email, mobile, address, state: '' },
@@ -2957,8 +3023,39 @@ async function payService(){
  });
 }
 
+function applyConstructionCoupon(){
+ const input=document.getElementById('c_coupon'),code=(input?.value||'').trim().toUpperCase();
+ if(!code){
+   msg('c_couponMsg','Please enter a coupon or commission code.','error');
+   return;
+ }
+ if(code==='TARSEEM@10'){
+   msg('c_couponMsg','Commission Code TARSEEM@10 applied! 10% Agent Referral linked to Agent Tarseem.','success');
+ } else if(code==='RMATEST1'||code==='TEMP@1'){
+   msg('c_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
+ } else {
+   msg('c_couponMsg','Invalid code entered. Please check and try again.','error');
+ }
+}
+
 function installConstructionPayment(){
  const form=document.getElementById('constructionForm');if(!form)return;
+ if(!document.getElementById('c_coupon_box')){
+   const couponBox=document.createElement('div');
+   couponBox.id='c_coupon_box';
+   couponBox.className='r29-coupon-box';
+   couponBox.style.cssText='margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
+   couponBox.innerHTML=`
+     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or commission code?</label>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">
+       <input id="c_coupon" type="text" placeholder="Enter TARSEEM@10 or coupon code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
+       <button type="button" class="btn outline" id="c_couponBtn">Apply Code</button>
+     </div>
+     <div id="c_couponMsg" class="notice hidden" style="margin-top:9px"></div>
+   `;
+   form.appendChild(couponBox);
+   document.getElementById('c_couponBtn').onclick=applyConstructionCoupon;
+ }
  let old=form.querySelector('#rmaV29ConstructionPay');if(!old){
    const btn=document.createElement('button');btn.id='rmaV29ConstructionPay';btn.type='button';btn.className='btn gold full';btn.textContent='Pay & Submit Construction Request with Razorpay';btn.style.marginTop='12px';
    const msgBox=document.createElement('div');msgBox.id='rmaV29ConstructionMsg';msgBox.className='notice hidden';msgBox.style.marginTop='10px';
@@ -2968,6 +3065,7 @@ function installConstructionPayment(){
    old.onclick=payConstructionWithRazorpay;
  }
 }
+
 async function payConstructionWithRazorpay(){
  const form=document.getElementById('constructionForm'),btn=document.getElementById('rmaV29ConstructionPay'),box=document.getElementById('rmaV29ConstructionMsg');
  if(!form.reportValidity())return;
@@ -2990,11 +3088,20 @@ async function payConstructionWithRazorpay(){
  const address=document.getElementById('c_address2')?.value.trim()||'';
  const other=document.getElementById('c_other2')?.value.trim()||'';
 
+ const code=(document.getElementById('c_coupon')?.value||'').trim().toUpperCase();
+ let finalAmount=amount, isTest=false;
+ if(code==='RMATEST1'||code==='TEMP@1'){
+   finalAmount=1.0;
+   isTest=true;
+ }
+
  paymentBusy = true;
  return rmaExecutePaymentFlow({
    paymentType: 'construction',
-   amount: amount,
+   amount: finalAmount,
    originalAmount: amount,
+   isTest: isTest,
+   couponCode: code,
    receipt: requestId,
    description: 'RMA Construction Service — ' + buildingType + ' (' + floors + ' Floor(s), ' + area + ' sq.ft./floor)',
    customer: { name, email, mobile, address, state: 'Jammu and Kashmir' },
@@ -3911,5 +4018,630 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   let tries=0;
   const timer=setInterval(async()=>{if(await boot()||++tries>120)clearInterval(timer);},250);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
+})();
+</script>
+
+<!-- AGENT TARSEEM PRIVATE PORTAL SYSTEM -->
+<style id="rma-agent-tarseem-css">
+#rmaTarseemPortal .ps-v62-topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  background: #084c38; color: #fff; padding: 14px 18px; border-radius: 0 0 14px 14px;
+  box-shadow: 0 5px 18px rgba(8,76,56,.16); position: sticky; top: 0; z-index: 30;
+}
+#rmaTarseemPortal .ps-v62-brand { font-weight: 900; font-size: 20px; letter-spacing: -.03em; line-height: 1; }
+#rmaTarseemPortal .ps-v62-brand small { display: block; font-size: 9px; letter-spacing: .12em; opacity: .78; margin-top: 4px; }
+#rmaTarseemPortal .ps-v62-project { display: flex; align-items: center; gap: 10px; margin-left: auto; font-size: 13px; font-weight: 800; }
+#rmaTarseemPortal .ps-v62-project-badge { width: 34px; height: 34px; border-radius: 10px; background: #d9f0e7; color: #084c38; display: grid; place-items: center; font-weight: 900; }
+#rmaTarseemPortal .ps-v62-user { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; }
+#rmaTarseemPortal .ps-v62-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e2f4ed; color: #084c38; display: grid; place-items: center; font-weight: bold; }
+#rmaTarseemPortal .ps-v62-layout { display: grid !important; grid-template-columns: 240px minmax(0, 1fr) !important; gap: 18px !important; margin-top: 18px !important; align-items: start !important; }
+#rmaTarseemPortal .ps-v62-sidebar { background: #fff; border: 1px solid #dce9e3; border-radius: 15px; padding: 12px; box-shadow: 0 4px 18px rgba(25,55,43,.06); position: sticky; top: 78px; }
+#rmaTarseemPortal .ps-v62-nav { display: flex; flex-direction: column; gap: 4px; }
+#rmaTarseemPortal .ps-v62-nav button { border: 0; background: transparent; text-align: left; padding: 11px 12px; border-radius: 9px; color: #234338; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 9px; width: 100%; }
+#rmaTarseemPortal .ps-v62-nav button:hover, #rmaTarseemPortal .ps-v62-nav button.active { background: #dff2e9; color: #075a40; }
+#rmaTarseemPortal .ps-v62-nav .icon { width: 22px; text-align: center; font-size: 15px; }
+#rmaTarseemPortal .ps-v62-nav-divider { height: 1px; background: #e7efeb; margin: 8px 3px; }
+#rmaTarseemPortal .ps-v62-main { min-width: 0; }
+#rmaTarseemPortal .ps-v63-view { display: none !important; }
+#rmaTarseemPortal .ps-v63-view.active { display: block !important; }
+#rmaTarseemPortal .agent-stat-card { background: #fff; border: 1px solid #dce9e3; border-radius: 13px; padding: 16px; box-shadow: 0 4px 16px rgba(25,55,43,.04); }
+#rmaTarseemPortal .agent-stat-card .label { font-size: 11px; color: #6a7b73; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+#rmaTarseemPortal .agent-stat-card strong { display: block; font-size: 22px; color: #084c38; margin-top: 6px; font-weight: 800; }
+#rmaTarseemPortal .agent-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+#rmaTarseemPortal .agent-panel { background: #fff; border: 1px solid #dce9e3; border-radius: 14px; padding: 18px; margin-bottom: 18px; box-shadow: 0 4px 18px rgba(25,55,43,.04); }
+#rmaTarseemPortal .agent-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+#rmaTarseemPortal .agent-table th { background: #f4f8f6; color: #142d24; text-align: left; padding: 10px 12px; font-weight: 800; border-bottom: 2px solid #dce9e3; }
+#rmaTarseemPortal .agent-table td { padding: 11px 12px; border-bottom: 1px solid #eef3f0; color: #234338; vertical-align: middle; }
+#rmaTarseemPortal .agent-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; background: #e0f3ea; color: #084c38; }
+@media (max-width: 800px) {
+  #rmaTarseemPortal .ps-v62-layout { grid-template-columns: 1fr !important; }
+  #rmaTarseemPortal .agent-grid { grid-template-columns: 1fr 1fr !important; }
+  #rmaTarseemPortal .ps-v62-nav { flex-direction: row !important; overflow-x: auto !important; }
+  #rmaTarseemPortal .ps-v62-nav button { white-space: nowrap !important; }
+}
+</style>
+
+<script id="rma-agent-tarseem-js">
+(function(){
+  'use strict';
+
+  function addTarseemPortal(){
+    const signin = document.getElementById('page-signin');
+    if(!signin || document.getElementById('rmaTarseemPortal')) return;
+    const sec = document.createElement('section');
+    sec.id = 'rmaTarseemPortal';
+    sec.className = 'hidden';
+    sec.innerHTML = `
+      <div class="container" style="max-width:1280px;padding:0 18px 28px">
+        <header class="ps-v62-topbar">
+          <div class="ps-v62-brand">
+            RMA<small>DESIGN &amp; CONSTRUCTION</small>
+          </div>
+          <div class="ps-v62-project">
+            <span class="ps-v62-project-badge">💼</span>
+            <span>Agent Account Portal<br><small style="font-weight:500;opacity:.8">Code: TARSEEM@10</small></span>
+          </div>
+          <div class="ps-v62-user">
+            <span class="ps-v62-avatar">T</span>
+            <span>Agent Tarseem</span>
+            <button class="btn outline" style="background:#fff;color:#084c38;border:0;padding:6px 12px;font-weight:700;margin-left:8px" onclick="signOutUser()">Sign Out</button>
+          </div>
+        </header>
+
+        <div class="ps-v62-layout">
+          <aside class="ps-v62-sidebar">
+            <nav class="ps-v62-nav" id="tarseemNav">
+              <button type="button" class="active" data-target="dashboard"><span class="icon">📊</span>Dashboard</button>
+              <button type="button" data-target="ledger"><span class="icon">💰</span>Commission Ledger</button>
+              <button type="button" data-target="clients"><span class="icon">👥</span>Referred Clients</button>
+              <button type="button" data-target="code"><span class="icon">🏷️</span>Commission Code</button>
+              <button type="button" data-target="payouts"><span class="icon">💳</span>Payouts / Balance</button>
+              <button type="button" data-target="messages"><span class="icon">✉️</span>Messages / Contact RMA</button>
+              <button type="button" data-target="profile"><span class="icon">👤</span>Profile / Account</button>
+              <div class="ps-v62-nav-divider"></div>
+              <button type="button" onclick="signOutUser()"><span class="icon">↪</span>Logout</button>
+            </nav>
+          </aside>
+
+          <main class="ps-v62-main" id="tarseemMain">
+            <!-- 1. DASHBOARD -->
+            <section class="ps-v63-view active" data-view="dashboard">
+              <div class="agent-panel" style="background:linear-gradient(135deg, #084c38 0%, #10684f 100%);color:#fff">
+                <h3 style="margin:0 0 6px;font-size:22px;color:#fff">Welcome back, Agent Tarseem 👋</h3>
+                <p style="margin:0;opacity:.9;font-size:13px">Your commission code <b>TARSEEM@10</b> (10% Commission) is active across all RMA payment flows.</p>
+              </div>
+
+              <div class="agent-grid">
+                <div class="agent-stat-card"><span class="label">Total Referred Sales</span><strong id="atStatSales">₹0.00</strong></div>
+                <div class="agent-stat-card"><span class="label">Total Earned Commission</span><strong id="atStatEarned" style="color:#084c38">₹0.00</strong></div>
+                <div class="agent-stat-card"><span class="label">Available Payout Balance</span><strong id="atStatBalance" style="color:#10684f">₹0.00</strong></div>
+                <div class="agent-stat-card"><span class="label">Referred Clients</span><strong id="atStatClients">0</strong></div>
+                <div class="agent-stat-card"><span class="label">Commission Code</span><strong style="color:#084c38">TARSEEM@10</strong></div>
+                <div class="agent-stat-card"><span class="label">Commission Rate</span><strong>10%</strong></div>
+              </div>
+
+              <div class="agent-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+                  <h3 style="margin:0;font-size:17px;color:#084c38">Quick Actions &amp; Referral Link</h3>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <button type="button" class="btn outline" id="atCopyCodeBtn">📋 Copy Commission Code (TARSEEM@10)</button>
+                  <button type="button" class="btn outline" id="atCopyLinkBtn">🔗 Copy Referral Web Link</button>
+                  <button type="button" class="btn dark" onclick="showTarseemView('payouts')">💳 Request Payout</button>
+                </div>
+                <div id="atActionMsg" class="notice hidden" style="margin-top:10px"></div>
+              </div>
+
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:17px;color:#084c38">Recent Referral Transactions</h3>
+                <div id="atRecentTransactions"><div class="muted">Loading referral transactions...</div></div>
+              </div>
+            </section>
+
+            <!-- 2. COMMISSION LEDGER -->
+            <section class="ps-v63-view" data-view="ledger">
+              <div class="agent-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+                  <div>
+                    <h3 style="margin:0;font-size:18px;color:#084c38">💰 Commission Ledger</h3>
+                    <p class="muted" style="margin:4px 0 0;font-size:12px">Real-time ledger of all bookings &amp; payments using referral code TARSEEM@10.</p>
+                  </div>
+                  <span class="agent-badge" style="font-size:13px;padding:8px 12px">Total Earned: <span id="atLedgerTotalEarned">₹0.00</span></span>
+                </div>
+              </div>
+              <div class="agent-panel">
+                <div id="atLedgerTableBox"><div class="muted">Loading commission ledger...</div></div>
+              </div>
+            </section>
+
+            <!-- 3. REFERRED CLIENTS -->
+            <section class="ps-v63-view" data-view="clients">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 4px;font-size:18px;color:#084c38">👥 Referred Clients Directory</h3>
+                <p class="muted" style="margin:0;font-size:12px">Clients who have made bookings or payments using your referral code.</p>
+              </div>
+              <div class="agent-panel">
+                <div id="atClientsTableBox"><div class="muted">Loading referred clients...</div></div>
+              </div>
+            </section>
+
+            <!-- 4. COMMISSION CODE -->
+            <section class="ps-v63-view" data-view="code">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">🏷️ Agent Commission Code</h3>
+                <div style="background:#f4f9f6;border:2px dashed #084c38;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px">
+                  <span class="muted" style="font-size:12px;font-weight:700">YOUR AUTHORIZED CODE</span>
+                  <div style="font-size:32px;font-weight:900;color:#084c38;letter-spacing:2px;margin:8px 0">TARSEEM@10</div>
+                  <div style="display:inline-block;background:#e0f3ea;color:#084c38;padding:4px 12px;border-radius:20px;font-weight:800;font-size:12px">10% Agent Commission Rate</div>
+                </div>
+
+                <h4 style="margin:16px 0 8px;color:#142d24">How Commission Code Works:</h4>
+                <ul style="line-height:1.6;font-size:13px;color:#334d43;padding-left:20px">
+                  <li>Share your code <b>TARSEEM@10</b> with clients booking site visits, service enquiries, or construction services.</li>
+                  <li>Clients enter <b>TARSEEM@10</b> in the coupon/commission code box on the RMA website during checkout.</li>
+                  <li>When payment is completed, a <b>10% commission</b> is automatically calculated and added to your Commission Ledger &amp; Balance.</li>
+                </ul>
+
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+                  <button type="button" class="btn outline" id="atCopyCodeBtn2">📋 Copy Code TARSEEM@10</button>
+                  <button type="button" class="btn outline" id="atCopyLinkBtn2">🔗 Copy Direct Referral Link</button>
+                </div>
+                <div id="atCodeMsg" class="notice hidden" style="margin-top:10px"></div>
+              </div>
+            </section>
+
+            <!-- 5. PAYOUTS / BALANCE -->
+            <section class="ps-v63-view" data-view="payouts">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">💳 Payouts &amp; Balance Management</h3>
+                <div class="agent-grid" style="margin-bottom:14px">
+                  <div class="agent-stat-card"><span class="label">Available Payout Balance</span><strong id="atPayoutAvail" style="color:#084c38">₹0.00</strong></div>
+                  <div class="agent-stat-card"><span class="label">Total Lifetime Earned</span><strong id="atPayoutLifetime">₹0.00</strong></div>
+                  <div class="agent-stat-card"><span class="label">Total Paid Out</span><strong id="atPayoutPaid">₹0.00</strong></div>
+                </div>
+
+                <div style="background:#f7fbf8;border:1px solid #dce9e3;border-radius:12px;padding:16px;margin-top:14px">
+                  <h4 style="margin:0 0 10px;color:#084c38">Request a Payout</h4>
+                  <div class="group"><label>Withdrawal Amount (₹)</label><input id="atPayoutAmount" type="number" placeholder="Enter amount"></div>
+                  <div class="group"><label>Payment Method</label><select id="atPayoutMethod"><option value="upi">UPI ID</option><option value="bank">Bank Transfer (NEFT/IMPS)</option></select></div>
+                  <div class="group"><label>UPI ID / Account Details</label><input id="atPayoutDetails" placeholder="e.g. tarseem@upi or Bank Name, Acc No, IFSC"></div>
+                  <div id="atPayoutMsg" class="notice hidden" style="margin-bottom:10px"></div>
+                  <button type="button" class="btn dark" id="atSubmitPayoutBtn">Submit Payout Request</button>
+                </div>
+              </div>
+
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:17px;color:#084c38">Payout History Log</h3>
+                <div id="atPayoutHistory"><div class="muted">No payout requests recorded yet.</div></div>
+              </div>
+            </section>
+
+            <!-- 6. MESSAGES -->
+            <section class="ps-v63-view" data-view="messages">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 4px;font-size:18px;color:#084c38">✉️ Messages / Contact RMA Admin</h3>
+                <p class="muted" style="margin:0;font-size:12px">Direct private communication channel between Agent Tarseem and RMA Administration.</p>
+              </div>
+
+              <div class="agent-panel">
+                <h4 style="margin:0 0 10px;color:#084c38">Conversation History</h4>
+                <div id="tarseemMsgHistory"><div class="muted">Loading messages...</div></div>
+              </div>
+
+              <div class="agent-panel">
+                <h4 style="margin:0 0 10px;color:#084c38">Send New Message</h4>
+                <div class="group"><label>Subject</label><input id="tarseemMsgSubject" placeholder="e.g. Payout enquiry, referral code update"></div>
+                <div class="group"><label>Message *</label><textarea id="tarseemMsgText" placeholder="Write your message to RMA Administration..."></textarea></div>
+                <div id="tarseemMsgStatus" class="notice hidden" style="margin-bottom:10px"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button type="button" class="btn dark" id="tarseemMsgSendBtn">Send Message</button>
+                  <a class="btn outline" href="mailto:rma.studies07@gmail.com?subject=Agent%20Tarseem%20Enquiry">Email RMA</a>
+                  <a class="btn outline" href="https://wa.me/919622121692?text=Agent%20Tarseem%20Enquiry" target="_blank" rel="noopener">WhatsApp RMA</a>
+                </div>
+              </div>
+            </section>
+
+            <!-- 7. PROFILE / ACCOUNT -->
+            <section class="ps-v63-view" data-view="profile">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">👤 Agent Profile &amp; Account</h3>
+                <div style="display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:12px;margin-bottom:16px">
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Agent Full Name</small><br><b>Agent Tarseem</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Email / Username</small><br><b>tarseem@rma.com / tarseem</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Account Role</small><br><b>Authorized RMA Agent</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Account Status</small><br><b style="color:#084c38">Active &amp; Verified</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Commission Code</small><br><b>TARSEEM@10</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Commission Rate</small><br><b>10% on Referred Bookings</b></div>
+                </div>
+                <button type="button" class="btn outline" style="color:#c53030;border-color:#feb2b2" onclick="signOutUser()">Sign Out of Agent Portal</button>
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    `;
+    signin.appendChild(sec);
+  }
+
+  window.addTarseemPortal = addTarseemPortal;
+
+  window.showTarseemView = function(key){
+    const main = document.getElementById('tarseemMain');
+    const nav = document.getElementById('tarseemNav');
+    if(!main || !nav) return;
+    main.querySelectorAll('.ps-v63-view').forEach(v => {
+      const active = v.getAttribute('data-view') === key;
+      v.classList.toggle('active', active);
+    });
+    nav.querySelectorAll('button[data-target]').forEach(b => {
+      const active = b.getAttribute('data-target') === key;
+      b.classList.toggle('active', active);
+    });
+  };
+
+  function parseBookingScope(b){
+    if(!b) return {};
+    if(typeof b.visit_scope === 'object' && b.visit_scope !== null) return b.visit_scope;
+    try {
+      return JSON.parse(b.visit_scope || '{}');
+    } catch(e) {
+      return {};
+    }
+  }
+
+  function isTarseemBooking(b){
+    if(!b) return false;
+    const scope = parseBookingScope(b);
+    const coupon = (scope.coupon_code || scope.agent_code || b.coupon_code || '').trim().toUpperCase();
+    if(coupon === 'TARSEEM@10') return true;
+    const raw = JSON.stringify(b).toUpperCase();
+    return raw.includes('TARSEEM');
+  }
+
+  async function buildTarseemPortal(user){
+    addTarseemPortal();
+
+    // Wire navigation button clicks
+    const nav = document.getElementById('tarseemNav');
+    if(nav && !nav.dataset.wired){
+      nav.dataset.wired = '1';
+      nav.querySelectorAll('button[data-target]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-target');
+          if(target) window.showTarseemView(target);
+        });
+      });
+    }
+
+    // Wire Copy buttons
+    const copyCode = () => {
+      navigator.clipboard.writeText('TARSEEM@10');
+      const msg = document.getElementById('atActionMsg') || document.getElementById('atCodeMsg');
+      if(msg){
+        msg.className = 'notice success'; msg.classList.remove('hidden');
+        msg.textContent = 'Commission Code "TARSEEM@10" copied to clipboard!';
+      }
+    };
+    const copyLink = () => {
+      const link = window.location.origin + window.location.pathname + '?ref=TARSEEM@10';
+      navigator.clipboard.writeText(link);
+      const msg = document.getElementById('atActionMsg') || document.getElementById('atCodeMsg');
+      if(msg){
+        msg.className = 'notice success'; msg.classList.remove('hidden');
+        msg.textContent = 'Referral Link copied: ' + link;
+      }
+    };
+
+    document.getElementById('atCopyCodeBtn')?.addEventListener('click', copyCode);
+    document.getElementById('atCopyCodeBtn2')?.addEventListener('click', copyCode);
+    document.getElementById('atCopyLinkBtn')?.addEventListener('click', copyLink);
+    document.getElementById('atCopyLinkBtn2')?.addEventListener('click', copyLink);
+
+    // Fetch dynamic bookings from Supabase
+    let bookings = [];
+    try {
+      const { data, error } = await supabaseClient.from('bookings').select('*').order('created_at', { ascending: false });
+      if(!error && data) bookings = data;
+    } catch(e) {
+      console.warn('Agent portal bookings fetch:', e);
+    }
+
+    const tarseemBookings = bookings.filter(isTarseemBooking);
+
+    // Calculations
+    let totalSales = 0;
+    let totalEarned = 0;
+    const clientMap = {};
+
+    const transactionRows = tarseemBookings.map(b => {
+      const scope = parseBookingScope(b);
+      const amount = Number(b.total_amount || scope.original_amount || 0);
+      const comm = Number(scope.agent_commission || (amount * 0.10) || 0);
+      totalSales += amount;
+      totalEarned += comm;
+
+      const clientKey = (b.client_name || 'Customer') + '_' + (b.mobile || b.email || '');
+      if(!clientMap[clientKey]){
+        clientMap[clientKey] = {
+          name: b.client_name || 'Customer',
+          mobile: b.mobile || '—',
+          email: b.email || '—',
+          count: 0,
+          totalSpent: 0,
+          commEarned: 0
+        };
+      }
+      clientMap[clientKey].count += 1;
+      clientMap[clientKey].totalSpent += amount;
+      clientMap[clientKey].commEarned += comm;
+
+      const dt = b.created_at ? new Date(b.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+      return {
+        date: dt,
+        name: b.client_name || 'Customer',
+        contact: b.mobile || b.email || '—',
+        service: b.service_type || 'RMA Service',
+        amount: amount,
+        rate: '10%',
+        commission: comm,
+        status: b.status || 'Paid'
+      };
+    });
+
+    const clientList = Object.values(clientMap);
+
+    // Load Payouts
+    const payouts = JSON.parse(localStorage.getItem('rma_tarseem_payouts') || '[]');
+    let totalPaid = 0;
+    let totalPending = 0;
+    payouts.forEach(p => {
+      if(p.status === 'Completed' || p.status === 'Paid') totalPaid += Number(p.amount || 0);
+      else if(p.status === 'Pending') totalPending += Number(p.amount || 0);
+    });
+
+    const availableBalance = Math.max(0, totalEarned - totalPaid - totalPending);
+
+    // Update Dashboard Metrics
+    const fmt = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+    document.getElementById('atStatSales').textContent = fmt(totalSales);
+    document.getElementById('atStatEarned').textContent = fmt(totalEarned);
+    document.getElementById('atStatBalance').textContent = fmt(availableBalance);
+    document.getElementById('atStatClients').textContent = String(clientList.length);
+
+    document.getElementById('atLedgerTotalEarned').textContent = fmt(totalEarned);
+    document.getElementById('atPayoutAvail').textContent = fmt(availableBalance);
+    document.getElementById('atPayoutLifetime').textContent = fmt(totalEarned);
+    document.getElementById('atPayoutPaid').textContent = fmt(totalPaid);
+
+    // Render Recent Transactions
+    const recentBox = document.getElementById('atRecentTransactions');
+    if(recentBox){
+      if(!transactionRows.length){
+        recentBox.innerHTML = '<div class="notice info">No referral transactions recorded yet. Give your code <b>TARSEEM@10</b> to clients booking services to earn 10% commission.</div>';
+      } else {
+        recentBox.innerHTML = `
+          <table class="agent-table">
+            <thead>
+              <tr><th>Date</th><th>Client Name</th><th>Service</th><th>Booking Amount</th><th>Commission (10%)</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              ${transactionRows.slice(0, 5).map(r => `
+                <tr>
+                  <td>${r.date}</td>
+                  <td><b>${r.name}</b><br><small class="muted">${r.contact}</small></td>
+                  <td>${r.service}</td>
+                  <td>${fmt(r.amount)}</td>
+                  <td><b style="color:#084c38">${fmt(r.commission)}</b></td>
+                  <td><span class="agent-badge">${r.status}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    // Render Ledger View
+    const ledgerBox = document.getElementById('atLedgerTableBox');
+    if(ledgerBox){
+      if(!transactionRows.length){
+        ledgerBox.innerHTML = '<div class="notice info">No commission transactions found in ledger yet. All future client payments entering code <b>TARSEEM@10</b> will log automatically here.</div>';
+      } else {
+        ledgerBox.innerHTML = `
+          <table class="agent-table">
+            <thead>
+              <tr><th>Date</th><th>Client Name</th><th>Contact</th><th>Service / Payment Type</th><th>Amount</th><th>Rate</th><th>Commission Earned</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              ${transactionRows.map(r => `
+                <tr>
+                  <td>${r.date}</td>
+                  <td><b>${r.name}</b></td>
+                  <td>${r.contact}</td>
+                  <td>${r.service}</td>
+                  <td>${fmt(r.amount)}</td>
+                  <td>${r.rate}</td>
+                  <td><b style="color:#084c38">${fmt(r.commission)}</b></td>
+                  <td><span class="agent-badge">${r.status}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    // Render Clients View
+    const clientsBox = document.getElementById('atClientsTableBox');
+    if(clientsBox){
+      if(!clientList.length){
+        clientsBox.innerHTML = '<div class="notice info">No referred clients recorded yet. Your client directory will list all referred clients and their total spending.</div>';
+      } else {
+        clientsBox.innerHTML = `
+          <table class="agent-table">
+            <thead>
+              <tr><th>Client Name</th><th>Mobile</th><th>Email</th><th>Total Bookings</th><th>Total Spent</th><th>Commission Generated</th></tr>
+            </thead>
+            <tbody>
+              ${clientList.map(c => `
+                <tr>
+                  <td><b>${c.name}</b></td>
+                  <td>${c.mobile}</td>
+                  <td>${c.email}</td>
+                  <td>${c.count}</td>
+                  <td>${fmt(c.totalSpent)}</td>
+                  <td><b style="color:#084c38">${fmt(c.commEarned)}</b></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    // Render Payout History & Handle Payout Submission
+    const renderPayoutHistory = () => {
+      const box = document.getElementById('atPayoutHistory');
+      if(!box) return;
+      const list = JSON.parse(localStorage.getItem('rma_tarseem_payouts') || '[]');
+      if(!list.length){
+        box.innerHTML = '<div class="notice info">No payout requests submitted yet.</div>';
+        return;
+      }
+      box.innerHTML = `
+        <table class="agent-table">
+          <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Details</th><th>Status</th></tr></thead>
+          <tbody>
+            ${list.map(p => `
+              <tr>
+                <td>${p.date}</td>
+                <td><b>${fmt(p.amount)}</b></td>
+                <td>${(p.method || '').toUpperCase()}</td>
+                <td>${p.details || '—'}</td>
+                <td><span class="agent-badge">${p.status || 'Pending'}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    };
+    renderPayoutHistory();
+
+    const submitPayoutBtn = document.getElementById('atSubmitPayoutBtn');
+    if(submitPayoutBtn && !submitPayoutBtn.dataset.wired){
+      submitPayoutBtn.dataset.wired = '1';
+      submitPayoutBtn.addEventListener('click', () => {
+        const amtEl = document.getElementById('atPayoutAmount');
+        const methodEl = document.getElementById('atPayoutMethod');
+        const detailsEl = document.getElementById('atPayoutDetails');
+        const msgEl = document.getElementById('atPayoutMsg');
+
+        const amt = Number(amtEl?.value || 0);
+        const method = methodEl?.value || 'upi';
+        const details = detailsEl?.value?.trim() || '';
+
+        if(!amt || amt <= 0){
+          if(msgEl){ msgEl.className = 'notice error'; msgEl.classList.remove('hidden'); msgEl.textContent = 'Please enter a valid withdrawal amount.'; }
+          return;
+        }
+        if(amt > availableBalance){
+          if(msgEl){ msgEl.className = 'notice error'; msgEl.classList.remove('hidden'); msgEl.textContent = 'Requested amount exceeds your available balance (' + fmt(availableBalance) + ').'; }
+          return;
+        }
+        if(!details){
+          if(msgEl){ msgEl.className = 'notice error'; msgEl.classList.remove('hidden'); msgEl.textContent = 'Please enter your UPI ID or Bank details.'; }
+          return;
+        }
+
+        const newPayout = {
+          id: 'PO-' + Date.now().toString().slice(-6),
+          date: new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }),
+          amount: amt,
+          method: method,
+          details: details,
+          status: 'Pending'
+        };
+
+        const currentPayouts = JSON.parse(localStorage.getItem('rma_tarseem_payouts') || '[]');
+        currentPayouts.unshift(newPayout);
+        localStorage.setItem('rma_tarseem_payouts', JSON.stringify(currentPayouts));
+
+        if(msgEl){
+          msgEl.className = 'notice success'; msgEl.classList.remove('hidden');
+          msgEl.textContent = 'Payout request for ' + fmt(amt) + ' submitted successfully!';
+        }
+        if(amtEl) amtEl.value = '';
+        if(detailsEl) detailsEl.value = '';
+
+        // Refresh portal counters
+        buildTarseemPortal(user);
+      });
+    }
+
+    // Render Messages & Messaging actions
+    const loadMessages = async () => {
+      const box = document.getElementById('tarseemMsgHistory');
+      if(!box) return;
+      try {
+        const { data, error } = await supabaseClient.from('client_messages').select('*').eq('user_id', user.id).order('created_at', { ascending: true });
+        if(error) throw error;
+        if(!data || !data.length){
+          box.innerHTML = '<div class="notice info">No messages yet. Send a message below to contact RMA Admin.</div>';
+          return;
+        }
+        box.innerHTML = data.map(m => `
+          <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;margin-bottom:10px;background:${m.sender_role==='admin'?'#f4fdf8':'#fff'}">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <b>${m.sender_role==='admin'?'🏛️ RMA Admin':'💼 Agent Tarseem'}</b>
+              <small class="muted">${m.created_at ? new Date(m.created_at).toLocaleString('en-IN') : ''}</small>
+            </div>
+            <div style="font-weight:700;color:#084c38;margin-bottom:4px">${m.subject || 'No Subject'}</div>
+            <div>${m.message || ''}</div>
+          </div>
+        `).join('');
+      } catch(e) {
+        box.innerHTML = '<div class="notice error">Unable to load message history.</div>';
+      }
+    };
+    await loadMessages();
+
+    const sendMsgBtn = document.getElementById('tarseemMsgSendBtn');
+    if(sendMsgBtn && !sendMsgBtn.dataset.wired){
+      sendMsgBtn.dataset.wired = '1';
+      sendMsgBtn.addEventListener('click', async () => {
+        const subj = document.getElementById('tarseemMsgSubject')?.value.trim() || 'Agent Query';
+        const txt = document.getElementById('tarseemMsgText')?.value.trim();
+        const stBox = document.getElementById('tarseemMsgStatus');
+
+        if(!txt){
+          if(stBox){ stBox.className = 'notice error'; stBox.classList.remove('hidden'); stBox.textContent = 'Please write your message text.'; }
+          return;
+        }
+
+        try {
+          const { error } = await supabaseClient.from('client_messages').insert({
+            user_id: user.id,
+            client_name: 'Agent Tarseem',
+            email: user.email || 'tarseem@rma.com',
+            subject: subj,
+            message: txt,
+            sender_role: 'agent',
+            thread_id: user.id,
+            status: 'new'
+          });
+          if(error) throw error;
+          if(stBox){ stBox.className = 'notice success'; stBox.classList.remove('hidden'); stBox.textContent = 'Message sent to RMA Admin successfully.'; }
+          document.getElementById('tarseemMsgText').value = '';
+          await loadMessages();
+        } catch(e) {
+          if(stBox){ stBox.className = 'notice error'; stBox.classList.remove('hidden'); stBox.textContent = e.message || 'Error sending message.'; }
+        }
+      });
+    }
+  }
+
+  window.buildTarseemPortal = buildTarseemPortal;
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', addTarseemPortal);
+  else addTarseemPortal();
 })();
 </script>
