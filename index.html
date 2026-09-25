@@ -1489,61 +1489,193 @@ async function rmaVerifyRazorpayPayment(response){
   return d;
 }
 
-async function openRazorpayPayment({amount,receipt,description,name,email,contact,messageEl,notes={}}){
-  const box=document.getElementById(messageEl);
-  if(!Number(amount)||Number(amount)<=0){
-    box.className="notice error";box.classList.remove("hidden");box.textContent="Please complete the required details before making payment.";return;
+async function rmaExecutePaymentFlow({
+  paymentType = "service",
+  amount,
+  originalAmount,
+  isTest = false,
+  couponCode = "",
+  receipt,
+  description,
+  customer = {},
+  scopeDetails = {},
+  btnEl,
+  msgEl,
+  onSuccess
+}){
+  const box = typeof msgEl === 'string' ? document.getElementById(msgEl) : msgEl;
+  const setMsg = (text, type = 'info') => {
+    if(!box) return;
+    box.className = 'notice ' + type;
+    box.classList.remove('hidden');
+    box.textContent = text;
+  };
+
+  if(!Number(amount) || Number(amount) <= 0){
+    setMsg('Please complete required details so the payment amount can be calculated.', 'error');
+    return;
   }
   if(!window.Razorpay){
-    box.className="notice error";box.classList.remove("hidden");box.textContent="Razorpay could not be loaded. Please check your internet connection and try again.";return;
+    setMsg('Razorpay Checkout could not be loaded. Please refresh the page and try again.', 'error');
+    return;
   }
+
+  if(btnEl) btnEl.disabled = true;
+  setMsg('Creating secure Razorpay order...', 'info');
+
+  const notes = {
+    request_id: receipt,
+    payment_type: paymentType,
+    is_test: String(isTest),
+    coupon_code: couponCode,
+    original_amount: String(originalAmount || amount),
+    final_amount: String(amount),
+    service_type: scopeDetails.service_type || paymentType
+  };
+
   try{
-    box.className="notice info";box.classList.remove("hidden");box.textContent="Creating secure Razorpay order...";
-    const order=await rmaCreateRazorpayOrder(amount,receipt,description,notes);
-    const options={
-      key:RAZORPAY_KEY_ID,
-      order_id:order.order_id,
-      amount:order.amount,
-      currency:order.currency||"INR",
-      name:"RMA Design & Construction",
+    const order = await rmaCreateRazorpayOrder(amount, receipt, description, notes);
+    const options = {
+      key: RAZORPAY_KEY_ID,
+      order_id: order.order_id,
+      amount: order.amount,
+      currency: order.currency || "INR",
+      name: "RMA Design & Construction",
       description,
-      prefill:{name:name||"",email:email||"",contact:contact||""},
-      theme:{color:"#2e7d5b"},
-      modal:{ondismiss:function(){box.className="notice info";box.classList.remove("hidden");box.textContent="Payment window closed. No payment was confirmed.";}},
-      handler:async function(response){
+      prefill: {
+        name: customer.name || "",
+        email: customer.email || "",
+        contact: customer.mobile || customer.contact || ""
+      },
+      theme: { color: "#2e7d5b" },
+      modal: {
+        ondismiss: function(){
+          if(btnEl) btnEl.disabled = false;
+          setMsg('Payment window closed. No payment was confirmed.', 'info');
+        }
+      },
+      handler: async function(response){
         try{
-          box.className="notice info";box.classList.remove("hidden");box.textContent="Verifying payment securely...";
+          setMsg('Verifying payment securely...', 'info');
           await rmaVerifyRazorpayPayment(response);
-          box.textContent="Payment verified. Generating GST invoice...";
-          const taxable=Number((Number(amount)/1.18).toFixed(2));
-          const gst=Number((Number(amount)-taxable).toFixed(2));
-          const inv=await rmaGenerateAndSendGSTInvoice({
-            payment_id:response.razorpay_payment_id,
-            razorpay_signature:response.razorpay_signature||"",
-            order_id:response.razorpay_order_id||"",
-            receipt,
-            invoice_type:"service",
-            customer:{name:name||"",email:email||"",mobile:contact||"",address:notes?.project_address||"",state:notes?.customer_state||""},
-            description,
-            taxable_amount:taxable,
-            gst_rate:18,
-            gst_amount:gst,
-            total_amount:Number(amount),
-            notes
-          });
-          box.className="notice success";box.classList.remove("hidden");box.innerHTML="<b>Payment verified and GST invoice generated.</b><br>Invoice No.: <b>"+inv.invoice_number+"</b><br>Payment ID: <b>"+response.razorpay_payment_id+"</b><br><small>The GST invoice has been sent to the customer email.</small>";
-          return {...response,invoice:inv};
-        }catch(err){
+
+          const taxable = Number((amount / 1.18).toFixed(2));
+          const gst = Number((amount - taxable).toFixed(2));
+          const recordPayload = {
+            request_id: receipt,
+            client_name: customer.name || "Customer",
+            mobile: customer.mobile || customer.contact || "",
+            email: customer.email || null,
+            service_type: paymentType + ' — ' + (scopeDetails.service_type || description),
+            project_address: customer.address || 'Project site',
+            visit_fee: taxable,
+            gst_amount: gst,
+            total_amount: amount,
+            status: 'paid',
+            visit_scope: JSON.stringify({
+              ...scopeDetails,
+              payment_type: paymentType,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              is_test: isTest,
+              coupon_code: couponCode,
+              original_amount: originalAmount || amount,
+              final_amount: amount
+            })
+          };
+
+          try {
+            if(typeof insertBooking === 'function') {
+              await insertBooking(recordPayload);
+            } else if(typeof supabaseClient !== 'undefined') {
+              await supabaseClient.from('bookings').insert(recordPayload);
+            }
+          } catch(dbErr) {
+            console.warn('Booking insertion warning:', dbErr);
+          }
+
+          let invoiceRes = null;
+          if(!isTest) {
+            setMsg('Payment verified. Generating GST invoice...', 'info');
+            try {
+              invoiceRes = await rmaGenerateAndSendGSTInvoice({
+                payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature || "",
+                order_id: response.razorpay_order_id || "",
+                receipt,
+                invoice_type: paymentType,
+                customer: {
+                  name: customer.name || "",
+                  email: customer.email || "",
+                  mobile: customer.mobile || customer.contact || "",
+                  address: customer.address || "",
+                  state: customer.state || "Jammu and Kashmir"
+                },
+                description,
+                taxable_amount: taxable,
+                gst_rate: 18,
+                gst_amount: gst,
+                total_amount: amount,
+                notes: {
+                  ...notes,
+                  customer_name: customer.name
+                }
+              });
+            } catch(invErr) {
+              console.error('GST Invoice generation error:', invErr);
+            }
+          }
+
+          if(btnEl) btnEl.textContent = 'Payment Completed';
+
+          if(isTest) {
+            if(box) {
+              box.className = "notice success";
+              box.classList.remove("hidden");
+              box.innerHTML = "<b>TEST Payment Verified.</b><br>Request ID: <b>" + receipt + "</b><br>Payment ID: <b>" + response.razorpay_payment_id + "</b><br><small>Test payment of ₹" + amount + " completed. Real GST tax invoice skipped for test transaction.</small>";
+            }
+          } else if(invoiceRes && invoiceRes.invoice_number) {
+            if(box) {
+              box.className = "notice success";
+              box.classList.remove("hidden");
+              box.innerHTML = "<b>Payment verified and GST invoice generated.</b><br>Invoice No.: <b>" + invoiceRes.invoice_number + "</b><br>Payment ID: <b>" + response.razorpay_payment_id + "</b><br><small>The GST invoice has been sent to customer email.</small>";
+            }
+          } else {
+            if(box) {
+              box.className = "notice success";
+              box.classList.remove("hidden");
+              box.innerHTML = "<b>Payment verified successfully.</b><br>Request ID: <b>" + receipt + "</b><br>Payment ID: <b>" + response.razorpay_payment_id + "</b>";
+            }
+          }
+
+          if(typeof onSuccess === 'function') {
+            onSuccess({ response, invoice: invoiceRes, amount, receipt });
+          }
+        } catch(err) {
           console.error(err);
-          box.className="notice error";box.classList.remove("hidden");box.textContent=err.message||"Payment verification failed.";
+          if(btnEl) btnEl.disabled = false;
+          setMsg(err.message || "Payment verification failed.", 'error');
         }
       }
     };
     new window.Razorpay(options).open();
-  }catch(err){
+  } catch(err) {
     console.error(err);
-    box.className="notice error";box.classList.remove("hidden");box.textContent=err.message||"Unable to start Razorpay payment.";
+    if(btnEl) btnEl.disabled = false;
+    setMsg(err.message || "Unable to start Razorpay payment.", 'error');
   }
+}
+
+async function openRazorpayPayment({amount,receipt,description,name,email,contact,messageEl,notes={}}){
+  return rmaExecutePaymentFlow({
+    paymentType: notes.service_type ? 'service' : 'site_visit',
+    amount: Number(amount),
+    receipt,
+    description,
+    customer: { name, email, contact, address: notes.project_address || "" },
+    scopeDetails: notes,
+    msgEl: messageEl
+  });
 }
 
 function payServiceWithRazorpay(){
