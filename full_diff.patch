@@ -1,0 +1,667 @@
+diff --git a/index.html b/index.html
+index 6b7f48c..b4dbaf3 100644
+--- a/index.html
++++ b/index.html
+@@ -214,76 +214,47 @@ section{padding:78px 0}
+ }
+ @media(max-width:600px){
+   body{font-size:15px}
+-  .container{width:min(100% - 24px,1180px)}
++  .container{width:min(100% - 28px,1180px)}
+   .topbar .container{padding:5px 0;gap:3px}
+   .topbar{font-size:11px}
+   .logo{font-size:17px}
+   .hero{min-height:auto}
+-  .hero h1{font-size:36px;margin:10px 0;line-height:1.1}
+-  .hero p{font-size:15px;line-height:1.5}
+-  .hero .copy{padding:32px 0 15px}
+-  .hero-quick-card{padding:20px 16px;border-radius:14px;box-shadow:0 8px 25px rgba(23,63,47,0.12)}
++  .hero h1{font-size:40px;margin:10px 0}
++  .hero p{font-size:16px}
++  .hero .copy{padding:42px 0 10px}
++  .hero-quick-card{padding:18px}
+   .rma-calc-grid,.rma-calc-result{grid-template-columns:1fr}
+-  .rma-estimator-card h2{font-size:21px}
+-  .group input,.group select,.group textarea{min-height:44px;font-size:15px;padding:10px 12px}
+-  .btn{width:100%;min-height:46px;font-size:15px;border-radius:8px}
+-  .hero .copy .btn{width:100%;flex:none;min-width:0}
+-  section{padding:40px 0}
+-  .heading h2{font-size:26px}
+-  .heading p{font-size:14px}
+-  .page-head{padding:30px 0}
+-  .page-head h1{font-size:28px}
++  .rma-estimator-card h2{font-size:23px}
++  .btn{width:100%;min-height:46px}
++  .hero .copy .btn{width:auto;flex:1;min-width:145px}
++  section{padding:50px 0}
++  .heading h2{font-size:29px}
++  .page-head{padding:38px 0}
++  .page-head h1{font-size:32px}
+   .form-grid,.service-picks,.toolrow{grid-template-columns:1fr}
+-  .statsgrid{grid-template-columns:1fr 1fr;gap:1px;background:#e2e6eb}
+-  .stat{padding:16px 8px;background:#fff}
+-  .stat strong{font-size:22px}
++  .statsgrid{grid-template-columns:1fr 1fr}
++  .stat{padding:18px 10px}
++  .stat strong{font-size:24px}
+   .site-layout{grid-template-columns:1fr}
+-  #visitMap,#map{height:300px;min-height:300px}
+-  .pricing-table{display:block;overflow-x:auto;white-space:nowrap;border-radius:8px}
++  #visitMap,#map{height:320px;min-height:320px}
++  .pricing-table{display:block;overflow-x:auto;white-space:nowrap}
+   .payment-card{width:100%}
+-  .service-sidebar{padding:12px;border-radius:12px}
+-  .service-side-item{padding:12px 10px;min-height:44px}
++  .service-sidebar{padding:12px}
++  .service-side-item{padding:13px 7px}
+   .doc-item{flex-direction:column;align-items:flex-start}
+-  .pricebox{border-radius:12px;padding:18px}
+-  .form-panel{padding:20px 16px;border-radius:12px}
+-  .profile{padding:24px 16px;border-radius:12px;grid-template-columns:1fr;gap:20px}
+-  .profile img{height:300px;border-radius:10px}
+-  .profile h2{font-size:28px;margin:6px 0 12px}
+-  .footergrid{grid-template-columns:1fr;gap:24px}
+ }
+ </style>
+
+ <style id="rma-v31-mobile-nav">
+-/* Premium Mobile Navigation & Quick Nav Styling */
+ @media(max-width:900px){
+-  .nav{position:sticky;top:0;z-index:1000;background:#ffffff;box-shadow:0 4px 20px rgba(23,63,47,0.08);border-bottom:1px solid #eef3f0}
+-  .navin{height:auto;min-height:62px;flex-wrap:wrap;padding:8px 0 6px}
+-  .logo{font-size:18px;display:flex;align-items:center;gap:6px}
+-  .menu{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px;background:#eef7f1;color:var(--navy);font-size:22px;border:1px solid #d6ebd9;transition:all .2s ease}
+-  .menu:active{background:var(--navy);color:#fff}
+-  .mobile-quick-nav{display:flex;order:3;width:100%;overflow-x:auto;gap:8px;padding:8px 0 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
++  .nav{position:sticky;top:0;z-index:1000}
++  .navin{height:auto;min-height:68px;flex-wrap:wrap;padding:8px 0 0}
++  .mobile-quick-nav{display:flex;order:3;width:100%;overflow-x:auto;gap:6px;padding:7px 0 9px;scrollbar-width:none}
+   .mobile-quick-nav::-webkit-scrollbar{display:none}
+-  .mobile-quick-nav button{flex:0 0 auto;border:1px solid #d4e2d8;background:#f6faf7;color:#1e4334;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;white-space:nowrap;transition:all .2s ease;box-shadow:0 2px 6px rgba(0,0,0,0.02)}
+-  .mobile-quick-nav button:active,.mobile-quick-nav button.active{background:var(--navy);color:#ffffff;border-color:var(--navy);box-shadow:0 4px 12px rgba(36,91,67,0.2)}
++  .mobile-quick-nav button{flex:0 0 auto;border:1px solid #d9e0e7;background:#fff;color:var(--navy);border-radius:18px;padding:7px 11px;font-size:12px;font-weight:700;white-space:nowrap}
++  .mobile-quick-nav button:active{background:var(--gold);color:var(--navy)}
+ }
+ @media(min-width:901px){.mobile-quick-nav{display:none}}
+-
+-/* Slide-out Mobile Menu Overlay */
+-.mobile-drawer-backdrop{position:fixed;inset:0;background:rgba(15,35,26,0.6);backdrop-filter:blur(6px);z-index:2000;opacity:0;pointer-events:none;transition:opacity .28s ease}
+-.mobile-drawer-backdrop.active{opacity:1;pointer-events:auto}
+-.mobile-drawer{position:fixed;top:0;right:0;bottom:0;width:min(320px,85vw);background:#112e22;color:#eaf5ef;z-index:2001;transform:translateX(100%);transition:transform .3s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column;box-shadow:-10px 0 30px rgba(0,0,0,0.3)}
+-.mobile-drawer-backdrop.active .mobile-drawer{transform:translateX(0)}
+-.mobile-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid rgba(255,255,255,0.1);background:#0d241a}
+-.mobile-drawer-title{font-weight:900;font-size:18px;letter-spacing:0.5px;color:#fff}
+-.mobile-drawer-title span{color:var(--gold)}
+-.mobile-drawer-close{background:rgba(255,255,255,0.1);border:0;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;display:grid;place-items:center;cursor:pointer;transition:background .2s}
+-.mobile-drawer-close:active{background:rgba(255,255,255,0.25)}
+-.mobile-drawer-body{padding:20px 16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1}
+-.mobile-drawer-body button{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:transparent;border:1px solid transparent;color:#d2e5db;padding:12px 16px;border-radius:12px;font-size:15px;font-weight:700;transition:all .2s ease}
+-.mobile-drawer-body button .nav-icon{font-size:18px;width:24px;text-align:center;opacity:0.85}
+-.mobile-drawer-body button:hover,.mobile-drawer-body button:active,.mobile-drawer-body button.active{background:rgba(63,143,104,0.22);color:#ffffff;border-color:rgba(63,143,104,0.4)}
+-.mobile-drawer-footer{padding:20px;border-top:1px solid rgba(255,255,255,0.1);background:#0d241a;font-size:12px;color:#8ba396;text-align:center}
+-.mobile-drawer-footer strong{color:#3f8f68;display:block;margin-bottom:4px}
+ </style>
+ <style id="rma-v34-fix">
+ /* V34: Path Seeker portal keeps the booking insert schema-safe. */
+@@ -453,28 +424,8 @@ section{padding:78px 0}
+ #rmaPathSeekerPortal .ps-v62-time{background:#075a40;color:#fff;border-radius:9px;min-width:64px;padding:8px;text-align:center}
+ #rmaPathSeekerPortal .ps-v62-time strong{display:block;font-size:18px;line-height:1}.ps-v62-time small{font-size:8px;opacity:.8;text-transform:uppercase}
+ #rmaPathSeekerPortal .ps-v62-report-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+-@media(max-width:900px){
+-  #rmaPathSeekerPortal .ps-v62-layout{grid-template-columns:1fr!important;gap:12px!important;margin-top:10px!important}
+-  #rmaPathSeekerPortal .ps-v62-sidebar{position:sticky!important;top:58px!important;z-index:20!important;padding:8px!important;border-radius:12px!important;background:#ffffff!important;box-shadow:0 6px 16px rgba(0,0,0,0.06)!important}
+-  #rmaPathSeekerPortal .ps-v62-nav{display:flex!important;flex-direction:row!important;overflow-x:auto!important;gap:6px!important;scrollbar-width:none!important;-webkit-overflow-scrolling:touch!important}
+-  #rmaPathSeekerPortal .ps-v62-nav::-webkit-scrollbar{display:none!important}
+-  #rmaPathSeekerPortal .ps-v62-nav button{flex:0 0 auto!important;padding:8px 12px!important;border-radius:20px!important;font-size:12px!important;white-space:nowrap!important;background:#f4f8f6!important;border:1px solid #dce9e3!important}
+-  #rmaPathSeekerPortal .ps-v62-nav button.active{background:#075a40!important;color:#ffffff!important;border-color:#075a40!important}
+-  #rmaPathSeekerPortal .ps-v62-nav-divider{display:none!important}
+-  #rmaPathSeekerPortal .ps-v33-top{grid-template-columns:1fr!important}
+-  #rmaPathSeekerPortal .ps-v33-message-grid{grid-template-columns:1fr!important}
+-}
+-@media(max-width:600px){
+-  #rmaPathSeekerPortal .ps-v62-topbar{padding:10px 12px!important}
+-  #rmaPathSeekerPortal .ps-v62-brand{font-size:16px!important}
+-  #rmaPathSeekerPortal .ps-v62-dashboard-grid{grid-template-columns:1fr 1fr!important}
+-  #rmaPathSeekerPortal .ps-v33-scope-grid{grid-template-columns:1fr!important}
+-  .ps-v62-project{display:none!important}
+-  #rmaPathSeekerPortal .ps-v62-watch{padding:12px!important}
+-  #rmaPathSeekerPortal .ps-v62-countdown{gap:5px!important}
+-  #rmaPathSeekerPortal .ps-v62-time{min-width:52px!important;padding:6px 4px!important}
+-  #rmaPathSeekerPortal .ps-v62-time strong{font-size:15px!important}
+-}
++@media(max-width:900px){#rmaPathSeekerPortal .ps-v62-layout{grid-template-columns:1fr!important}.ps-v62-sidebar{position:relative!important;top:auto!important}.ps-v62-nav{display:grid!important;grid-template-columns:repeat(3,1fr)}#rmaPathSeekerPortal .ps-v33-top{grid-template-columns:1fr!important}#rmaPathSeekerPortal .ps-v33-message-grid{grid-template-columns:1fr!important}}
++@media(max-width:600px){#rmaPathSeekerPortal .ps-v62-dashboard-grid{grid-template-columns:1fr!important}#rmaPathSeekerPortal .ps-v62-nav{grid-template-columns:repeat(2,1fr)}#rmaPathSeekerPortal .ps-v33-scope-grid{grid-template-columns:1fr!important}.ps-v62-project{display:none!important}}
+ </style>
+
+ <style id="rma-v63-exact-single-section">
+@@ -534,32 +485,9 @@ section{padding:78px 0}
+   <button onclick="showPage('contact')">Contact</button>
+   <button onclick="showPage('signin')">Sign In</button>
+ </div>
+-<button class="menu" onclick="toggleMenu()" aria-label="Open Navigation Menu">☰</button>
++<button class="menu" onclick="toggleMenu()">☰</button>
+ </div>
+ </nav>
+-
+-<!-- Mobile Navigation Drawer -->
+-<div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop" onclick="closeMobileDrawer()">
+-  <div class="mobile-drawer" onclick="event.stopPropagation()">
+-    <div class="mobile-drawer-head">
+-      <div class="mobile-drawer-title">RMA <span>Design &amp; Construction</span></div>
+-      <button class="mobile-drawer-close" onclick="closeMobileDrawer()" aria-label="Close menu">✕</button>
+-    </div>
+-    <div class="mobile-drawer-body">
+-      <button onclick="showPage('home'); closeMobileDrawer();"><span class="nav-icon">⌂</span> Home</button>
+-      <button onclick="showPage('services'); closeMobileDrawer();"><span class="nav-icon">📐</span> Services</button>
+-      <button onclick="showPage('construction'); closeMobileDrawer();"><span class="nav-icon">🏗️</span> Construction</button>
+-      <button onclick="showPage('sitevisit'); closeMobileDrawer();"><span class="nav-icon">📍</span> Book My Site Visit</button>
+-      <button onclick="showPage('about'); closeMobileDrawer();"><span class="nav-icon">ℹ️</span> About Us</button>
+-      <button onclick="showPage('contact'); closeMobileDrawer();"><span class="nav-icon">📞</span> Contact Us</button>
+-      <button onclick="showPage('signin'); closeMobileDrawer();"><span class="nav-icon">👤</span> Sign In / Portal</button>
+-    </div>
+-    <div class="mobile-drawer-footer">
+-      <strong>RMA Design &amp; Construction</strong>
+-      Architectural • Structural • Construction
+-    </div>
+-  </div>
+-</div>
+ <!-- HOME -->
+ <main class="page active" id="page-home">
+ <section class="hero">
+@@ -1170,15 +1098,6 @@ function showPage(name){
+   if(page) page.classList.add("active");
+   window.scrollTo({top:0,behavior:"smooth"});
+   document.getElementById("navlinks").style.display="";
+-
+-  // Highlight active button in mobile quick nav and drawer
+-  document.querySelectorAll(".mobile-quick-nav button, .mobile-drawer-body button").forEach(btn=>{
+-    btn.classList.remove("active");
+-    if(btn.getAttribute("onclick") && btn.getAttribute("onclick").includes("'" + name + "'")){
+-      btn.classList.add("active");
+-    }
+-  });
+-
+   if(name==="services"){
+     setTimeout(()=>refreshServiceDetails(),50);
+   }
+@@ -1198,15 +1117,12 @@ function showPage(name){
+   }
+ }
+ function toggleMenu(){
+-  const drawer = document.getElementById("mobileDrawerBackdrop");
+-  if(drawer){
+-    drawer.classList.toggle("active");
+-  }
+-}
+-function closeMobileDrawer(){
+-  const drawer = document.getElementById("mobileDrawerBackdrop");
+-  if(drawer){
+-    drawer.classList.remove("active");
++  const n=document.getElementById("navlinks");
++  n.style.display = n.style.display==="flex" ? "none" : "flex";
++  if(n.style.display==="flex"){
++    n.style.flexDirection="column";
++    n.style.position="absolute"; n.style.top="76px"; n.style.left="0"; n.style.right="0";
++    n.style.background="#0b1b2b"; n.style.padding="20px";
+   }
+ }
+
+@@ -1489,63 +1405,191 @@ async function rmaVerifyRazorpayPayment(response){
+   return d;
+ }
+
+-async function openRazorpayPayment({amount,receipt,description,name,email,contact,messageEl,notes={}}){
+-  const box=document.getElementById(messageEl);
+-  if(!Number(amount)||Number(amount)<=0){
+-    box.className="notice error";box.classList.remove("hidden");box.textContent="Please complete the required details before making payment.";return;
++async function rmaExecutePaymentFlow({
++  paymentType,
++  amount,
++  originalAmount,
++  isTest = false,
++  couponCode = "",
++  receipt,
++  description,
++  customer,
++  scopeDetails = {},
++  btnEl,
++  msgEl,
++  onSuccess
++}){
++  const box = typeof msgEl === 'string' ? document.getElementById(msgEl) : msgEl;
++  const setMsg = (text, type = 'info') => {
++    if(!box) return;
++    box.className = 'notice ' + type;
++    box.classList.remove('hidden');
++    box.textContent = text;
++  };
++
++  if(!Number(amount) || Number(amount) <= 0){
++    setMsg('Please complete required details so the payment amount can be calculated.', 'error');
++    return;
+   }
+   if(!window.Razorpay){
+-    box.className="notice error";box.classList.remove("hidden");box.textContent="Razorpay could not be loaded. Please check your internet connection and try again.";return;
++    setMsg('Razorpay Checkout could not be loaded. Please refresh the page and try again.', 'error');
++    return;
+   }
++
++  if(btnEl) btnEl.disabled = true;
++  setMsg('Creating secure Razorpay order...', 'info');
++
++  const notes = {
++    request_id: receipt,
++    payment_type: paymentType,
++    is_test: String(isTest),
++    coupon_code: couponCode,
++    original_amount: String(originalAmount || amount),
++    final_amount: String(amount),
++    service_type: scopeDetails.service_type || paymentType
++  };
++
+   try{
+-    box.className="notice info";box.classList.remove("hidden");box.textContent="Creating secure Razorpay order...";
+-    const order=await rmaCreateRazorpayOrder(amount,receipt,description,notes);
+-    const options={
+-      key:RAZORPAY_KEY_ID,
+-      order_id:order.order_id,
+-      amount:order.amount,
+-      currency:order.currency||"INR",
+-      name:"RMA Design & Construction",
++    const order = await rmaCreateRazorpayOrder(amount, receipt, description, notes);
++    const options = {
++      key: RAZORPAY_KEY_ID,
++      order_id: order.order_id,
++      amount: order.amount,
++      currency: order.currency || "INR",
++      name: "RMA Design & Construction",
+       description,
+-      prefill:{name:name||"",email:email||"",contact:contact||""},
+-      theme:{color:"#2e7d5b"},
+-      modal:{ondismiss:function(){box.className="notice info";box.classList.remove("hidden");box.textContent="Payment window closed. No payment was confirmed.";}},
+-      handler:async function(response){
++      prefill: {
++        name: customer.name || "",
++        email: customer.email || "",
++        contact: customer.mobile || customer.contact || ""
++      },
++      theme: { color: "#2e7d5b" },
++      modal: {
++        ondismiss: function(){
++          if(btnEl) btnEl.disabled = false;
++          setMsg('Payment window closed. No payment was confirmed.', 'info');
++        }
++      },
++      handler: async function(response){
+         try{
+-          box.className="notice info";box.classList.remove("hidden");box.textContent="Verifying payment securely...";
++          setMsg('Verifying payment securely...', 'info');
+           await rmaVerifyRazorpayPayment(response);
+-          box.textContent="Payment verified. Generating GST invoice...";
+-          const taxable=Number((Number(amount)/1.18).toFixed(2));
+-          const gst=Number((Number(amount)-taxable).toFixed(2));
+-          const inv=await rmaGenerateAndSendGSTInvoice({
+-            payment_id:response.razorpay_payment_id,
+-            razorpay_signature:response.razorpay_signature||"",
+-            order_id:response.razorpay_order_id||"",
+-            receipt,
+-            invoice_type:"service",
+-            customer:{name:name||"",email:email||"",mobile:contact||"",address:notes?.project_address||"",state:notes?.customer_state||""},
+-            description,
+-            taxable_amount:taxable,
+-            gst_rate:18,
+-            gst_amount:gst,
+-            total_amount:Number(amount),
+-            notes
+-          });
+-          box.className="notice success";box.classList.remove("hidden");box.innerHTML="<b>Payment verified and GST invoice generated.</b><br>Invoice No.: <b>"+inv.invoice_number+"</b><br>Payment ID: <b>"+response.razorpay_payment_id+"</b><br><small>The GST invoice has been sent to the customer email.</small>";
+-          return {...response,invoice:inv};
+-        }catch(err){
++
++          const taxable = Number((amount / 1.18).toFixed(2));
++          const gst = Number((amount - taxable).toFixed(2));
++          const recordPayload = {
++            request_id: receipt,
++            client_name: customer.name,
++            mobile: customer.mobile || customer.contact,
++            email: customer.email || null,
++            service_type: paymentType + ' — ' + (scopeDetails.service_type || description),
++            project_address: customer.address || 'Project site',
++            visit_fee: taxable,
++            gst_amount: gst,
++            total_amount: amount,
++            status: 'paid',
++            visit_scope: JSON.stringify({
++              ...scopeDetails,
++              payment_type: paymentType,
++              razorpay_order_id: response.razorpay_order_id,
++              razorpay_payment_id: response.razorpay_payment_id,
++              is_test: isTest,
++              coupon_code: couponCode,
++              original_amount: originalAmount || amount,
++              final_amount: amount
++            })
++          };
++
++          try {
++            await insertBooking(recordPayload);
++          } catch(dbErr) {
++            console.warn('Booking insertion warning:', dbErr);
++          }
++
++          let invoiceRes = null;
++          if(!isTest) {
++            setMsg('Payment verified. Generating GST invoice...', 'info');
++            try {
++              invoiceRes = await rmaGenerateAndSendGSTInvoice({
++                payment_id: response.razorpay_payment_id,
++                razorpay_signature: response.razorpay_signature || "",
++                order_id: response.razorpay_order_id || "",
++                receipt,
++                invoice_type: paymentType,
++                customer: {
++                  name: customer.name || "",
++                  email: customer.email || "",
++                  mobile: customer.mobile || customer.contact || "",
++                  address: customer.address || "",
++                  state: customer.state || "Jammu and Kashmir"
++                },
++                description,
++                taxable_amount: taxable,
++                gst_rate: 18,
++                gst_amount: gst,
++                total_amount: amount,
++                notes: {
++                  ...notes,
++                  customer_name: customer.name
++                }
++              });
++            } catch(invErr) {
++              console.error('GST Invoice generation error:', invErr);
++            }
++          }
++
++          if(btnEl) btnEl.textContent = 'Payment Completed';
++
++          if(isTest) {
++            if(box) {
++              box.className = "notice success";
++              box.classList.remove("hidden");
++              box.innerHTML = "<b>TEST Payment Verified.</b><br>Request ID: <b>" + receipt + "</b><br>Payment ID: <b>" + response.razorpay_payment_id + "</b><br><small>Test payment of ₹" + amount + " completed. Real GST tax invoice skipped for test transaction.</small>";
++            }
++          } else if(invoiceRes && invoiceRes.invoice_number) {
++            if(box) {
++              box.className = "notice success";
++              box.classList.remove("hidden");
++              box.innerHTML = "<b>Payment verified and GST invoice generated.</b><br>Invoice No.: <b>" + invoiceRes.invoice_number + "</b><br>Payment ID: <b>" + response.razorpay_payment_id + "</b><br><small>The GST invoice has been sent to customer email.</small>";
++            }
++          } else {
++            if(box) {
++              box.className = "notice success";
++              box.classList.remove("hidden");
++              box.innerHTML = "<b>Payment verified successfully.</b><br>Request ID: <b>" + receipt + "</b><br>Payment ID: <b>" + response.razorpay_payment_id + "</b>";
++            }
++          }
++
++          if(typeof onSuccess === 'function') {
++            onSuccess({ response, invoice: invoiceRes, amount, receipt });
++          }
++        } catch(err) {
+           console.error(err);
+-          box.className="notice error";box.classList.remove("hidden");box.textContent=err.message||"Payment verification failed.";
++          if(btnEl) btnEl.disabled = false;
++          setMsg(err.message || "Payment verification failed.", 'error');
+         }
+       }
+     };
+     new window.Razorpay(options).open();
+-  }catch(err){
++  } catch(err) {
+     console.error(err);
+-    box.className="notice error";box.classList.remove("hidden");box.textContent=err.message||"Unable to start Razorpay payment.";
++    if(btnEl) btnEl.disabled = false;
++    setMsg(err.message || "Unable to start Razorpay payment.", 'error');
+   }
+ }
+
++async function openRazorpayPayment({amount,receipt,description,name,email,contact,messageEl,notes={}}){
++  return rmaExecutePaymentFlow({
++    paymentType: notes.service_type ? 'service' : 'site_visit',
++    amount: Number(amount),
++    receipt,
++    description,
++    customer: { name, email, contact, address: notes.project_address || "" },
++    scopeDetails: notes,
++    msgEl: messageEl
++  });
++}
++
+ function payServiceWithRazorpay(){
+   window.updateServicePrice?.();
+   const amountText=document.getElementById("serviceTotal")?.textContent||"₹0";
+@@ -2699,48 +2743,52 @@ async function payVisit(){
+  if(paymentBusy)return;
+  const form=document.getElementById('rmaV29VisitForm'),btn=document.getElementById('r29_pay');if(!form.reportValidity())return;
+  if(!visitReady||visitDistance===null){msg('r29_message','Please verify the Project PIN or use My Location first so the road distance and fee can be calculated.','error');return}
+- if(!window.Razorpay){msg('r29_message','Razorpay Checkout could not be loaded. Please refresh the page and try again.','error');return}
+  const pricing=siteVisitPricing(visitDistance);
+  const fee=pricing.fee,gst=pricing.gst,total=pricing.total,requestId='RMA-V-'+Date.now().toString().slice(-9);
+  const name=document.getElementById('r29_name').value.trim(),mobile=document.getElementById('r29_mobile').value.trim(),email=document.getElementById('r29_email').value.trim();
++ const address=document.getElementById('r29_address').value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg('r29_message','Please enter a valid customer Gmail / email address so we can send your GST bill.','error');return;}
+- paymentBusy=true;btn.disabled=false;msg('r29_message','Creating secure Razorpay order...');
+- try{
+-   const order=await rmaCreateRazorpayOrder(total,requestId,'RMA Site Visit Fee',{request_id:requestId,service_type:'Site Visit',distance_km:String(visitDistance.toFixed(2)),base_pin:BASE_PIN,coupon_code:pricing.coupon,coupon_valid_today:rmaCouponIsValidToday(),original_total:String(pricing.baseTotal.toFixed(2)),discount:String(pricing.discount.toFixed(2)),final_total:String(total.toFixed(2))});
+-   const rz=new window.Razorpay({key:window.RAZORPAY_KEY_ID,order_id:order.order_id,amount:order.amount,currency:order.currency||'INR',name:'RMA Design & Construction',description:'RMA Site Visit Fee',prefill:{name,email,contact:mobile},theme:{color:'#2e7d5b'},modal:{ondismiss:()=>{paymentBusy=false;msg('r29_message','Payment window closed. No payment was confirmed.','info');}},handler:async response=>{
+-      try{
+-        msg('r29_message','Payment received. Verifying securely...');
+-        await rmaVerifyRazorpayPayment(response);
+-        const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG,coupon_code:pricing.coupon,original_total:pricing.baseTotal,discount:pricing.discount,final_total:total})};
+-        await insertBooking(payload);
+-        paymentBusy=false;
+-        btn.textContent='Site Visit Booked';
+-        btn.disabled=true;
+-        const invoicePayload={payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature||'',order_id:response.razorpay_order_id||'',receipt:requestId,invoice_type:'site_visit',customer:{name,email:email||'',mobile,address:document.getElementById('r29_address').value.trim(),state:'Jammu and Kashmir'},description:'RMA Site Visit Fee',taxable_amount:Number(fee.toFixed(2)),gst_rate:18,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),notes:{distance_km:Number(visitDistance.toFixed(2)),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,coupon_code:pricing.coupon,original_total:Number(pricing.baseTotal.toFixed(2)),discount:Number(pricing.discount.toFixed(2)),final_total:Number(total.toFixed(2))}};
+-        window.__rmaSiteVisitInvoicePayload=invoicePayload;
+-        window.__rmaSiteVisitInvoiceResult=null;
+-        rmaShowSiteVisitSuccess({bookingId:requestId,paymentId:response.razorpay_payment_id,total:total});
+-        try{
+-          msg('r29_message','Payment received. Preparing your GST bill...','info');
+-          const inv=await rmaGenerateAndSendGSTInvoice(invoicePayload);
+-          window.__rmaSiteVisitInvoiceResult=inv;
+-          rmaUpdateGSTBillButton(inv);
+-        }catch(invoiceError){
+-          console.error('GST invoice generation:',invoiceError);
+-          rmaUpdateGSTBillButton(null, invoiceError?.message||'GST bill is not ready yet. Please try again from this page.');
+-        }
+-      }catch(e){
+-        paymentBusy=false;
+-        if(response?.razorpay_payment_id){
+-          btn.disabled=true;
+-          rmaShowSiteVisitSuccess({bookingId:requestId,paymentId:response.razorpay_payment_id,total:total,warning:e.message||'Payment was received, but booking confirmation needs to be completed by our team.'});
+-        }else{
+-          btn.disabled=false;
+-          msg('r29_message',e.message||'Payment verification or booking failed.','error');
+-        }
+-      }
+-   }});rz.open();
+- }catch(e){paymentBusy=false;btn.disabled=false;msg('r29_message',e.message||'Unable to start Razorpay payment.','error');}
++
++ paymentBusy=true;
++ const invoicePayload={
++   payment_id:'',
++   receipt:requestId,
++   invoice_type:'site_visit',
++   customer:{name,email,mobile,address,state:'Jammu and Kashmir'},
++   description:'RMA Site Visit Fee',
++   taxable_amount:Number(fee.toFixed(2)),
++   gst_rate:18,
++   gst_amount:Number(gst.toFixed(2)),
++   total_amount:Number(total.toFixed(2)),
++   notes:{distance_km:Number(visitDistance.toFixed(2)),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,coupon_code:pricing.coupon,original_total:Number(pricing.baseTotal.toFixed(2)),discount:Number(pricing.discount.toFixed(2)),final_total:Number(total.toFixed(2))}
++ };
++ window.__rmaSiteVisitInvoicePayload=invoicePayload;
++
++ return rmaExecutePaymentFlow({
++   paymentType: 'site_visit',
++   amount: total,
++   originalAmount: pricing.baseTotal,
++   couponCode: pricing.coupon,
++   receipt: requestId,
++   description: 'RMA Site Visit Fee',
++   customer: { name, email, mobile, address, state: 'Jammu and Kashmir' },
++   scopeDetails: {
++     building_type: document.getElementById('r29_building').value,
++     requirement: document.getElementById('r29_requirement').value.trim(),
++     requested_date: document.getElementById('r29_date').value,
++     requested_time: document.getElementById('r29_time').value,
++     distance_km: Number(visitDistance.toFixed(2))
++   },
++   btnEl: btn,
++   msgEl: 'r29_message',
++   onSuccess: ({ response, invoice }) => {
++     paymentBusy = false;
++     window.__rmaSiteVisitInvoicePayload.payment_id = response.razorpay_payment_id;
++     window.__rmaSiteVisitInvoiceResult = invoice;
++     rmaShowSiteVisitSuccess({ bookingId: requestId, paymentId: response.razorpay_payment_id, total: total });
++     if(invoice) rmaUpdateGSTBillButton(invoice);
++   }
++ });
+ }
+
+ function installServicePayment(){
+@@ -2753,20 +2801,25 @@ function installServicePayment(){
+  btn.onclick=payService;
+ }
+ async function payService(){
+- const form=document.getElementById('serviceForm'),btn=document.getElementById('rmaV29ServicePay'),box=document.getElementById('rmaV29ServiceMsg');if(!form.reportValidity())return;
++ const form=document.getElementById('serviceForm'),btn=document.getElementById('rmaV29ServicePay');if(!form.reportValidity())return;
+  const keys=selectedServiceKeys();if(!keys.length){msg('rmaV29ServiceMsg','Please select at least one service.','error');return}
+  const mobile=document.getElementById('s_mobile')?.value.trim()||'';if(!/^\d{10}$/.test(mobile)){msg('rmaV29ServiceMsg','Please enter a valid 10-digit mobile number.','error');return}
+  updateServicePrice();const amount=Number((document.getElementById('serviceTotal')?.textContent||'').replace(/[^0-9.]/g,''));if(!amount){msg('rmaV29ServiceMsg','Please select a service so the payment amount can be calculated.','error');return}
+- if(!window.Razorpay){msg('rmaV29ServiceMsg','Razorpay Checkout could not be loaded. Please refresh the page and try again.','error');return}
+- const requestId='RMA-S-'+Date.now().toString().slice(-9);const name=document.getElementById('s_name')?.value.trim()||'';const email=document.getElementById('s_email')?.value.trim()||'';
+- btn.disabled=false;msg('rmaV29ServiceMsg','Creating secure Razorpay order...');
+- try{
+-   const order=await rmaCreateRazorpayOrder(amount,requestId,'RMA Professional Service Payment',{request_id:requestId,service_type:keys.join(',')});
+-   const rz=new window.Razorpay({key:window.RAZORPAY_KEY_ID,order_id:order.order_id,amount:order.amount,currency:order.currency||'INR',name:'RMA Design & Construction',description:'RMA Professional Service Payment',prefill:{name,email,contact:mobile},theme:{color:'#2e7d5b'},modal:{ondismiss:()=>msg('rmaV29ServiceMsg','Payment window closed. No payment was confirmed.','info')},handler:async response=>{
+-     try{msg('rmaV29ServiceMsg','Verifying payment securely...');await rmaVerifyRazorpayPayment(response);const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Paid Service Request — '+keys.join(', '),project_address:document.getElementById('s_project_address')?.value.trim()||'Service request',latitude:null,longitude:null,distance_km:0,visit_fee:amount,gst_amount:0,total_amount:amount,status:'paid',visit_scope:JSON.stringify({selected_services:keys,payment_id:response.razorpay_payment_id,payment_status:'paid'})};await insertBooking(payload);msg('rmaV29ServiceMsg','Payment verified. Generating GST invoice...');const taxable=Number((amount/1.18).toFixed(2));const gst=Number((amount-taxable).toFixed(2));const inv=await rmaGenerateAndSendGSTInvoice({payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature||'',order_id:response.razorpay_order_id||'',receipt:requestId,invoice_type:'service',customer:{name,email:email||'',mobile,address:document.getElementById('s_project_address')?.value.trim()||'Service request',state:''},description:'RMA Professional Service — '+keys.join(', '),taxable_amount:taxable,gst_rate:18,gst_amount:gst,total_amount:amount,notes:{selected_services:keys}});btn.textContent='Payment Completed';btn.disabled=true;msg('rmaV29ServiceMsg','Payment verified, service request submitted and GST invoice sent. Invoice No.: '+inv.invoice_number,'success');}
+-     catch(e){btn.disabled=false;msg('rmaV29ServiceMsg',e.message||'Payment verification or submission failed.','error');}
+-   }});rz.open();
+- }catch(e){btn.disabled=false;msg('rmaV29ServiceMsg',e.message||'Unable to start Razorpay payment.','error');}
++ const requestId='RMA-S-'+Date.now().toString().slice(-9);
++ const name=document.getElementById('s_name')?.value.trim()||'';
++ const email=document.getElementById('s_email')?.value.trim()||'';
++ const address=document.getElementById('s_project_address')?.value.trim()||'Service request';
++
++ return rmaExecutePaymentFlow({
++   paymentType: 'service',
++   amount,
++   receipt: requestId,
++   description: 'RMA Professional Service — ' + keys.join(', '),
++   customer: { name, email, mobile, address },
++   scopeDetails: { selected_services: keys, service_type: keys.join(',') },
++   btnEl: btn,
++   msgEl: 'rmaV29ServiceMsg'
++ });
+ }
+
+ function installConstructionPayment(){
+@@ -2781,7 +2834,7 @@ function installConstructionPayment(){
+  }
+ }
+ async function payConstructionWithRazorpay(){
+- const form=document.getElementById('constructionForm'),btn=document.getElementById('rmaV29ConstructionPay'),box=document.getElementById('rmaV29ConstructionMsg');
++ const form=document.getElementById('constructionForm'),btn=document.getElementById('rmaV29ConstructionPay');
+  if(!form.reportValidity())return;
+  const name=document.getElementById('c_name2')?.value.trim()||'';
+  const mobile=document.getElementById('c_mobile2')?.value.trim()||'';
+@@ -2792,62 +2845,34 @@ async function payConstructionWithRazorpay(){
+  const amountText=document.getElementById('c_summaryTotal')?.textContent||'₹0';
+  const amount=Number(amountText.replace(/[^0-9.]/g,''));
+  if(!amount||amount<=0){msg('rmaV29ConstructionMsg','Please enter built-up area and construction details so the total payment amount can be calculated.','error');return}
+- if(!window.Razorpay){msg('rmaV29ConstructionMsg','Razorpay Checkout could not be loaded. Please refresh the page and try again.','error');return}
++
+  const requestId='RMA-C-'+Date.now().toString().slice(-9);
+- btn.disabled=false;msg('rmaV29ConstructionMsg','Creating secure Razorpay order...');
+- try{
+-   const buildingType=document.getElementById('c_building2')?.value||'Residential';
+-   const floors=document.getElementById('c_floors2')?.value||'1';
+-   const area=document.getElementById('c_area2')?.value||'0';
+-   const basis=document.getElementById('c_basis2')?.value||'material';
+-   const rate=document.getElementById('c_rate2')?.value||'grey';
+-   const address=document.getElementById('c_address2')?.value.trim()||'';
+-   const other=document.getElementById('c_other2')?.value.trim()||'';
+-   const order=await rmaCreateRazorpayOrder(amount,requestId,'RMA Construction Payment',{request_id:requestId,service_type:'Construction — '+buildingType});
+-   const rz=new window.Razorpay({
+-     key:window.RAZORPAY_KEY_ID,
+-     order_id:order.order_id,
+-     amount:order.amount,
+-     currency:order.currency||'INR',
+-     name:'RMA Design & Construction',
+-     description:'RMA Construction Payment',
+-     prefill:{name,email,contact:mobile},
+-     theme:{color:'#2e7d5b'},
+-     modal:{ondismiss:()=>msg('rmaV29ConstructionMsg','Payment window closed. No payment was confirmed.','info')},
+-     handler:async response=>{
+-       try{
+-         msg('rmaV29ConstructionMsg','Verifying payment securely...');
+-         await rmaVerifyRazorpayPayment(response);
+-         const cPayload={request_id:requestId,client_name:name,mobile,email:email||null,building_type:buildingType,floors:Number(floors),built_up_area_per_floor:Number(area),basis,stage:rate,site_address:address,requirements:other,total_amount:amount,status:'paid',payment_id:response.razorpay_payment_id};
+-         try{await insertBooking({request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Paid Construction Request — '+buildingType,project_address:address,visit_fee:amount,gst_amount:Number((amount-(amount/1.18)).toFixed(2)),total_amount:amount,status:'paid',visit_scope:JSON.stringify(cPayload)});}catch(e){console.warn('Booking insert for construction payment:',e);}
+-         msg('rmaV29ConstructionMsg','Payment verified. Generating GST invoice...');
+-         const taxable=Number((amount/1.18).toFixed(2));
+-         const gst=Number((amount-taxable).toFixed(2));
+-         const inv=await rmaGenerateAndSendGSTInvoice({
+-           payment_id:response.razorpay_payment_id,
+-           razorpay_signature:response.razorpay_signature||'',
+-           order_id:response.razorpay_order_id||'',
+-           receipt:requestId,
+-           invoice_type:'construction',
+-           customer:{name,email:email||'',mobile,address,state:'Jammu and Kashmir'},
+-           description:'RMA Construction Service — '+buildingType+' ('+floors+' Floor(s), '+area+' sq.ft./floor)',
+-           taxable_amount:taxable,
+-           gst_rate:18,
+-           gst_amount:gst,
+-           total_amount:amount,
+-           notes:{building_type:buildingType,floors,built_up_area_per_floor:area,basis,stage:rate}
+-         });
+-         btn.textContent='Payment Completed';
+-         btn.disabled=true;
+-         msg('rmaV29ConstructionMsg','Payment verified, construction request submitted and GST invoice sent. Invoice No.: '+inv.invoice_number,'success');
+-       }catch(e){
+-         btn.disabled=false;
+-         msg('rmaV29ConstructionMsg',e.message||'Payment verification or submission failed.','error');
+-       }
+-     }
+-   });
+-   rz.open();
+- }catch(e){btn.disabled=false;msg('rmaV29ConstructionMsg',e.message||'Unable to start Razorpay payment.','error');}
++ const buildingType=document.getElementById('c_building2')?.value||'Residential';
++ const floors=document.getElementById('c_floors2')?.value||'1';
++ const area=document.getElementById('c_area2')?.value||'0';
++ const basis=document.getElementById('c_basis2')?.value||'material';
++ const rate=document.getElementById('c_rate2')?.value||'grey';
++ const address=document.getElementById('c_address2')?.value.trim()||'';
++ const other=document.getElementById('c_other2')?.value.trim()||'';
++
++ return rmaExecutePaymentFlow({
++   paymentType: 'construction',
++   amount,
++   receipt: requestId,
++   description: 'RMA Construction Service — ' + buildingType + ' (' + floors + ' Floor(s), ' + area + ' sq.ft./floor)',
++   customer: { name, email, mobile, address, state: 'Jammu and Kashmir' },
++   scopeDetails: {
++     building_type: buildingType,
++     floors: Number(floors),
++     built_up_area_per_floor: Number(area),
++     basis,
++     stage: rate,
++     requirements: other,
++     service_type: 'Construction — ' + buildingType
++   },
++   btnEl: btn,
++   msgEl: 'rmaV29ConstructionMsg'
++ });
+ }
+ window.payConstructionWithRazorpay=payConstructionWithRazorpay;
