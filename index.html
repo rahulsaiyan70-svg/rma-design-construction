@@ -2754,19 +2754,33 @@ function installServicePayment(){
 }
 async function payService(){
  const form=document.getElementById('serviceForm'),btn=document.getElementById('rmaV29ServicePay'),box=document.getElementById('rmaV29ServiceMsg');if(!form.reportValidity())return;
+ if(paymentBusy) return;
  const keys=selectedServiceKeys();if(!keys.length){msg('rmaV29ServiceMsg','Please select at least one service.','error');return}
  const mobile=document.getElementById('s_mobile')?.value.trim()||'';if(!/^\d{10}$/.test(mobile)){msg('rmaV29ServiceMsg','Please enter a valid 10-digit mobile number.','error');return}
  updateServicePrice();const amount=Number((document.getElementById('serviceTotal')?.textContent||'').replace(/[^0-9.]/g,''));if(!amount){msg('rmaV29ServiceMsg','Please select a service so the payment amount can be calculated.','error');return}
- if(!window.Razorpay){msg('rmaV29ServiceMsg','Razorpay Checkout could not be loaded. Please refresh the page and try again.','error');return}
  const requestId='RMA-S-'+Date.now().toString().slice(-9);const name=document.getElementById('s_name')?.value.trim()||'';const email=document.getElementById('s_email')?.value.trim()||'';
- btn.disabled=false;msg('rmaV29ServiceMsg','Creating secure Razorpay order...');
- try{
-   const order=await rmaCreateRazorpayOrder(amount,requestId,'RMA Professional Service Payment',{request_id:requestId,service_type:keys.join(',')});
-   const rz=new window.Razorpay({key:window.RAZORPAY_KEY_ID,order_id:order.order_id,amount:order.amount,currency:order.currency||'INR',name:'RMA Design & Construction',description:'RMA Professional Service Payment',prefill:{name,email,contact:mobile},theme:{color:'#2e7d5b'},modal:{ondismiss:()=>msg('rmaV29ServiceMsg','Payment window closed. No payment was confirmed.','info')},handler:async response=>{
-     try{msg('rmaV29ServiceMsg','Verifying payment securely...');await rmaVerifyRazorpayPayment(response);const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Paid Service Request — '+keys.join(', '),project_address:document.getElementById('s_project_address')?.value.trim()||'Service request',latitude:null,longitude:null,distance_km:0,visit_fee:amount,gst_amount:0,total_amount:amount,status:'paid',visit_scope:JSON.stringify({selected_services:keys,payment_id:response.razorpay_payment_id,payment_status:'paid'})};await insertBooking(payload);msg('rmaV29ServiceMsg','Payment verified. Generating GST invoice...');const taxable=Number((amount/1.18).toFixed(2));const gst=Number((amount-taxable).toFixed(2));const inv=await rmaGenerateAndSendGSTInvoice({payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature||'',order_id:response.razorpay_order_id||'',receipt:requestId,invoice_type:'service',customer:{name,email:email||'',mobile,address:document.getElementById('s_project_address')?.value.trim()||'Service request',state:''},description:'RMA Professional Service — '+keys.join(', '),taxable_amount:taxable,gst_rate:18,gst_amount:gst,total_amount:amount,notes:{selected_services:keys}});btn.textContent='Payment Completed';btn.disabled=true;msg('rmaV29ServiceMsg','Payment verified, service request submitted and GST invoice sent. Invoice No.: '+inv.invoice_number,'success');}
-     catch(e){btn.disabled=false;msg('rmaV29ServiceMsg',e.message||'Payment verification or submission failed.','error');}
-   }});rz.open();
- }catch(e){btn.disabled=false;msg('rmaV29ServiceMsg',e.message||'Unable to start Razorpay payment.','error');}
+ const address=document.getElementById('s_project_address')?.value.trim()||'Service request';
+
+ paymentBusy = true;
+ return rmaExecutePaymentFlow({
+   paymentType: 'service',
+   amount: amount,
+   originalAmount: amount,
+   receipt: requestId,
+   description: 'RMA Professional Service Payment — ' + keys.join(', '),
+   customer: { name, email, mobile, address, state: '' },
+   scopeDetails: {
+     service_type: keys.join(', '),
+     selected_services: keys
+   },
+   btnEl: btn,
+   msgEl: 'rmaV29ServiceMsg',
+   onSuccess: ({ response, invoice }) => {
+     paymentBusy = false;
+     if(btn) { btn.textContent = 'Payment Completed'; btn.disabled = true; }
+     msg('rmaV29ServiceMsg', 'Payment verified, service request submitted' + (invoice ? (' and GST invoice sent. Invoice No.: ' + invoice.invoice_number) : '.'), 'success');
+   }
+ });
 }
 
 function installConstructionPayment(){
@@ -2783,6 +2797,7 @@ function installConstructionPayment(){
 async function payConstructionWithRazorpay(){
  const form=document.getElementById('constructionForm'),btn=document.getElementById('rmaV29ConstructionPay'),box=document.getElementById('rmaV29ConstructionMsg');
  if(!form.reportValidity())return;
+ if(paymentBusy) return;
  const name=document.getElementById('c_name2')?.value.trim()||'';
  const mobile=document.getElementById('c_mobile2')?.value.trim()||'';
  const email=document.getElementById('c_email2')?.value.trim()||'';
@@ -2792,62 +2807,40 @@ async function payConstructionWithRazorpay(){
  const amountText=document.getElementById('c_summaryTotal')?.textContent||'₹0';
  const amount=Number(amountText.replace(/[^0-9.]/g,''));
  if(!amount||amount<=0){msg('rmaV29ConstructionMsg','Please enter built-up area and construction details so the total payment amount can be calculated.','error');return}
- if(!window.Razorpay){msg('rmaV29ConstructionMsg','Razorpay Checkout could not be loaded. Please refresh the page and try again.','error');return}
  const requestId='RMA-C-'+Date.now().toString().slice(-9);
- btn.disabled=false;msg('rmaV29ConstructionMsg','Creating secure Razorpay order...');
- try{
-   const buildingType=document.getElementById('c_building2')?.value||'Residential';
-   const floors=document.getElementById('c_floors2')?.value||'1';
-   const area=document.getElementById('c_area2')?.value||'0';
-   const basis=document.getElementById('c_basis2')?.value||'material';
-   const rate=document.getElementById('c_rate2')?.value||'grey';
-   const address=document.getElementById('c_address2')?.value.trim()||'';
-   const other=document.getElementById('c_other2')?.value.trim()||'';
-   const order=await rmaCreateRazorpayOrder(amount,requestId,'RMA Construction Payment',{request_id:requestId,service_type:'Construction — '+buildingType});
-   const rz=new window.Razorpay({
-     key:window.RAZORPAY_KEY_ID,
-     order_id:order.order_id,
-     amount:order.amount,
-     currency:order.currency||'INR',
-     name:'RMA Design & Construction',
-     description:'RMA Construction Payment',
-     prefill:{name,email,contact:mobile},
-     theme:{color:'#2e7d5b'},
-     modal:{ondismiss:()=>msg('rmaV29ConstructionMsg','Payment window closed. No payment was confirmed.','info')},
-     handler:async response=>{
-       try{
-         msg('rmaV29ConstructionMsg','Verifying payment securely...');
-         await rmaVerifyRazorpayPayment(response);
-         const cPayload={request_id:requestId,client_name:name,mobile,email:email||null,building_type:buildingType,floors:Number(floors),built_up_area_per_floor:Number(area),basis,stage:rate,site_address:address,requirements:other,total_amount:amount,status:'paid',payment_id:response.razorpay_payment_id};
-         try{await insertBooking({request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Paid Construction Request — '+buildingType,project_address:address,visit_fee:amount,gst_amount:Number((amount-(amount/1.18)).toFixed(2)),total_amount:amount,status:'paid',visit_scope:JSON.stringify(cPayload)});}catch(e){console.warn('Booking insert for construction payment:',e);}
-         msg('rmaV29ConstructionMsg','Payment verified. Generating GST invoice...');
-         const taxable=Number((amount/1.18).toFixed(2));
-         const gst=Number((amount-taxable).toFixed(2));
-         const inv=await rmaGenerateAndSendGSTInvoice({
-           payment_id:response.razorpay_payment_id,
-           razorpay_signature:response.razorpay_signature||'',
-           order_id:response.razorpay_order_id||'',
-           receipt:requestId,
-           invoice_type:'construction',
-           customer:{name,email:email||'',mobile,address,state:'Jammu and Kashmir'},
-           description:'RMA Construction Service — '+buildingType+' ('+floors+' Floor(s), '+area+' sq.ft./floor)',
-           taxable_amount:taxable,
-           gst_rate:18,
-           gst_amount:gst,
-           total_amount:amount,
-           notes:{building_type:buildingType,floors,built_up_area_per_floor:area,basis,stage:rate}
-         });
-         btn.textContent='Payment Completed';
-         btn.disabled=true;
-         msg('rmaV29ConstructionMsg','Payment verified, construction request submitted and GST invoice sent. Invoice No.: '+inv.invoice_number,'success');
-       }catch(e){
-         btn.disabled=false;
-         msg('rmaV29ConstructionMsg',e.message||'Payment verification or submission failed.','error');
-       }
-     }
-   });
-   rz.open();
- }catch(e){btn.disabled=false;msg('rmaV29ConstructionMsg',e.message||'Unable to start Razorpay payment.','error');}
+ const buildingType=document.getElementById('c_building2')?.value||'Residential';
+ const floors=document.getElementById('c_floors2')?.value||'1';
+ const area=document.getElementById('c_area2')?.value||'0';
+ const basis=document.getElementById('c_basis2')?.value||'material';
+ const rate=document.getElementById('c_rate2')?.value||'grey';
+ const address=document.getElementById('c_address2')?.value.trim()||'';
+ const other=document.getElementById('c_other2')?.value.trim()||'';
+
+ paymentBusy = true;
+ return rmaExecutePaymentFlow({
+   paymentType: 'construction',
+   amount: amount,
+   originalAmount: amount,
+   receipt: requestId,
+   description: 'RMA Construction Service — ' + buildingType + ' (' + floors + ' Floor(s), ' + area + ' sq.ft./floor)',
+   customer: { name, email, mobile, address, state: 'Jammu and Kashmir' },
+   scopeDetails: {
+     service_type: 'Construction — ' + buildingType,
+     building_type: buildingType,
+     floors,
+     built_up_area_per_floor: area,
+     basis,
+     stage: rate,
+     requirements: other
+   },
+   btnEl: btn,
+   msgEl: 'rmaV29ConstructionMsg',
+   onSuccess: ({ response, invoice }) => {
+     paymentBusy = false;
+     if(btn) { btn.textContent = 'Payment Completed'; btn.disabled = true; }
+     msg('rmaV29ConstructionMsg', 'Payment verified, construction request submitted' + (invoice ? (' and GST invoice sent. Invoice No.: ' + invoice.invoice_number) : '.'), 'success');
+   }
+ });
 }
 window.payConstructionWithRazorpay=payConstructionWithRazorpay;
 
