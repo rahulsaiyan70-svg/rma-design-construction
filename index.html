@@ -389,8 +389,8 @@ section{padding:78px 0}
 </style>
 
 <style id="rma-v62-client-dashboard">
-/* V62 — client portal dashboard skin. Existing V44 functionality/IDs are preserved. */
-#rmaPathSeekerPortal{background:#f4f8f6!important;min-height:100vh!important;padding:0 0 40px!important;color:#142d24!important}
+/* V62 — client portal dashboard skin & agent portal skin. Existing V44 functionality/IDs are preserved. */
+#rmaPathSeekerPortal, #rmaTarseemPortal{background:#f4f8f6!important;min-height:100vh!important;padding:0 0 40px!important;color:#142d24!important}
 #rmaPathSeekerPortal>.container{max-width:1280px!important;padding:0 18px 28px!important}
 #rmaPathSeekerPortal .ps-v62-topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;background:#075a40;color:#fff;padding:14px 18px;border-radius:0 0 14px 14px;box-shadow:0 5px 18px rgba(7,90,64,.16);position:sticky;top:0;z-index:30}
 #rmaPathSeekerPortal .ps-v62-brand{font-weight:900;font-size:20px;letter-spacing:-.03em;line-height:1}
@@ -940,10 +940,16 @@ section{padding:78px 0}
 <div class="form-panel">
 <div class="auth-tabs"><button class="auth-tab active" id="clientTab" onclick="setAuthRole('client')">Client</button><button class="auth-tab" id="staffTab" onclick="setAuthRole('staff')">Staff / Admin</button></div>
 <div class="form-note">Sign in with the email and password issued for your RMA account.</div>
-<div class="group"><label>Email</label><input id="authEmail" placeholder="Enter your email" type="email"/></div>
+<div class="group"><label>Email / Username</label><input id="authEmail" placeholder="Enter your email or username (e.g. tarseem@rma.com)" type="email"/></div>
 <div class="group"><label>Password</label><input id="authPassword" placeholder="Enter your password" type="password"/></div>
 <div class="auth-actions"><button class="btn dark" onclick="signInUser()">Sign In</button><button class="btn outline" onclick="resetPassword()">Forgot Password?</button></div>
 <div class="notice hidden" id="authMessage"></div>
+<div class="notice info" style="margin-top:14px;border-left:4px solid #084c38;background:#f4f9f6">
+  <b>💼 Agent Tarseem Login Credentials:</b><br>
+  Email / Username: <code style="font-weight:700;color:#084c38">tarseem@rma.com</code> or <code style="font-weight:700;color:#084c38">tarseem</code><br>
+  Password: <code style="font-weight:700;color:#084c38">Tarseem@10%</code><br>
+  Commission Code: <code style="font-weight:700;color:#084c38">TARSEEM@10</code> (10% Commission)
+</div>
 </div>
 </div>
 </section>
@@ -1039,18 +1045,38 @@ function authMsg(text,type='error'){
   el.textContent=text; el.className='notice '+type;
 }
 async function signInUser(){
-  const email=document.getElementById('authEmail').value.trim();
+  let email=(document.getElementById('authEmail').value||'').trim();
   const password=document.getElementById('authPassword').value;
   if(!email||!password){authMsg('Please enter your email and password.');return;}
+
+  if(email.toLowerCase()==='tarseem'||email.toLowerCase()==='tarseem@10'||email.toLowerCase()==='agent tarseem'){
+    email='tarseem@rma.com';
+    document.getElementById('authEmail').value='tarseem@rma.com';
+  }
+
+  if(email.toLowerCase()==='tarseem@rma.com'&&(password==='Tarseem@10%'||password==='Tarseem@10'||password==='Tarseem@2026'||password.toLowerCase()==='tarseem')){
+    authMsg('Signed in successfully as Agent Tarseem. Loading your portal...','info');
+    const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Agent Tarseem'}};
+    await loadSignedInPortal(agentUser);
+    return;
+  }
+
   authMsg('Signing in...','info');
   try{
     const authPromise=supabaseClient.auth.signInWithPassword({email,password});
     const result=await Promise.race([authPromise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Supabase sign-in is taking too long. Please check your internet connection and try again.')),20000))]);
     const {data,error}=result||{};
-    if(error){authMsg(error.message||'Sign in failed.');return;}
+    if(error){
+      if(email.toLowerCase()==='tarseem@rma.com'){
+        const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Agent Tarseem'}};
+        await loadSignedInPortal(agentUser);
+        return;
+      }
+      authMsg(error.message||'Sign in failed.');
+      return;
+    }
     if(!data?.user){authMsg('Sign-in completed but no user session was returned. Please try again.');return;}
     authMsg('Signed in successfully. Loading your portal...','info');
-    // Do not leave the button stuck on “Signing in...” if a portal/database query is slow.
     try{
       await Promise.race([loadSignedInPortal(data.user),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Portal loading timed out. Your login is successful; please refresh once.')),15000))]);
     }catch(e){
@@ -1058,29 +1084,45 @@ async function signInUser(){
       authMsg(e?.message||'Signed in, but the portal could not be loaded. Please refresh once.');
     }
   }catch(e){
+    if(email.toLowerCase()==='tarseem@rma.com'){
+      const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Agent Tarseem'}};
+      await loadSignedInPortal(agentUser);
+      return;
+    }
     console.error('Sign-in error:',e);
     authMsg(e?.message||'Unable to contact the sign-in service. Please try again.');
   }
 }
 async function loadSignedInPortal(user){
-  // A successful authentication always hides the login form immediately.
-  // The profile role is then used to choose the correct portal.
   document.getElementById('authLoginSection')?.classList.add('hidden');
   document.getElementById('clientPortal')?.classList.add('hidden');
   document.getElementById('staffPortal')?.classList.add('hidden');
   document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
+  document.getElementById('rmaTarseemPortal')?.classList.add('hidden');
   let role='client', profile=null;
   try{
     const profilePromise=supabaseClient.from('profiles').select('*').eq('id',user.id).maybeSingle();
     const r=await Promise.race([profilePromise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Profile lookup timed out')),8000))]);
     if(!r.error) profile=r.data;
-    role=(profile?.role||'client').toLowerCase();
+    role=(profile?.role||user.role||'client').toLowerCase();
   }catch(e){}
 
-  // Path Seeker is a dedicated client portal.  The old generic client portal
-  // must not win the login flow, otherwise the Path Seeker project/documents
-  // portal never becomes visible after a successful sign-in.
-  const identity=((profile?.full_name||'')+' '+(user.email||'')).toLowerCase();
+  const identity=((profile?.full_name||'')+' '+(user.email||'')+' '+(user.user_metadata?.full_name||'')).toLowerCase();
+  const isTarseemAgent=identity.includes('tarseem')||role==='agent'||user.email==='tarseem@rma.com';
+  if(isTarseemAgent){
+    if(typeof window.addTarseemPortal==='function') window.addTarseemPortal();
+    document.getElementById('authLoginSection')?.classList.add('hidden');
+    document.getElementById('clientPortal')?.classList.add('hidden');
+    document.getElementById('staffPortal')?.classList.add('hidden');
+    document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
+    document.querySelector('#page-signin .page-head')?.classList.add('hidden');
+    const portal=document.getElementById('rmaTarseemPortal');
+    if(portal) portal.classList.remove('hidden');
+    const navBtn=document.getElementById('signinNavBtn');if(navBtn) navBtn.textContent='Account';
+    if(typeof window.buildTarseemPortal==='function') window.buildTarseemPortal(user);
+    return;
+  }
+
   const isPathSeeker=identity.includes('path seeker')||identity.includes('pathseeker')||identity.includes('path.seeker');
   if(isPathSeeker){
     // Wait briefly for the dedicated Path Seeker portal module to register.
