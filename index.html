@@ -2614,9 +2614,9 @@ const rate=d=>d<=10?1500:d<=20?2000:d<=40?2500:d<=50?3500:d<=75?4000:5000;
 const money=n=>'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 let visitReady=false, visitDistance=null, paymentBusy=false, siteVisitCouponApplied=false;
 const RMA_TEMP_COUPON='TEMP@1';
-const RMA_TEMP_COUPON_AMOUNT=5;
+const RMA_TEMP_COUPON_AMOUNT=1;
 function rmaIndiaToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
-function rmaCouponIsValidToday(){return rmaIndiaToday()==='2026-09-24';}
+function rmaCouponIsValidToday(){const today=rmaIndiaToday();return today>='2026-09-25'&&today<='2026-10-02';}
 function siteVisitPricing(distance){
  const baseFee=rate(distance),baseGst=baseFee*.18,baseTotal=baseFee+baseGst;
  if(siteVisitCouponApplied){
@@ -2630,9 +2630,9 @@ function siteVisitPricing(distance){
 function applySiteVisitCoupon(){
  const input=document.getElementById('r29_coupon'),code=(input?.value||'').trim();
  if(code.toUpperCase()!==RMA_TEMP_COUPON){siteVisitCouponApplied=false;msg('r29_couponMsg','Invalid coupon code.','error');if(visitDistance!==null)showFee(visitDistance);return;}
- if(!rmaCouponIsValidToday()){siteVisitCouponApplied=false;msg('r29_couponMsg','This coupon is valid only on 24 September 2026.','error');if(visitDistance!==null)showFee(visitDistance);return;}
+ if(!rmaCouponIsValidToday()){siteVisitCouponApplied=false;msg('r29_couponMsg','This coupon was valid for 1 week (25 September 2026 to 02 October 2026).','error');if(visitDistance!==null)showFee(visitDistance);return;}
  siteVisitCouponApplied=true;
- msg('r29_couponMsg','Coupon applied. Final amount is ₹5.00 for today only.','success');
+ msg('r29_couponMsg','Coupon applied. Final amount is ₹1.00.','success');
  if(visitDistance!==null)showFee(visitDistance);
 }
 
