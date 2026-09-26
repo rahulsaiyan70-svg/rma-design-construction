@@ -521,6 +521,7 @@ section{padding:78px 0}
 <li><button onclick="showPage('services')">Services</button></li>
 <li><button onclick="showPage('construction')">Construction</button></li>
 <li><button onclick="showPage('sitevisit')">Book My Site Visit</button></li>
+<li><button onclick="showAppointmentSection()">Book Appointment</button></li>
 <li><button onclick="showPage('about')">About</button></li>
 <li><button onclick="showPage('contact')">Contact</button></li>
 <li><button id="signinNavBtn" onclick="showPage('signin')">Sign In</button></li>
@@ -569,7 +570,7 @@ section{padding:78px 0}
 <h1>BUILDING<br/>YOUR VISION</h1>
 <p>Professional architectural planning, structural design, municipality approval drawings, estimation, surveying and construction services.</p>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:28px">
-<button class="btn gold" onclick="showPage('services')">Explore Services</button>
+<button class="btn gold" onclick="showAppointmentSection()">Book Your Appointment →</button>
 <button class="btn dark" onclick="showPage('sitevisit')">Book My Site Visit →</button>
 </div>
 </div>
@@ -636,6 +637,101 @@ section{padding:78px 0}
 </div>
 </div>
 </section>
+
+<!-- BOOK YOUR APPOINTMENT SECTION -->
+<section class="section" id="appointment-section" style="background:#f4f8f5;padding:50px 0;border-top:1px solid #dce9e3;border-bottom:1px solid #dce9e3">
+  <div class="container" style="max-width:860px">
+    <div style="text-align:center;margin-bottom:26px">
+      <span class="kicker" style="color:#084c38;font-weight:800;letter-spacing:1px;font-size:12px;text-transform:uppercase">APPOINTMENT REQUEST</span>
+      <h2 style="font-size:32px;font-weight:900;color:#142d24;margin:6px 0 10px">Book Your Appointment</h2>
+      <p class="muted" style="font-size:15px;max-width:620px;margin:0 auto">Schedule an architectural &amp; engineering consultation with RMA Design &amp; Construction.</p>
+    </div>
+
+    <div class="form-panel" style="background:#fff;border:1px solid #dce9e3;border-radius:16px;padding:30px;box-shadow:0 6px 24px rgba(20,45,36,0.06)">
+      <div id="appointmentFormContainer">
+        <form id="rmaAppointmentForm" onsubmit="handleAppointmentSubmit(event)">
+          <div class="form-grid">
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Full Name *</label>
+              <input id="apt_name" type="text" placeholder="Enter your full name" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px">
+            </div>
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Mobile Number *</label>
+              <input id="apt_mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Email Address *</label>
+              <input id="apt_email" type="email" placeholder="e.g. name@gmail.com" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px">
+            </div>
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Project / Building Type *</label>
+              <select id="apt_building" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px;background:#fff">
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Institutional">Institutional</option>
+                <option value="Industrial">Industrial</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="group">
+            <label style="font-weight:700;display:block;margin-bottom:6px">Project / Site Address *</label>
+            <textarea id="apt_address" rows="2" placeholder="House/plot number, street, locality, district, J&amp;K" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px"></textarea>
+          </div>
+
+          <div class="form-grid">
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Preferred Date *</label>
+              <input id="apt_date" type="date" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px">
+            </div>
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Preferred Time *</label>
+              <select id="apt_time" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px;background:#fff">
+                <option value="10:00 AM">10:00 AM</option>
+                <option value="11:00 AM">11:00 AM</option>
+                <option value="12:00 PM">12:00 PM</option>
+                <option value="02:00 PM">02:00 PM</option>
+                <option value="03:00 PM">03:00 PM</option>
+                <option value="04:00 PM">04:00 PM</option>
+                <option value="05:00 PM">05:00 PM</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="group">
+            <label style="font-weight:700;display:block;margin-bottom:6px">Brief Requirement / Message</label>
+            <textarea id="apt_message" rows="3" placeholder="Briefly describe your project, architectural needs, structural requirements, or consultation topic..." style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px"></textarea>
+          </div>
+
+          <div id="aptFormMsg" class="notice hidden" style="margin-bottom:14px"></div>
+
+          <button type="submit" id="aptSubmitBtn" class="btn gold full" style="font-size:16px;font-weight:800;padding:14px">Request Appointment</button>
+        </form>
+      </div>
+
+      <!-- Confirmation Screen -->
+      <div id="appointmentConfirmationBox" class="hidden" style="text-align:center;padding:20px 10px">
+        <div style="width:64px;height:64px;border-radius:50%;background:#e0f3ea;color:#084c38;display:grid;place-items:center;font-size:32px;margin:0 auto 16px;font-weight:900">✓</div>
+        <h3 style="font-size:24px;font-weight:900;color:#084c38;margin-bottom:8px">Appointment Request Received</h3>
+        <p style="font-size:16px;color:#234338;margin-bottom:14px;line-height:1.5">
+          Your temporary appointment has been booked for <b id="aptConfDate" style="color:#084c38"></b> at <b id="aptConfTime" style="color:#084c38"></b>.
+        </p>
+        <div style="background:#f4f9f6;border:1px solid #dce9e3;border-radius:12px;padding:16px;margin:16px 0;text-align:left;font-size:14px;line-height:1.6;color:#334d43">
+          <p style="margin:0 0 8px"><b>Important Note:</b> This is a temporary appointment request, not a permanently confirmed slot.</p>
+          <p style="margin:0">Our team will shortly confirm the available slot and contact you with the final appointment timing. Our team will contact you shortly.</p>
+        </div>
+        <div id="aptConfDetails" style="text-align:left;background:#fbfcfc;border:1px solid #eef3f0;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;line-height:1.6">
+        </div>
+        <button type="button" class="btn outline" onclick="resetAppointmentForm()">Book Another Appointment</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <div class="stats">
 <div class="container statsgrid">
 <div class="stat"><strong>5+</strong><span>Years Experience</span></div>
@@ -1518,6 +1614,70 @@ async function rmaVerifyRazorpayPayment(response){
   return d;
 }
 
+async function notifyRMAAdminForNewBooking({
+  type,
+  customerName,
+  mobile,
+  email,
+  location,
+  paymentAmount,
+  bookingId,
+  requestedDate,
+  requestedTime,
+  referralCode,
+  details
+}){
+  const formattedDate = new Date().toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+  const formattedTime = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+
+  const headerTitle = `New ${type}`;
+  const lines = [
+    `${headerTitle}`,
+    `Customer: ${customerName || 'N/A'}`,
+    `Mobile: ${mobile || 'N/A'}`,
+    `Email: ${email || 'N/A'}`
+  ];
+
+  if(requestedDate) lines.push(`Requested Date: ${requestedDate}`);
+  if(requestedTime) lines.push(`Requested Time: ${requestedTime}`);
+  if(location) lines.push(`Location / Address: ${location}`);
+  if(paymentAmount) lines.push(`Payment: ₹${paymentAmount}`);
+  if(referralCode) lines.push(`Referral Code Used: ${referralCode}`);
+  if(details) lines.push(`Details: ${details}`);
+  lines.push(`Booking / Request ID: ${bookingId}`);
+  lines.push(`Submission Date/Time: ${formattedDate} at ${formattedTime}`);
+
+  const fullText = lines.join('\n');
+  const subjectText = `${headerTitle} — ${bookingId}`;
+
+  // Channel 2: Message/notification inside RMA Admin Account (stored in client_messages)
+  try {
+    if(typeof supabaseClient !== 'undefined'){
+      await supabaseClient.from('client_messages').insert({
+        user_id: 'admin_notify',
+        client_name: customerName || 'Customer',
+        email: email || null,
+        subject: subjectText,
+        message: fullText,
+        sender_role: 'client',
+        thread_id: 'admin_notifications',
+        status: 'new'
+      });
+    }
+  } catch(err){
+    console.warn('Admin notification message insert warning:', err);
+  }
+
+  // Channel 1: Email Notification trigger
+  try {
+    const mailtoUrl = `mailto:rma.studies07@gmail.com?subject=${encodeURIComponent(subjectText)}&body=${encodeURIComponent(fullText)}`;
+    window.__lastAdminNotificationEmailUrl = mailtoUrl;
+  } catch(err){
+    console.warn('Admin notification email warning:', err);
+  }
+}
+window.notifyRMAAdminForNewBooking = notifyRMAAdminForNewBooking;
+
 async function rmaExecutePaymentFlow({
   paymentType = "service",
   amount,
@@ -1553,7 +1713,7 @@ async function rmaExecutePaymentFlow({
   setMsg('Creating secure Razorpay order...', 'info');
 
   const normCoupon = (couponCode || '').trim().toUpperCase();
-  const isTarseem = normCoupon === 'TARSEEM@10';
+  const isTarseem = normCoupon === 'TARSEEM@10' || normCoupon === 'TARSEEM@20';
   const origAmt = Number(originalAmount || amount);
   const agentCommission = isTarseem ? Number((origAmt * 0.10).toFixed(2)) : 0;
 
@@ -1562,7 +1722,7 @@ async function rmaExecutePaymentFlow({
     payment_type: paymentType,
     is_test: String(isTest),
     coupon_code: normCoupon,
-    agent_code: isTarseem ? 'TARSEEM@10' : (scopeDetails.agent_code || ''),
+    agent_code: isTarseem ? normCoupon : (scopeDetails.agent_code || ''),
     agent_commission: String(agentCommission),
     original_amount: String(origAmt),
     final_amount: String(amount),
@@ -1615,7 +1775,7 @@ async function rmaExecutePaymentFlow({
               razorpay_payment_id: response.razorpay_payment_id,
               is_test: isTest,
               coupon_code: normCoupon,
-              agent_code: isTarseem ? 'TARSEEM@10' : (scopeDetails.agent_code || ''),
+              agent_code: isTarseem ? normCoupon : (scopeDetails.agent_code || ''),
               agent_commission: agentCommission,
               original_amount: origAmt,
               final_amount: amount
@@ -1630,6 +1790,24 @@ async function rmaExecutePaymentFlow({
             }
           } catch(dbErr) {
             console.warn('Booking insertion warning:', dbErr);
+          }
+
+          try {
+            if(typeof window.notifyRMAAdminForNewBooking === 'function') {
+              window.notifyRMAAdminForNewBooking({
+                type: paymentType === 'construction' ? 'Construction Request' : 'Service Request',
+                customerName: customer.name || 'Customer',
+                mobile: customer.mobile || customer.contact || '',
+                email: customer.email || '',
+                location: customer.address || '',
+                paymentAmount: amount,
+                bookingId: receipt,
+                referralCode: normCoupon || 'None',
+                details: scopeDetails.service_type || description
+              });
+            }
+          } catch(notifyErr) {
+            console.warn('Notification error:', notifyErr);
           }
 
           let invoiceRes = null;
@@ -2796,8 +2974,17 @@ function siteVisitPricing(distance){
    const gst=Number((finalTotal-taxable).toFixed(2));
    return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:Number((baseTotal-finalTotal).toFixed(2)),coupon:normCode||RMA_TEMP_COUPON};
  }
- if(normCode==='TARSEEM@10'){
-   const discountAmount = 500;
+ let discountAmount = 0;
+ if(normCode==='TARSEEM@10' || normCode==='SITE10'){
+   discountAmount = 100;
+ } else if(normCode==='TARSEEM@20'){
+   discountAmount = 250;
+ } else if(normCode==='SITE20'){
+   discountAmount = 200;
+ } else if(normCode==='SITE30'){
+   discountAmount = 300;
+ }
+ if(discountAmount > 0){
    const finalTotal = Math.max(0, Number((baseTotal - discountAmount).toFixed(2)));
    const taxable = Number((finalTotal / 1.18).toFixed(2));
    const gst = Number((finalTotal - taxable).toFixed(2));
@@ -2816,13 +3003,25 @@ function applySiteVisitCoupon(){
  siteVisitCode=code;
  if(code==='TARSEEM@10'){
    siteVisitCouponApplied=false;
-   msg('r29_couponMsg','Referral code applied. ₹500 discount has been applied to your payment.','success');
+   msg('r29_couponMsg','Referral code applied. ₹100 discount has been applied.','success');
+ } else if(code==='TARSEEM@20'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Referral code applied. ₹250 discount has been applied.','success');
+ } else if(code==='SITE10'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Coupon code applied. ₹100 discount has been applied.','success');
+ } else if(code==='SITE20'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Coupon code applied. ₹200 discount has been applied.','success');
+ } else if(code==='SITE30'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Coupon code applied. ₹300 discount has been applied.','success');
  } else if(code===RMA_TEMP_COUPON || code==='RMATEST1'){
    siteVisitCouponApplied=true;
-   msg('r29_couponMsg','Coupon applied. Final amount is ₹1.00.','success');
+   msg('r29_couponMsg','Test Coupon applied. Amount reduced to ₹1.00 for payment verification.','success');
  } else {
    siteVisitCouponApplied=false; siteVisitCode='';
-   msg('r29_couponMsg','Invalid coupon or referral code.','error');
+   msg('r29_couponMsg','Invalid coupon or referral code for Site Visit.','error');
  }
  if(visitDistance!==null)showFee(visitDistance);
 }
@@ -2902,10 +3101,29 @@ async function payVisit(){
       try{
         msg('r29_message','Payment received. Verifying securely...');
         await rmaVerifyRazorpayPayment(response);
-        const isTarseemVisit = pricing.coupon === 'TARSEEM@10';
+        const isTarseemVisit = pricing.coupon === 'TARSEEM@10' || pricing.coupon === 'TARSEEM@20';
         const visitCommission = isTarseemVisit ? Number((pricing.baseTotal * 0.10).toFixed(2)) : 0;
-        const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG,coupon_code:pricing.coupon,agent_code:isTarseemVisit?'TARSEEM@10':'',agent_commission:visitCommission,original_total:pricing.baseTotal,discount:pricing.discount,final_total:total})};
+        const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG,coupon_code:pricing.coupon,agent_code:isTarseemVisit?pricing.coupon:'',agent_commission:visitCommission,original_total:pricing.baseTotal,discount:pricing.discount,final_total:total})};
         await insertBooking(payload);
+        try {
+          if(typeof window.notifyRMAAdminForNewBooking === 'function') {
+            window.notifyRMAAdminForNewBooking({
+              type: 'Site Visit Booking',
+              customerName: name,
+              mobile: mobile,
+              email: email || '',
+              location: document.getElementById('r29_address').value.trim(),
+              paymentAmount: total,
+              bookingId: requestId,
+              requestedDate: document.getElementById('r29_date').value,
+              requestedTime: document.getElementById('r29_time').value,
+              referralCode: pricing.coupon || 'None',
+              details: `Building Type: ${document.getElementById('r29_building').value}\nRequirement: ${document.getElementById('r29_requirement').value.trim()}`
+            });
+          }
+        } catch(notifyErr) {
+          console.warn('Site visit notification error:', notifyErr);
+        }
         paymentBusy=false;
         btn.textContent='Site Visit Booked';
         btn.disabled=true;
@@ -2943,11 +3161,17 @@ function applyServiceCoupon(){
    return;
  }
  if(code==='TARSEEM@10'){
-   msg('s_couponMsg','Referral code applied. ₹500 discount has been applied to your payment.','success');
+   msg('s_couponMsg','Referral code applied. ₹500 discount has been applied.','success');
+ } else if(code==='TARSEEM@20'){
+   msg('s_couponMsg','Referral code applied. ₹1,000 discount has been applied.','success');
+ } else if(code==='GOOD5'){
+   msg('s_couponMsg','Coupon code applied. ₹500 discount has been applied.','success');
+ } else if(code==='BEST10'){
+   msg('s_couponMsg','Coupon code applied. ₹1,000 discount has been applied.','success');
  } else if(code==='RMATEST1'||code==='TEMP@1'){
    msg('s_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
  } else {
-   msg('s_couponMsg','Invalid code entered. Please check and try again.','error');
+   msg('s_couponMsg','Invalid coupon or referral code for Service.','error');
  }
 }
 
@@ -2991,8 +3215,10 @@ async function payService(){
  if(code==='RMATEST1'||code==='TEMP@1'){
    finalAmount=1.0;
    isTest=true;
- } else if(code==='TARSEEM@10'){
+ } else if(code==='TARSEEM@10'||code==='GOOD5'){
    finalAmount=Math.max(0, amount - 500);
+ } else if(code==='TARSEEM@20'||code==='BEST10'){
+   finalAmount=Math.max(0, amount - 1000);
  }
 
  paymentBusy = true;
@@ -3026,11 +3252,17 @@ function applyConstructionCoupon(){
    return;
  }
  if(code==='TARSEEM@10'){
-   msg('c_couponMsg','Referral code applied. ₹500 discount has been applied to your payment.','success');
+   msg('c_couponMsg','Referral code applied. ₹500 discount has been applied.','success');
+ } else if(code==='TARSEEM@20'){
+   msg('c_couponMsg','Referral code applied. ₹1,000 discount has been applied.','success');
+ } else if(code==='GOOD5'){
+   msg('c_couponMsg','Coupon code applied. ₹500 discount has been applied.','success');
+ } else if(code==='BEST10'){
+   msg('c_couponMsg','Coupon code applied. ₹1,000 discount has been applied.','success');
  } else if(code==='RMATEST1'||code==='TEMP@1'){
    msg('c_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
  } else {
-   msg('c_couponMsg','Invalid code entered. Please check and try again.','error');
+   msg('c_couponMsg','Invalid coupon or referral code for Construction.','error');
  }
 }
 
@@ -3089,8 +3321,10 @@ async function payConstructionWithRazorpay(){
  if(code==='RMATEST1'||code==='TEMP@1'){
    finalAmount=1.0;
    isTest=true;
- } else if(code==='TARSEEM@10'){
+ } else if(code==='TARSEEM@10'||code==='GOOD5'){
    finalAmount=Math.max(0, amount - 500);
+ } else if(code==='TARSEEM@20'||code==='BEST10'){
+   finalAmount=Math.max(0, amount - 1000);
  }
 
  paymentBusy = true;
@@ -3290,17 +3524,60 @@ async function submitPathSeekerVisitRequest36(){
 async function loadConversation36(userId){const box=document.getElementById('psV36Thread');if(!box)return;try{const q=await supabaseClient.from('client_messages').select('*').eq('user_id',userId).order('created_at',{ascending:true});if(q.error)throw q.error;const rows=q.data||[];box.innerHTML=rows.length?rows.map(x=>'<div class="ps-v36-msg '+(x.sender_role==='admin'?'admin':'client')+'"><small><b>'+(x.sender_role==='admin'?'RMA':'You')+'</b> • '+new Date(x.created_at).toLocaleString('en-IN')+(x.subject?' • '+esc36(x.subject):'')+'</small>'+esc36(x.message||'')+'</div>').join(''):'<div class="muted">No messages yet.</div>';box.scrollTop=box.scrollHeight}catch(e){box.innerHTML='<div class="notice error">Conversation could not be loaded. Please run the V36 Supabase SQL.</div>'}}
 async function loadStaff36(){
  const staff=document.getElementById('staffSiteVisitRequests');if(!staff)return;let rows=[];
- try{const q=await supabaseClient.from('bookings').select('*').ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(100);if(q.error)throw q.error;rows=q.data||[]}
+ try{const q=await supabaseClient.from('bookings').select('*').order('created_at',{ascending:false}).limit(200);if(q.error)throw q.error;rows=q.data||[]}
  catch(e){staff.innerHTML='<div class="notice error">Requests could not be loaded. Check staff/admin RLS.</div>';return}
  const pending=rows.filter(x=>String(x.status||'pending').toLowerCase()==='pending').length;
- const rendered=rows.map(x=>{let j={};try{j=JSON.parse(x.visit_scope||'{}')}catch(e){}const status=String(x.status||'pending').toLowerCase();
- return `<div class="ps-v36-admin-request" id="adminReq_${esc36(x.id)}"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b>${esc36(x.request_id||'Site Visit')}</b><br><small>${esc36(x.client_name||'Client')} • ${esc36(x.mobile||V36_CLIENT_PHONE)} • ${esc36(x.email||V36_CLIENT_EMAIL)}</small><br><small>Requested ${new Date(x.created_at).toLocaleString('en-IN')}</small></div><span class="role-badge">${esc36(status)}</span></div>
- <p style="margin:8px 0"><b>Preferred:</b> ${esc36(x.preferred_date_from||j.requested_date_from||j.requested_date||'—')} to ${esc36(x.preferred_date_to||j.requested_date_to||j.requested_date||'—')}<br><b>Reason:</b> ${esc36(j.reason||'Not provided')}</p>
- <div class="ps-v36-admin-grid"><input type="date" id="admDate_${esc36(x.id)}" value="${esc36(x.scheduled_date||'')}" aria-label="Scheduled date"><input type="time" id="admTime_${esc36(x.id)}" value="${esc36(x.scheduled_time||'')}" aria-label="Scheduled time"><input id="admPhone_${esc36(x.id)}" value="${esc36(x.mobile||V36_CLIENT_PHONE)}" placeholder="Client phone"><input id="admEmail_${esc36(x.id)}" value="${esc36(x.email||V36_CLIENT_EMAIL)}" placeholder="Client email"></div>
- <div class="rma-v36-admin-actions"><button class="btn dark" onclick="approvePathSeeker36('${esc36(x.id)}')">Approve &amp; Schedule</button><button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','rejected')">Reject</button><button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','completed')">Mark Completed</button><button class="btn outline" onclick="openChatForBooking36('${esc36(x.client_user_id||'')}')">Open Conversation</button></div>
- <div class="ps-v39-review-editor"><h4>Site Visit Review / Record</h4><textarea id="reviewNotes_${esc36(x.id)}" placeholder="Write what was inspected, discussed, verified, decided, pending work, etc."></textarea><input id="reviewPhotos_${esc36(x.id)}" type="file" accept="image/*" multiple><button class="btn outline" onclick="saveSiteVisitReview36('${esc36(x.id)}')">Save Visit Review &amp; Photos</button><div id="reviewMsg_${esc36(x.id)}" class="muted"></div></div>
- <div id="reviewHistory_${esc36(x.id)}" class="ps-v39-review-list">Loading visit reviews...</div></div>`;}).join('');
- staff.innerHTML='<div class="ps-v36-admin-toolbar"><button class="btn outline" onclick="loadStaffSiteVisitRequests()">Refresh</button><span class="role-badge">'+pending+' pending</span></div>'+(rendered||'<div class="muted">No site-visit requests.</div>');
+ const rendered=rows.map(x=>{
+   let j={};try{j=JSON.parse(x.visit_scope||'{}')}catch(e){}
+   const status=String(x.status||'pending').toLowerCase();
+   const typeName=x.service_type||'Site Visit Request';
+   const refCode=j.coupon_code||j.agent_code||x.coupon_code||'None';
+   const reqDate=x.preferred_date_from||j.preferred_date||j.requested_date||j.requested_date_from||'—';
+   const reqTime=x.preferred_time||j.preferred_time||j.requested_time||'—';
+   const locationAddr=x.project_address||j.project_address||'—';
+   const detailsText=j.requirement_message||j.requirement||j.requirements||j.reason||'None';
+   const payAmt=x.total_amount?('₹'+Number(x.total_amount).toLocaleString('en-IN')):(x.visit_fee?('₹'+Number(x.visit_fee).toLocaleString('en-IN')):'₹0 / Free');
+
+   return `<div class="ps-v36-admin-request" id="adminReq_${esc36(x.id)}">
+     <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+       <div>
+         <span class="role-badge" style="background:#e0f3ea;color:#084c38;font-weight:800;margin-bottom:4px;display:inline-block">${esc36(typeName)}</span><br>
+         <b>${esc36(x.request_id||('RMA-REQ-'+x.id))}</b><br>
+         <small><b>Customer:</b> ${esc36(x.client_name||'Client')} • 📞 ${esc36(x.mobile||'—')} • ✉️ ${esc36(x.email||'—')}</small><br>
+         <small class="muted">Submitted: ${new Date(x.created_at).toLocaleString('en-IN')}</small>
+       </div>
+       <span class="role-badge">${esc36(status)}</span>
+     </div>
+     <div style="margin:10px 0;background:#f9fbf9;border:1px solid #e1ebe5;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.5">
+       <div><b>Location / Address:</b> ${esc36(locationAddr)}</div>
+       <div><b>Requested Date &amp; Time:</b> ${esc36(reqDate)} at ${esc36(reqTime)}</div>
+       <div><b>Payment Amount / Status:</b> ${esc36(payAmt)} (${esc36(status)})</div>
+       <div><b>Referral Code Used:</b> <strong style="color:#084c38">${esc36(refCode)}</strong></div>
+       ${detailsText ? `<div><b>Scope / Requirement:</b> ${esc36(detailsText)}</div>` : ''}
+     </div>
+     <div class="ps-v36-admin-grid">
+       <input type="date" id="admDate_${esc36(x.id)}" value="${esc36(x.scheduled_date||x.preferred_date_from||'')}" aria-label="Scheduled date">
+       <input type="time" id="admTime_${esc36(x.id)}" value="${esc36(x.scheduled_time||x.preferred_time||'')}" aria-label="Scheduled time">
+       <input id="admPhone_${esc36(x.id)}" value="${esc36(x.mobile||'')}" placeholder="Client phone">
+       <input id="admEmail_${esc36(x.id)}" value="${esc36(x.email||'')}" placeholder="Client email">
+     </div>
+     <div class="rma-v36-admin-actions">
+       <button class="btn dark" onclick="approvePathSeeker36('${esc36(x.id)}')">Approve &amp; Schedule</button>
+       <button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','rejected')">Reject</button>
+       <button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','completed')">Mark Completed</button>
+       <button class="btn outline" onclick="openChatForBooking36('${esc36(x.client_user_id||'')}')">Open Conversation</button>
+     </div>
+     <div class="ps-v39-review-editor">
+       <h4>Request Notes / Review Record</h4>
+       <textarea id="reviewNotes_${esc36(x.id)}" placeholder="Write internal notes, site inspection records, client discussion details, etc."></textarea>
+       <input id="reviewPhotos_${esc36(x.id)}" type="file" accept="image/*" multiple>
+       <button class="btn outline" onclick="saveSiteVisitReview36('${esc36(x.id)}')">Save Review &amp; Photos</button>
+       <div id="reviewMsg_${esc36(x.id)}" class="muted"></div>
+     </div>
+     <div id="reviewHistory_${esc36(x.id)}" class="ps-v39-review-list">Loading reviews...</div>
+   </div>`;
+ }).join('');
+ staff.innerHTML='<div class="ps-v36-admin-toolbar"><button class="btn outline" onclick="loadStaffSiteVisitRequests()">Refresh Dashboard</button><span class="role-badge">'+pending+' pending requests</span></div>'+(rendered||'<div class="muted">No requests recorded yet.</div>');
  await loadAdminMessages36(); for(const x of rows) await loadAdminReviewHistory36(x.id);
 }
 async function approvePathSeeker36(id){
@@ -3457,7 +3734,7 @@ window.rmaV36Init=v36Init;
   }
   async function refreshAdminStats(){
     try{
-      const q1=await supabaseClient.from('bookings').select('status,service_type').ilike('service_type','%Site Visit%');
+      const q1=await supabaseClient.from('bookings').select('status,service_type');
       const rows=q1.error?[]:(q1.data||[]); const count=s=>rows.filter(x=>String(x.status||'pending').toLowerCase()===s).length;
       q('#v40Pending')?.replaceChildren(document.createTextNode(String(count('pending'))));
       q('#v40Approved')?.replaceChildren(document.createTextNode(String(count('approved'))));
@@ -4077,7 +4354,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           </div>
           <div class="ps-v62-project">
             <span class="ps-v62-project-badge">👤</span>
-            <span>Private Account Portal<br><small style="font-weight:500;opacity:.8">Referral Code: TARSEEM@10</small></span>
+            <span>Private Account Portal<br><small style="font-weight:500;opacity:.8">Referral Codes: TARSEEM@10 &amp; TARSEEM@20</small></span>
           </div>
           <div class="ps-v62-user">
             <span class="ps-v62-avatar">T</span>
@@ -4106,7 +4383,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <section class="ps-v63-view active" data-view="dashboard">
               <div class="agent-panel" style="background:linear-gradient(135deg, #084c38 0%, #10684f 100%);color:#fff">
                 <h3 style="margin:0 0 6px;font-size:22px;color:#fff">Welcome back, Tarseem 👋</h3>
-                <p style="margin:0;opacity:.9;font-size:13px">Your referral code <b>TARSEEM@10</b> is active across all RMA payment flows.</p>
+                <p style="margin:0;opacity:.9;font-size:13px">Your referral codes <b>TARSEEM@10</b> and <b>TARSEEM@20</b> are active across all RMA payment flows.</p>
               </div>
 
               <div class="agent-grid">
@@ -4114,7 +4391,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
                 <div class="agent-stat-card"><span class="label">Total Earnings</span><strong id="atStatEarned" style="color:#084c38">₹0.00</strong></div>
                 <div class="agent-stat-card"><span class="label">Available Balance</span><strong id="atStatBalance" style="color:#10684f">₹0.00</strong></div>
                 <div class="agent-stat-card"><span class="label">Referred Customers</span><strong id="atStatClients">0</strong></div>
-                <div class="agent-stat-card"><span class="label">Referral Code</span><strong style="color:#084c38">TARSEEM@10</strong></div>
+                <div class="agent-stat-card"><span class="label">Active Referral Codes</span><strong style="color:#084c38">TARSEEM@10 / TARSEEM@20</strong></div>
                 <div class="agent-stat-card"><span class="label">Referral Rate</span><strong>10%</strong></div>
               </div>
 
@@ -4142,7 +4419,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
                   <div>
                     <h3 style="margin:0;font-size:18px;color:#084c38">💰 Earnings History</h3>
-                    <p class="muted" style="margin:4px 0 0;font-size:12px">Real-time record of all bookings &amp; payments using referral code TARSEEM@10.</p>
+                    <p class="muted" style="margin:4px 0 0;font-size:12px">Real-time record of all bookings &amp; payments using referral codes TARSEEM@10 or TARSEEM@20.</p>
                   </div>
                   <span class="agent-badge" style="font-size:13px;padding:8px 12px">Total Earned: <span id="atLedgerTotalEarned">₹0.00</span></span>
                 </div>
@@ -4166,18 +4443,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <!-- 4. REFERRAL CODE -->
             <section class="ps-v63-view" data-view="code">
               <div class="agent-panel">
-                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">🏷️ Referral Code</h3>
+                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">🏷️ Referral Codes</h3>
                 <div style="background:#f4f9f6;border:2px dashed #084c38;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px">
-                  <span class="muted" style="font-size:12px;font-weight:700">YOUR AUTHORIZED CODE</span>
-                  <div style="font-size:32px;font-weight:900;color:#084c38;letter-spacing:2px;margin:8px 0">TARSEEM@10</div>
+                  <span class="muted" style="font-size:12px;font-weight:700">YOUR AUTHORIZED CODES</span>
+                  <div style="font-size:28px;font-weight:900;color:#084c38;letter-spacing:1px;margin:8px 0">TARSEEM@10 &amp; TARSEEM@20</div>
                   <div style="display:inline-block;background:#e0f3ea;color:#084c38;padding:4px 12px;border-radius:20px;font-weight:800;font-size:12px">10% Referral Rate</div>
                 </div>
 
-                <h4 style="margin:16px 0 8px;color:#142d24">How Referral Code Works:</h4>
+                <h4 style="margin:16px 0 8px;color:#142d24">How Referral Codes Work:</h4>
                 <ul style="line-height:1.6;font-size:13px;color:#334d43;padding-left:20px">
-                  <li>Share your code <b>TARSEEM@10</b> with customers booking site visits, service enquiries, or construction services.</li>
-                  <li>Customers enter <b>TARSEEM@10</b> in the coupon or referral code box on the RMA website during checkout.</li>
-                  <li>When payment is completed, the earnings are automatically calculated and added to your Earnings History &amp; Available Balance.</li>
+                  <li>Share your code <b>TARSEEM@10</b> or <b>TARSEEM@20</b> with customers booking site visits, service enquiries, or construction services.</li>
+                  <li>Customers enter the code in the coupon or referral code box on the RMA website during checkout.</li>
+                  <li>When payment is completed, the referral earnings are automatically calculated and added to your Earnings History &amp; Available Balance.</li>
                 </ul>
 
                 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
@@ -4248,7 +4525,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
                   <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Email / Username</small><br><b>tarseem@rma.com / tarseem</b></div>
                   <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Account Role</small><br><b>Authorized Referral Partner</b></div>
                   <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Account Status</small><br><b style="color:#084c38">Active &amp; Verified</b></div>
-                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Referral Code</small><br><b>TARSEEM@10</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Referral Codes</small><br><b>TARSEEM@10 / TARSEEM@20</b></div>
                   <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Earnings Rate</small><br><b>10% on Referred Bookings</b></div>
                 </div>
                 <button type="button" class="btn outline" style="color:#c53030;border-color:#feb2b2" onclick="signOutUser()">Sign Out of Account</button>
@@ -4291,9 +4568,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     if(!b) return false;
     const scope = parseBookingScope(b);
     const coupon = (scope.coupon_code || scope.agent_code || b.coupon_code || '').trim().toUpperCase();
-    if(coupon === 'TARSEEM@10') return true;
+    if(coupon === 'TARSEEM@10' || coupon === 'TARSEEM@20') return true;
     const raw = JSON.stringify(b).toUpperCase();
-    return raw.includes('TARSEEM');
+    return raw.includes('TARSEEM@10') || raw.includes('TARSEEM@20');
   }
 
   async function buildTarseemPortal(user){
@@ -4345,16 +4622,27 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }
 
     const tarseemBookings = bookings.filter(isTarseemBooking);
+    const seenBookingKeys = new Set();
+    const uniqueTarseemBookings = [];
+    for(const b of tarseemBookings) {
+      const scope = parseBookingScope(b);
+      const key = scope.razorpay_payment_id || b.request_id || b.id;
+      if(key && seenBookingKeys.has(key)) continue;
+      if(key) seenBookingKeys.add(key);
+      uniqueTarseemBookings.push(b);
+    }
 
     // Calculations
     let totalSales = 0;
     let totalEarned = 0;
     const clientMap = {};
 
-    const transactionRows = tarseemBookings.map(b => {
+    const transactionRows = uniqueTarseemBookings.map(b => {
       const scope = parseBookingScope(b);
       const amount = Number(b.total_amount || scope.original_amount || 0);
       const comm = Number(scope.agent_commission || (amount * 0.10) || 0);
+      const refCode = (scope.coupon_code || scope.agent_code || 'TARSEEM@10').trim().toUpperCase();
+      const bookingId = b.request_id || scope.razorpay_payment_id || b.id || '—';
       totalSales += amount;
       totalEarned += comm;
 
@@ -4376,12 +4664,14 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const dt = b.created_at ? new Date(b.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—';
       return {
         date: dt,
-        name: b.client_name || 'Customer',
+        customer: b.client_name || 'Customer',
         contact: b.mobile || b.email || '—',
         service: b.service_type || 'RMA Service',
+        bookingId: bookingId,
+        refCode: refCode,
         amount: amount,
         rate: '10%',
-        commission: comm,
+        earned: comm,
         status: b.status || 'Paid'
       };
     });
@@ -4415,21 +4705,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const recentBox = document.getElementById('atRecentTransactions');
     if(recentBox){
       if(!transactionRows.length){
-        recentBox.innerHTML = '<div class="notice info">No referral transactions recorded yet. Share your referral code <b>TARSEEM@10</b> with customers booking services to record earnings.</div>';
+        recentBox.innerHTML = '<div class="notice info">No referral transactions recorded yet. Share your referral code <b>TARSEEM@10</b> or <b>TARSEEM@20</b> with customers booking services to record earnings.</div>';
       } else {
         recentBox.innerHTML = `
           <table class="agent-table">
             <thead>
-              <tr><th>Date</th><th>Customer Name</th><th>Service</th><th>Booking Amount</th><th>Amount Earned</th><th>Status</th></tr>
+              <tr><th>Date</th><th>Referred Customer</th><th>Service / Booked Item</th><th>Booking / Payment ID</th><th>Referral Code</th><th>Payment Amount</th><th>Amount Earned</th><th>Earnings Status</th></tr>
             </thead>
             <tbody>
               ${transactionRows.slice(0, 5).map(r => `
                 <tr>
                   <td>${esc(r.date)}</td>
-                  <td><b>${esc(r.name)}</b><br><small class="muted">${esc(r.contact)}</small></td>
+                  <td><b>${esc(r.customer)}</b><br><small class="muted">${esc(r.contact)}</small></td>
                   <td>${esc(r.service)}</td>
+                  <td><code>${esc(r.bookingId)}</code></td>
+                  <td><b>${esc(r.refCode)}</b></td>
                   <td>${fmt(r.amount)}</td>
-                  <td><b style="color:#084c38">${fmt(r.commission)}</b></td>
+                  <td><b style="color:#084c38">${fmt(r.earned)}</b></td>
                   <td><span class="agent-badge">${esc(r.status)}</span></td>
                 </tr>
               `).join('')}
@@ -4443,23 +4735,25 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const ledgerBox = document.getElementById('atLedgerTableBox');
     if(ledgerBox){
       if(!transactionRows.length){
-        ledgerBox.innerHTML = '<div class="notice info">No transactions found in earnings history yet. All future customer payments entering code <b>TARSEEM@10</b> will log automatically here.</div>';
+        ledgerBox.innerHTML = '<div class="notice info">No transactions found in earnings history yet. All future customer payments entering code <b>TARSEEM@10</b> or <b>TARSEEM@20</b> will log automatically here.</div>';
       } else {
         ledgerBox.innerHTML = `
           <table class="agent-table">
             <thead>
-              <tr><th>Date</th><th>Customer Name</th><th>Contact</th><th>Service / Payment Type</th><th>Booking Amount</th><th>Rate</th><th>Amount Earned</th><th>Status</th></tr>
+              <tr><th>Date</th><th>Referred Customer</th><th>Contact</th><th>Service / Booked Item</th><th>Booking / Payment ID</th><th>Referral Code</th><th>Payment Amount</th><th>Rate</th><th>Amount Earned</th><th>Earnings Status</th></tr>
             </thead>
             <tbody>
               ${transactionRows.map(r => `
                 <tr>
                   <td>${esc(r.date)}</td>
-                  <td><b>${esc(r.name)}</b></td>
+                  <td><b>${esc(r.customer)}</b></td>
                   <td>${esc(r.contact)}</td>
                   <td>${esc(r.service)}</td>
+                  <td><code>${esc(r.bookingId)}</code></td>
+                  <td><b>${esc(r.refCode)}</b></td>
                   <td>${fmt(r.amount)}</td>
                   <td>${esc(r.rate)}</td>
-                  <td><b style="color:#084c38">${fmt(r.commission)}</b></td>
+                  <td><b style="color:#084c38">${fmt(r.earned)}</b></td>
                   <td><span class="agent-badge">${esc(r.status)}</span></td>
                 </tr>
               `).join('')}
@@ -4641,5 +4935,162 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   window.buildTarseemPortal = buildTarseemPortal;
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', addTarseemPortal);
   else addTarseemPortal();
+})();
+</script>
+
+<script id="rma-appointment-js">
+(function(){
+  'use strict';
+
+  function showAppointmentSection(){
+    showPage('home');
+    setTimeout(() => {
+      const el = document.getElementById('appointment-section');
+      if(el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  }
+  window.showAppointmentSection = showAppointmentSection;
+
+  function esc(s){
+    const d = document.createElement('div');
+    d.textContent = String(s ?? '');
+    return d.innerHTML;
+  }
+
+  async function handleAppointmentSubmit(e){
+    if(e) e.preventDefault();
+    const name = document.getElementById('apt_name')?.value.trim() || '';
+    const mobile = document.getElementById('apt_mobile')?.value.trim() || '';
+    const email = document.getElementById('apt_email')?.value.trim() || '';
+    const address = document.getElementById('apt_address')?.value.trim() || '';
+    const building = document.getElementById('apt_building')?.value || 'Residential';
+    const preferredDate = document.getElementById('apt_date')?.value || '';
+    const preferredTime = document.getElementById('apt_time')?.value || '11:00 AM';
+    const message = document.getElementById('apt_message')?.value.trim() || '';
+
+    const msgBox = document.getElementById('aptFormMsg');
+    const btn = document.getElementById('aptSubmitBtn');
+
+    const setMsg = (txt, type = 'error') => {
+      if(!msgBox) return;
+      msgBox.className = 'notice ' + type;
+      msgBox.classList.remove('hidden');
+      msgBox.textContent = txt;
+    };
+
+    if(!name || !mobile || !email || !address || !building || !preferredDate || !preferredTime){
+      setMsg('Please fill in all required fields.');
+      return;
+    }
+
+    if(!/^\d{10}$/.test(mobile)){
+      setMsg('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      setMsg('Please enter a valid email address.');
+      return;
+    }
+
+    if(btn){ btn.disabled = true; btn.textContent = 'Submitting Request...'; }
+
+    const requestId = 'RMA-APT-' + Date.now().toString().slice(-8);
+    const nowIso = new Date().toISOString();
+
+    let dateDisplay = preferredDate;
+    try {
+      const parts = preferredDate.split('-');
+      if(parts.length === 3){
+        const dObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        dateDisplay = dObj.toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+      }
+    } catch(err){}
+
+    const recordPayload = {
+      request_id: requestId,
+      client_name: name,
+      mobile: mobile,
+      email: email,
+      service_type: 'Appointment Request',
+      project_address: address,
+      visit_fee: 0,
+      gst_amount: 0,
+      total_amount: 0,
+      status: 'pending',
+      preferred_date_from: preferredDate,
+      preferred_time: preferredTime,
+      visit_scope: JSON.stringify({
+        building_type: building,
+        preferred_date: preferredDate,
+        preferred_time: preferredTime,
+        requirement_message: message,
+        submission_time: nowIso
+      })
+    };
+
+    try {
+      if(typeof insertBooking === 'function'){
+        await insertBooking(recordPayload);
+      } else if(typeof supabaseClient !== 'undefined'){
+        await supabaseClient.from('bookings').insert(recordPayload);
+      }
+    } catch(dbErr){
+      console.warn('Appointment insertion warning:', dbErr);
+    }
+
+    // Auto notification to RMA admin
+    if(typeof window.notifyRMAAdminForNewBooking === 'function'){
+      window.notifyRMAAdminForNewBooking({
+        type: 'Appointment Request',
+        customerName: name,
+        mobile: mobile,
+        email: email,
+        location: address,
+        bookingId: requestId,
+        requestedDate: dateDisplay,
+        requestedTime: preferredTime,
+        details: `Building Type: ${building}\nMessage: ${message || 'None'}`
+      });
+    }
+
+    // Display Confirmation Screen
+    const formBox = document.getElementById('appointmentFormContainer');
+    const confBox = document.getElementById('appointmentConfirmationBox');
+    if(formBox) formBox.classList.add('hidden');
+    if(confBox) confBox.classList.remove('hidden');
+
+    const cDate = document.getElementById('aptConfDate');
+    const cTime = document.getElementById('aptConfTime');
+    if(cDate) cDate.textContent = dateDisplay;
+    if(cTime) cTime.textContent = preferredTime;
+
+    const cDetails = document.getElementById('aptConfDetails');
+    if(cDetails){
+      cDetails.innerHTML = `
+        <div><b>Appointment / Request ID:</b> ${esc(requestId)}</div>
+        <div><b>Customer Name:</b> ${esc(name)}</div>
+        <div><b>Mobile Number:</b> ${esc(mobile)}</div>
+        <div><b>Email Address:</b> ${esc(email)}</div>
+        <div><b>Project / Site Address:</b> ${esc(address)}</div>
+        <div><b>Project / Building Type:</b> ${esc(building)}</div>
+        <div><b>Requested Date &amp; Time:</b> ${esc(dateDisplay)} at ${esc(preferredTime)}</div>
+        ${message ? `<div><b>Requirement / Message:</b> ${esc(message)}</div>` : ''}
+      `;
+    }
+  }
+
+  function resetAppointmentForm(){
+    document.getElementById('rmaAppointmentForm')?.reset();
+    document.getElementById('appointmentConfirmationBox')?.classList.add('hidden');
+    document.getElementById('appointmentFormContainer')?.classList.remove('hidden');
+    const btn = document.getElementById('aptSubmitBtn');
+    if(btn){ btn.disabled = false; btn.textContent = 'Request Appointment'; }
+    const msgBox = document.getElementById('aptFormMsg');
+    if(msgBox) msgBox.classList.add('hidden');
+  }
+
+  window.handleAppointmentSubmit = handleAppointmentSubmit;
+  window.resetAppointmentForm = resetAppointmentForm;
 })();
 </script>
