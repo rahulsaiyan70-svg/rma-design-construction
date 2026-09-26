@@ -1049,12 +1049,12 @@ async function signInUser(){
 
   if(email.toLowerCase()==='tarseem@rma.com'){
     if(password==='Tarseem@10%'){
-      authMsg('Signed in successfully as Agent Tarseem. Loading your portal...','info');
-      const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Agent Tarseem'}};
+      authMsg('Signed in successfully. Loading your dashboard...','info');
+      const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Tarseem'}};
       await loadSignedInPortal(agentUser);
       return;
     } else {
-      authMsg('Invalid password for Agent account.');
+      authMsg('Invalid email or password.');
       return;
     }
   }
@@ -1570,7 +1570,8 @@ async function rmaExecutePaymentFlow({
 
   const normCoupon = (couponCode || '').trim().toUpperCase();
   const isTarseem = normCoupon === 'TARSEEM@10';
-  const agentCommission = isTarseem ? Number((amount * 0.10).toFixed(2)) : 0;
+  const origAmt = Number(originalAmount || amount);
+  const agentCommission = isTarseem ? Number((origAmt * 0.10).toFixed(2)) : 0;
 
   const notes = {
     request_id: receipt,
@@ -1579,7 +1580,7 @@ async function rmaExecutePaymentFlow({
     coupon_code: normCoupon,
     agent_code: isTarseem ? 'TARSEEM@10' : (scopeDetails.agent_code || ''),
     agent_commission: String(agentCommission),
-    original_amount: String(originalAmount || amount),
+    original_amount: String(origAmt),
     final_amount: String(amount),
     service_type: scopeDetails.service_type || paymentType
   };
@@ -1632,7 +1633,7 @@ async function rmaExecutePaymentFlow({
               coupon_code: normCoupon,
               agent_code: isTarseem ? 'TARSEEM@10' : (scopeDetails.agent_code || ''),
               agent_commission: agentCommission,
-              original_amount: originalAmount || amount,
+              original_amount: origAmt,
               final_amount: amount
             })
           };
@@ -2811,26 +2812,33 @@ function siteVisitPricing(distance){
    const gst=Number((finalTotal-taxable).toFixed(2));
    return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:Number((baseTotal-finalTotal).toFixed(2)),coupon:normCode||RMA_TEMP_COUPON};
  }
+ if(normCode==='TARSEEM@10'){
+   const discountAmount = 500;
+   const finalTotal = Math.max(0, Number((baseTotal - discountAmount).toFixed(2)));
+   const taxable = Number((finalTotal / 1.18).toFixed(2));
+   const gst = Number((finalTotal - taxable).toFixed(2));
+   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:discountAmount,coupon:normCode};
+ }
  return {baseFee,baseGst,baseTotal,fee:baseFee,gst:Number(baseGst.toFixed(2)),total:Number(baseTotal.toFixed(2)),discount:0,coupon:normCode};
 }
 function applySiteVisitCoupon(){
  const input=document.getElementById('r29_coupon'),code=(input?.value||'').trim().toUpperCase();
  if(!code){
    siteVisitCouponApplied=false; siteVisitCode='';
-   msg('r29_couponMsg','Please enter a coupon or commission code.','error');
+   msg('r29_couponMsg','Please enter a coupon or referral code.','error');
    if(visitDistance!==null)showFee(visitDistance);
    return;
  }
  siteVisitCode=code;
  if(code==='TARSEEM@10'){
    siteVisitCouponApplied=false;
-   msg('r29_couponMsg','Commission Code TARSEEM@10 applied! 10% Agent Referral linked to Agent Tarseem.','success');
+   msg('r29_couponMsg','Referral code applied. ₹500 discount has been applied to your payment.','success');
  } else if(code===RMA_TEMP_COUPON || code==='RMATEST1'){
    siteVisitCouponApplied=true;
    msg('r29_couponMsg','Coupon applied. Final amount is ₹1.00.','success');
  } else {
    siteVisitCouponApplied=false; siteVisitCode='';
-   msg('r29_couponMsg','Invalid coupon or commission code.','error');
+   msg('r29_couponMsg','Invalid coupon or referral code.','error');
  }
  if(visitDistance!==null)showFee(visitDistance);
 }
@@ -2857,7 +2865,7 @@ function buildVisit(){
 <input type="hidden" id="r29_lat"><input type="hidden" id="r29_lng">
 </div>
 <div class="v29-price"><div class="v29-line"><span>Road Distance</span><strong id="r29_distance">—</strong></div><div class="v29-line"><span>Site Visit Fee</span><strong id="r29_fee">—</strong></div><div class="v29-line"><span>GST 18%</span><strong id="r29_gst">—</strong></div><div class="v29-line" id="r29_discount_row" style="display:none"><span>Coupon Discount</span><strong id="r29_discount">—</strong></div><div class="v29-line v29-total"><span>Total Payable</span><strong id="r29_total">—</strong></div></div>
-<div class="r29-coupon-box" style="margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8"><label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon?</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="r29_coupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none"><button type="button" class="btn outline" id="r29_couponBtn">Apply Coupon</button></div><div id="r29_couponMsg" class="notice hidden" style="margin-top:9px"></div></div>
+<div class="r29-coupon-box" style="margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8"><label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or referral code?</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="r29_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none"><button type="button" class="btn outline" id="r29_couponBtn">Apply Code</button></div><div id="r29_couponMsg" class="notice hidden" style="margin-top:9px"></div></div>
 <div id="r29_message" class="notice hidden" style="margin-top:12px"></div>
 <button type="button" class="btn gold full" id="r29_pay">Pay &amp; Book Site Visit with Razorpay</button>
 </form></div></div>`;
@@ -2910,7 +2918,9 @@ async function payVisit(){
       try{
         msg('r29_message','Payment received. Verifying securely...');
         await rmaVerifyRazorpayPayment(response);
-        const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG,coupon_code:pricing.coupon,original_total:pricing.baseTotal,discount:pricing.discount,final_total:total})};
+        const isTarseemVisit = pricing.coupon === 'TARSEEM@10';
+        const visitCommission = isTarseemVisit ? Number((pricing.baseTotal * 0.10).toFixed(2)) : 0;
+        const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG,coupon_code:pricing.coupon,agent_code:isTarseemVisit?'TARSEEM@10':'',agent_commission:visitCommission,original_total:pricing.baseTotal,discount:pricing.discount,final_total:total})};
         await insertBooking(payload);
         paymentBusy=false;
         btn.textContent='Site Visit Booked';
@@ -2945,11 +2955,11 @@ async function payVisit(){
 function applyServiceCoupon(){
  const input=document.getElementById('s_coupon'),code=(input?.value||'').trim().toUpperCase();
  if(!code){
-   msg('s_couponMsg','Please enter a coupon or commission code.','error');
+   msg('s_couponMsg','Please enter a coupon or referral code.','error');
    return;
  }
  if(code==='TARSEEM@10'){
-   msg('s_couponMsg','Commission Code TARSEEM@10 applied! 10% Agent Referral linked to Agent Tarseem.','success');
+   msg('s_couponMsg','Referral code applied. ₹500 discount has been applied to your payment.','success');
  } else if(code==='RMATEST1'||code==='TEMP@1'){
    msg('s_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
  } else {
@@ -2965,9 +2975,9 @@ function installServicePayment(){
    couponBox.className='r29-coupon-box';
    couponBox.style.cssText='margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
    couponBox.innerHTML=`
-     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or commission code?</label>
+     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or referral code?</label>
      <div style="display:flex;gap:8px;flex-wrap:wrap">
-       <input id="s_coupon" type="text" placeholder="Enter TARSEEM@10 or coupon code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
+       <input id="s_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
        <button type="button" class="btn outline" id="s_couponBtn">Apply Code</button>
      </div>
      <div id="s_couponMsg" class="notice hidden" style="margin-top:9px"></div>
@@ -2997,6 +3007,8 @@ async function payService(){
  if(code==='RMATEST1'||code==='TEMP@1'){
    finalAmount=1.0;
    isTest=true;
+ } else if(code==='TARSEEM@10'){
+   finalAmount=Math.max(0, amount - 500);
  }
 
  paymentBusy = true;
@@ -3026,11 +3038,11 @@ async function payService(){
 function applyConstructionCoupon(){
  const input=document.getElementById('c_coupon'),code=(input?.value||'').trim().toUpperCase();
  if(!code){
-   msg('c_couponMsg','Please enter a coupon or commission code.','error');
+   msg('c_couponMsg','Please enter a coupon or referral code.','error');
    return;
  }
  if(code==='TARSEEM@10'){
-   msg('c_couponMsg','Commission Code TARSEEM@10 applied! 10% Agent Referral linked to Agent Tarseem.','success');
+   msg('c_couponMsg','Referral code applied. ₹500 discount has been applied to your payment.','success');
  } else if(code==='RMATEST1'||code==='TEMP@1'){
    msg('c_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
  } else {
@@ -3046,9 +3058,9 @@ function installConstructionPayment(){
    couponBox.className='r29-coupon-box';
    couponBox.style.cssText='margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
    couponBox.innerHTML=`
-     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or commission code?</label>
+     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or referral code?</label>
      <div style="display:flex;gap:8px;flex-wrap:wrap">
-       <input id="c_coupon" type="text" placeholder="Enter TARSEEM@10 or coupon code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
+       <input id="c_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
        <button type="button" class="btn outline" id="c_couponBtn">Apply Code</button>
      </div>
      <div id="c_couponMsg" class="notice hidden" style="margin-top:9px"></div>
@@ -3093,6 +3105,8 @@ async function payConstructionWithRazorpay(){
  if(code==='RMATEST1'||code==='TEMP@1'){
    finalAmount=1.0;
    isTest=true;
+ } else if(code==='TARSEEM@10'){
+   finalAmount=Math.max(0, amount - 500);
  }
 
  paymentBusy = true;
@@ -4078,12 +4092,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             RMA<small>DESIGN &amp; CONSTRUCTION</small>
           </div>
           <div class="ps-v62-project">
-            <span class="ps-v62-project-badge">💼</span>
-            <span>Agent Account Portal<br><small style="font-weight:500;opacity:.8">Code: TARSEEM@10</small></span>
+            <span class="ps-v62-project-badge">👤</span>
+            <span>Private Account Portal<br><small style="font-weight:500;opacity:.8">Referral Code: TARSEEM@10</small></span>
           </div>
           <div class="ps-v62-user">
             <span class="ps-v62-avatar">T</span>
-            <span>Agent Tarseem</span>
+            <span>Tarseem</span>
             <button class="btn outline" style="background:#fff;color:#084c38;border:0;padding:6px 12px;font-weight:700;margin-left:8px" onclick="signOutUser()">Sign Out</button>
           </div>
         </header>
@@ -4092,14 +4106,14 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           <aside class="ps-v62-sidebar">
             <nav class="ps-v62-nav" id="tarseemNav">
               <button type="button" class="active" data-target="dashboard"><span class="icon">📊</span>Dashboard</button>
-              <button type="button" data-target="ledger"><span class="icon">💰</span>Commission Ledger</button>
-              <button type="button" data-target="clients"><span class="icon">👥</span>Referred Clients</button>
-              <button type="button" data-target="code"><span class="icon">🏷️</span>Commission Code</button>
-              <button type="button" data-target="payouts"><span class="icon">💳</span>Payouts / Balance</button>
-              <button type="button" data-target="messages"><span class="icon">✉️</span>Messages / Contact RMA</button>
-              <button type="button" data-target="profile"><span class="icon">👤</span>Profile / Account</button>
+              <button type="button" data-target="ledger"><span class="icon">💰</span>Earnings History</button>
+              <button type="button" data-target="clients"><span class="icon">👥</span>Referred Customers</button>
+              <button type="button" data-target="code"><span class="icon">🏷️</span>Referral Code</button>
+              <button type="button" data-target="payouts"><span class="icon">💳</span>Payouts &amp; Balance</button>
+              <button type="button" data-target="messages"><span class="icon">✉️</span>Messages</button>
+              <button type="button" data-target="profile"><span class="icon">👤</span>Account</button>
               <div class="ps-v62-nav-divider"></div>
-              <button type="button" onclick="signOutUser()"><span class="icon">↪</span>Logout</button>
+              <button type="button" onclick="signOutUser()"><span class="icon">↪</span>Sign Out</button>
             </nav>
           </aside>
 
@@ -4107,17 +4121,17 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <!-- 1. DASHBOARD -->
             <section class="ps-v63-view active" data-view="dashboard">
               <div class="agent-panel" style="background:linear-gradient(135deg, #084c38 0%, #10684f 100%);color:#fff">
-                <h3 style="margin:0 0 6px;font-size:22px;color:#fff">Welcome back, Agent Tarseem 👋</h3>
-                <p style="margin:0;opacity:.9;font-size:13px">Your commission code <b>TARSEEM@10</b> (10% Commission) is active across all RMA payment flows.</p>
+                <h3 style="margin:0 0 6px;font-size:22px;color:#fff">Welcome back, Tarseem 👋</h3>
+                <p style="margin:0;opacity:.9;font-size:13px">Your referral code <b>TARSEEM@10</b> is active across all RMA payment flows.</p>
               </div>
 
               <div class="agent-grid">
                 <div class="agent-stat-card"><span class="label">Total Referred Sales</span><strong id="atStatSales">₹0.00</strong></div>
-                <div class="agent-stat-card"><span class="label">Total Earned Commission</span><strong id="atStatEarned" style="color:#084c38">₹0.00</strong></div>
-                <div class="agent-stat-card"><span class="label">Available Payout Balance</span><strong id="atStatBalance" style="color:#10684f">₹0.00</strong></div>
-                <div class="agent-stat-card"><span class="label">Referred Clients</span><strong id="atStatClients">0</strong></div>
-                <div class="agent-stat-card"><span class="label">Commission Code</span><strong style="color:#084c38">TARSEEM@10</strong></div>
-                <div class="agent-stat-card"><span class="label">Commission Rate</span><strong>10%</strong></div>
+                <div class="agent-stat-card"><span class="label">Total Earnings</span><strong id="atStatEarned" style="color:#084c38">₹0.00</strong></div>
+                <div class="agent-stat-card"><span class="label">Available Balance</span><strong id="atStatBalance" style="color:#10684f">₹0.00</strong></div>
+                <div class="agent-stat-card"><span class="label">Referred Customers</span><strong id="atStatClients">0</strong></div>
+                <div class="agent-stat-card"><span class="label">Referral Code</span><strong style="color:#084c38">TARSEEM@10</strong></div>
+                <div class="agent-stat-card"><span class="label">Referral Rate</span><strong>10%</strong></div>
               </div>
 
               <div class="agent-panel">
@@ -4125,7 +4139,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
                   <h3 style="margin:0;font-size:17px;color:#084c38">Quick Actions &amp; Referral Link</h3>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap">
-                  <button type="button" class="btn outline" id="atCopyCodeBtn">📋 Copy Commission Code (TARSEEM@10)</button>
+                  <button type="button" class="btn outline" id="atCopyCodeBtn">📋 Copy Referral Code (TARSEEM@10)</button>
                   <button type="button" class="btn outline" id="atCopyLinkBtn">🔗 Copy Referral Web Link</button>
                   <button type="button" class="btn dark" onclick="showTarseemView('payouts')">💳 Request Payout</button>
                 </div>
@@ -4133,53 +4147,53 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               </div>
 
               <div class="agent-panel">
-                <h3 style="margin:0 0 12px;font-size:17px;color:#084c38">Recent Referral Transactions</h3>
+                <h3 style="margin:0 0 12px;font-size:17px;color:#084c38">Recent Referral Activity</h3>
                 <div id="atRecentTransactions"><div class="muted">Loading referral transactions...</div></div>
               </div>
             </section>
 
-            <!-- 2. COMMISSION LEDGER -->
+            <!-- 2. EARNINGS HISTORY -->
             <section class="ps-v63-view" data-view="ledger">
               <div class="agent-panel">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
                   <div>
-                    <h3 style="margin:0;font-size:18px;color:#084c38">💰 Commission Ledger</h3>
-                    <p class="muted" style="margin:4px 0 0;font-size:12px">Real-time ledger of all bookings &amp; payments using referral code TARSEEM@10.</p>
+                    <h3 style="margin:0;font-size:18px;color:#084c38">💰 Earnings History</h3>
+                    <p class="muted" style="margin:4px 0 0;font-size:12px">Real-time record of all bookings &amp; payments using referral code TARSEEM@10.</p>
                   </div>
                   <span class="agent-badge" style="font-size:13px;padding:8px 12px">Total Earned: <span id="atLedgerTotalEarned">₹0.00</span></span>
                 </div>
               </div>
               <div class="agent-panel">
-                <div id="atLedgerTableBox"><div class="muted">Loading commission ledger...</div></div>
+                <div id="atLedgerTableBox"><div class="muted">Loading earnings history...</div></div>
               </div>
             </section>
 
-            <!-- 3. REFERRED CLIENTS -->
+            <!-- 3. REFERRED CUSTOMERS -->
             <section class="ps-v63-view" data-view="clients">
               <div class="agent-panel">
-                <h3 style="margin:0 0 4px;font-size:18px;color:#084c38">👥 Referred Clients Directory</h3>
-                <p class="muted" style="margin:0;font-size:12px">Clients who have made bookings or payments using your referral code.</p>
+                <h3 style="margin:0 0 4px;font-size:18px;color:#084c38">👥 Referred Customers Directory</h3>
+                <p class="muted" style="margin:0;font-size:12px">Customers who have made bookings or payments using your referral code.</p>
               </div>
               <div class="agent-panel">
-                <div id="atClientsTableBox"><div class="muted">Loading referred clients...</div></div>
+                <div id="atClientsTableBox"><div class="muted">Loading referred customers...</div></div>
               </div>
             </section>
 
-            <!-- 4. COMMISSION CODE -->
+            <!-- 4. REFERRAL CODE -->
             <section class="ps-v63-view" data-view="code">
               <div class="agent-panel">
-                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">🏷️ Agent Commission Code</h3>
+                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">🏷️ Referral Code</h3>
                 <div style="background:#f4f9f6;border:2px dashed #084c38;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px">
                   <span class="muted" style="font-size:12px;font-weight:700">YOUR AUTHORIZED CODE</span>
                   <div style="font-size:32px;font-weight:900;color:#084c38;letter-spacing:2px;margin:8px 0">TARSEEM@10</div>
-                  <div style="display:inline-block;background:#e0f3ea;color:#084c38;padding:4px 12px;border-radius:20px;font-weight:800;font-size:12px">10% Agent Commission Rate</div>
+                  <div style="display:inline-block;background:#e0f3ea;color:#084c38;padding:4px 12px;border-radius:20px;font-weight:800;font-size:12px">10% Referral Rate</div>
                 </div>
 
-                <h4 style="margin:16px 0 8px;color:#142d24">How Commission Code Works:</h4>
+                <h4 style="margin:16px 0 8px;color:#142d24">How Referral Code Works:</h4>
                 <ul style="line-height:1.6;font-size:13px;color:#334d43;padding-left:20px">
-                  <li>Share your code <b>TARSEEM@10</b> with clients booking site visits, service enquiries, or construction services.</li>
-                  <li>Clients enter <b>TARSEEM@10</b> in the coupon/commission code box on the RMA website during checkout.</li>
-                  <li>When payment is completed, a <b>10% commission</b> is automatically calculated and added to your Commission Ledger &amp; Balance.</li>
+                  <li>Share your code <b>TARSEEM@10</b> with customers booking site visits, service enquiries, or construction services.</li>
+                  <li>Customers enter <b>TARSEEM@10</b> in the coupon or referral code box on the RMA website during checkout.</li>
+                  <li>When payment is completed, the earnings are automatically calculated and added to your Earnings History &amp; Available Balance.</li>
                 </ul>
 
                 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
@@ -4195,8 +4209,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               <div class="agent-panel">
                 <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">💳 Payouts &amp; Balance Management</h3>
                 <div class="agent-grid" style="margin-bottom:14px">
-                  <div class="agent-stat-card"><span class="label">Available Payout Balance</span><strong id="atPayoutAvail" style="color:#084c38">₹0.00</strong></div>
-                  <div class="agent-stat-card"><span class="label">Total Lifetime Earned</span><strong id="atPayoutLifetime">₹0.00</strong></div>
+                  <div class="agent-stat-card"><span class="label">Available Balance</span><strong id="atPayoutAvail" style="color:#084c38">₹0.00</strong></div>
+                  <div class="agent-stat-card"><span class="label">Total Earnings</span><strong id="atPayoutLifetime">₹0.00</strong></div>
                   <div class="agent-stat-card"><span class="label">Total Paid Out</span><strong id="atPayoutPaid">₹0.00</strong></div>
                 </div>
 
@@ -4220,7 +4234,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <section class="ps-v63-view" data-view="messages">
               <div class="agent-panel">
                 <h3 style="margin:0 0 4px;font-size:18px;color:#084c38">✉️ Messages / Contact RMA Admin</h3>
-                <p class="muted" style="margin:0;font-size:12px">Direct private communication channel between Agent Tarseem and RMA Administration.</p>
+                <p class="muted" style="margin:0;font-size:12px">Direct private communication channel with RMA Administration.</p>
               </div>
 
               <div class="agent-panel">
@@ -4235,8 +4249,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
                 <div id="tarseemMsgStatus" class="notice hidden" style="margin-bottom:10px"></div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                   <button type="button" class="btn dark" id="tarseemMsgSendBtn">Send Message</button>
-                  <a class="btn outline" href="mailto:rma.studies07@gmail.com?subject=Agent%20Tarseem%20Enquiry">Email RMA</a>
-                  <a class="btn outline" href="https://wa.me/919622121692?text=Agent%20Tarseem%20Enquiry" target="_blank" rel="noopener">WhatsApp RMA</a>
+                  <a class="btn outline" href="mailto:rma.studies07@gmail.com?subject=Tarseem%20Account%20Enquiry">Email RMA</a>
+                  <a class="btn outline" href="https://wa.me/919622121692?text=Tarseem%20Account%20Enquiry" target="_blank" rel="noopener">WhatsApp RMA</a>
                 </div>
               </div>
             </section>
@@ -4244,16 +4258,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <!-- 7. PROFILE / ACCOUNT -->
             <section class="ps-v63-view" data-view="profile">
               <div class="agent-panel">
-                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">👤 Agent Profile &amp; Account</h3>
+                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">👤 Account Details</h3>
                 <div style="display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:12px;margin-bottom:16px">
-                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Agent Full Name</small><br><b>Agent Tarseem</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Full Name</small><br><b>Tarseem</b></div>
                   <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Email / Username</small><br><b>tarseem@rma.com / tarseem</b></div>
-                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Account Role</small><br><b>Authorized RMA Agent</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Account Role</small><br><b>Authorized Referral Partner</b></div>
                   <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Account Status</small><br><b style="color:#084c38">Active &amp; Verified</b></div>
-                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Commission Code</small><br><b>TARSEEM@10</b></div>
-                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Commission Rate</small><br><b>10% on Referred Bookings</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Referral Code</small><br><b>TARSEEM@10</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Earnings Rate</small><br><b>10% on Referred Bookings</b></div>
                 </div>
-                <button type="button" class="btn outline" style="color:#c53030;border-color:#feb2b2" onclick="signOutUser()">Sign Out of Agent Portal</button>
+                <button type="button" class="btn outline" style="color:#c53030;border-color:#feb2b2" onclick="signOutUser()">Sign Out of Account</button>
               </div>
             </section>
           </main>
@@ -4319,7 +4333,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const msg = document.getElementById('atActionMsg') || document.getElementById('atCodeMsg');
       if(msg){
         msg.className = 'notice success'; msg.classList.remove('hidden');
-        msg.textContent = 'Commission Code "TARSEEM@10" copied to clipboard!';
+        msg.textContent = 'Referral Code "TARSEEM@10" copied to clipboard!';
       }
     };
     const copyLink = () => {
@@ -4343,7 +4357,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const { data, error } = await supabaseClient.from('bookings').select('*').order('created_at', { ascending: false });
       if(!error && data) bookings = data;
     } catch(e) {
-      console.warn('Agent portal bookings fetch:', e);
+      console.warn('Portal bookings fetch:', e);
     }
 
     const tarseemBookings = bookings.filter(isTarseemBooking);
@@ -4417,12 +4431,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const recentBox = document.getElementById('atRecentTransactions');
     if(recentBox){
       if(!transactionRows.length){
-        recentBox.innerHTML = '<div class="notice info">No referral transactions recorded yet. Give your code <b>TARSEEM@10</b> to clients booking services to earn 10% commission.</div>';
+        recentBox.innerHTML = '<div class="notice info">No referral transactions recorded yet. Share your referral code <b>TARSEEM@10</b> with customers booking services to record earnings.</div>';
       } else {
         recentBox.innerHTML = `
           <table class="agent-table">
             <thead>
-              <tr><th>Date</th><th>Client Name</th><th>Service</th><th>Booking Amount</th><th>Commission (10%)</th><th>Status</th></tr>
+              <tr><th>Date</th><th>Customer Name</th><th>Service</th><th>Booking Amount</th><th>Amount Earned</th><th>Status</th></tr>
             </thead>
             <tbody>
               ${transactionRows.slice(0, 5).map(r => `
@@ -4445,12 +4459,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const ledgerBox = document.getElementById('atLedgerTableBox');
     if(ledgerBox){
       if(!transactionRows.length){
-        ledgerBox.innerHTML = '<div class="notice info">No commission transactions found in ledger yet. All future client payments entering code <b>TARSEEM@10</b> will log automatically here.</div>';
+        ledgerBox.innerHTML = '<div class="notice info">No transactions found in earnings history yet. All future customer payments entering code <b>TARSEEM@10</b> will log automatically here.</div>';
       } else {
         ledgerBox.innerHTML = `
           <table class="agent-table">
             <thead>
-              <tr><th>Date</th><th>Client Name</th><th>Contact</th><th>Service / Payment Type</th><th>Amount</th><th>Rate</th><th>Commission Earned</th><th>Status</th></tr>
+              <tr><th>Date</th><th>Customer Name</th><th>Contact</th><th>Service / Payment Type</th><th>Booking Amount</th><th>Rate</th><th>Amount Earned</th><th>Status</th></tr>
             </thead>
             <tbody>
               ${transactionRows.map(r => `
@@ -4475,12 +4489,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const clientsBox = document.getElementById('atClientsTableBox');
     if(clientsBox){
       if(!clientList.length){
-        clientsBox.innerHTML = '<div class="notice info">No referred clients recorded yet. Your client directory will list all referred clients and their total spending.</div>';
+        clientsBox.innerHTML = '<div class="notice info">No referred customers recorded yet. Your customer directory will list all referred customers and their total spending.</div>';
       } else {
         clientsBox.innerHTML = `
           <table class="agent-table">
             <thead>
-              <tr><th>Client Name</th><th>Mobile</th><th>Email</th><th>Total Bookings</th><th>Total Spent</th><th>Commission Generated</th></tr>
+              <tr><th>Customer Name</th><th>Mobile</th><th>Email</th><th>Total Bookings</th><th>Total Spent</th><th>Total Earned</th></tr>
             </thead>
             <tbody>
               ${clientList.map(c => `
@@ -4592,7 +4606,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         box.innerHTML = data.map(m => `
           <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;margin-bottom:10px;background:${m.sender_role==='admin'?'#f4fdf8':'#fff'}">
             <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <b>${m.sender_role==='admin'?'🏛️ RMA Admin':'💼 Agent Tarseem'}</b>
+              <b>${m.sender_role==='admin'?'🏛️ RMA Admin':'👤 Tarseem'}</b>
               <small class="muted">${m.created_at ? new Date(m.created_at).toLocaleString('en-IN') : ''}</small>
             </div>
             <div style="font-weight:700;color:#084c38;margin-bottom:4px">${m.subject || 'No Subject'}</div>
@@ -4609,7 +4623,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     if(sendMsgBtn && !sendMsgBtn.dataset.wired){
       sendMsgBtn.dataset.wired = '1';
       sendMsgBtn.addEventListener('click', async () => {
-        const subj = document.getElementById('tarseemMsgSubject')?.value.trim() || 'Agent Query';
+        const subj = document.getElementById('tarseemMsgSubject')?.value.trim() || 'Account Query';
         const txt = document.getElementById('tarseemMsgText')?.value.trim();
         const stBox = document.getElementById('tarseemMsgStatus');
 
@@ -4621,11 +4635,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         try {
           const { error } = await supabaseClient.from('client_messages').insert({
             user_id: user.id,
-            client_name: 'Agent Tarseem',
+            client_name: 'Tarseem',
             email: user.email || 'tarseem@rma.com',
             subject: subj,
             message: txt,
-            sender_role: 'agent',
+            sender_role: 'referral',
             thread_id: user.id,
             status: 'new'
           });
