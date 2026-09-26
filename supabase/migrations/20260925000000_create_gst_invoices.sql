@@ -44,17 +44,18 @@ CREATE POLICY "Allow public read access to gst_invoices"
     USING (true);
 
 -- Allow service role and client insert access
-CREATE POLICY "Allow service role and client insert to gst_invoices"
+-- Allow service role insert access
+CREATE POLICY "Allow service role insert to gst_invoices"
     ON public.gst_invoices
     FOR INSERT
-    TO anon, authenticated, service_role
+    TO service_role
     WITH CHECK (true);
 
--- Allow service role and client update access
-CREATE POLICY "Allow update to gst_invoices"
+-- Allow service role update access
+CREATE POLICY "Allow service role update to gst_invoices"
     ON public.gst_invoices
     FOR UPDATE
-    TO anon, authenticated, service_role
+    TO service_role
     USING (true);
 
 -- Indexes for fast query lookup

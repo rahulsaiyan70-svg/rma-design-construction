@@ -1043,22 +1043,6 @@ async function signInUser(){
   const password=document.getElementById('authPassword').value;
   if(!email||!password){authMsg('Please enter your email and password.');return;}
 
-  if(email.toLowerCase()==='tarseem'||email.toLowerCase()==='agent tarseem'){
-    email='tarseem@rma.com';
-  }
-
-  if(email.toLowerCase()==='tarseem@rma.com'){
-    if(password==='Tarseem@10%'){
-      authMsg('Signed in successfully. Loading your dashboard...','info');
-      const agentUser={id:'rma-agent-tarseem-010',email:'tarseem@rma.com',role:'agent',user_metadata:{full_name:'Tarseem'}};
-      await loadSignedInPortal(agentUser);
-      return;
-    } else {
-      authMsg('Invalid email or password.');
-      return;
-    }
-  }
-
   authMsg('Signing in...','info');
   try{
     const authPromise=supabaseClient.auth.signInWithPassword({email,password});
@@ -4441,12 +4425,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <tbody>
               ${transactionRows.slice(0, 5).map(r => `
                 <tr>
-                  <td>${r.date}</td>
-                  <td><b>${r.name}</b><br><small class="muted">${r.contact}</small></td>
-                  <td>${r.service}</td>
+                  <td>${esc(r.date)}</td>
+                  <td><b>${esc(r.name)}</b><br><small class="muted">${esc(r.contact)}</small></td>
+                  <td>${esc(r.service)}</td>
                   <td>${fmt(r.amount)}</td>
                   <td><b style="color:#084c38">${fmt(r.commission)}</b></td>
-                  <td><span class="agent-badge">${r.status}</span></td>
+                  <td><span class="agent-badge">${esc(r.status)}</span></td>
                 </tr>
               `).join('')}
             </tbody>
@@ -4469,14 +4453,14 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <tbody>
               ${transactionRows.map(r => `
                 <tr>
-                  <td>${r.date}</td>
-                  <td><b>${r.name}</b></td>
-                  <td>${r.contact}</td>
-                  <td>${r.service}</td>
+                  <td>${esc(r.date)}</td>
+                  <td><b>${esc(r.name)}</b></td>
+                  <td>${esc(r.contact)}</td>
+                  <td>${esc(r.service)}</td>
                   <td>${fmt(r.amount)}</td>
-                  <td>${r.rate}</td>
+                  <td>${esc(r.rate)}</td>
                   <td><b style="color:#084c38">${fmt(r.commission)}</b></td>
-                  <td><span class="agent-badge">${r.status}</span></td>
+                  <td><span class="agent-badge">${esc(r.status)}</span></td>
                 </tr>
               `).join('')}
             </tbody>
@@ -4499,10 +4483,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <tbody>
               ${clientList.map(c => `
                 <tr>
-                  <td><b>${c.name}</b></td>
-                  <td>${c.mobile}</td>
-                  <td>${c.email}</td>
-                  <td>${c.count}</td>
+                  <td><b>${esc(c.name)}</b></td>
+                  <td>${esc(c.mobile)}</td>
+                  <td>${esc(c.email)}</td>
+                  <td>${esc(c.count)}</td>
                   <td>${fmt(c.totalSpent)}</td>
                   <td><b style="color:#084c38">${fmt(c.commEarned)}</b></td>
                 </tr>
@@ -4528,11 +4512,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           <tbody>
             ${list.map(p => `
               <tr>
-                <td>${p.date}</td>
+                <td>${esc(p.date)}</td>
                 <td><b>${fmt(p.amount)}</b></td>
-                <td>${(p.method || '').toUpperCase()}</td>
-                <td>${p.details || '—'}</td>
-                <td><span class="agent-badge">${p.status || 'Pending'}</span></td>
+                <td>${esc((p.method || '').toUpperCase())}</td>
+                <td>${esc(p.details || '—')}</td>
+                <td><span class="agent-badge">${esc(p.status || 'Pending')}</span></td>
               </tr>
             `).join('')}
           </tbody>
@@ -4607,10 +4591,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;margin-bottom:10px;background:${m.sender_role==='admin'?'#f4fdf8':'#fff'}">
             <div style="display:flex;justify-content:space-between;margin-bottom:6px">
               <b>${m.sender_role==='admin'?'🏛️ RMA Admin':'👤 Tarseem'}</b>
-              <small class="muted">${m.created_at ? new Date(m.created_at).toLocaleString('en-IN') : ''}</small>
+              <small class="muted">${m.created_at ? esc(new Date(m.created_at).toLocaleString('en-IN')) : ''}</small>
             </div>
-            <div style="font-weight:700;color:#084c38;margin-bottom:4px">${m.subject || 'No Subject'}</div>
-            <div>${m.message || ''}</div>
+            <div style="font-weight:700;color:#084c38;margin-bottom:4px">${esc(m.subject || 'No Subject')}</div>
+            <div>${esc(m.message || '')}</div>
           </div>
         `).join('');
       } catch(e) {
