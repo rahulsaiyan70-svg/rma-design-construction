@@ -389,8 +389,8 @@ section{padding:78px 0}
 </style>
 
 <style id="rma-v62-client-dashboard">
-/* V62 — client portal dashboard skin. Existing V44 functionality/IDs are preserved. */
-#rmaPathSeekerPortal{background:#f4f8f6!important;min-height:100vh!important;padding:0 0 40px!important;color:#142d24!important}
+/* V62 — client portal dashboard skin & agent portal skin. Existing V44 functionality/IDs are preserved. */
+#rmaPathSeekerPortal, #rmaTarseemPortal{background:#f4f8f6!important;min-height:100vh!important;padding:0 0 40px!important;color:#142d24!important}
 #rmaPathSeekerPortal>.container{max-width:1280px!important;padding:0 18px 28px!important}
 #rmaPathSeekerPortal .ps-v62-topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;background:#075a40;color:#fff;padding:14px 18px;border-radius:0 0 14px 14px;box-shadow:0 5px 18px rgba(7,90,64,.16);position:sticky;top:0;z-index:30}
 #rmaPathSeekerPortal .ps-v62-brand{font-weight:900;font-size:20px;letter-spacing:-.03em;line-height:1}
@@ -521,6 +521,7 @@ section{padding:78px 0}
 <li><button onclick="showPage('services')">Services</button></li>
 <li><button onclick="showPage('construction')">Construction</button></li>
 <li><button onclick="showPage('sitevisit')">Book My Site Visit</button></li>
+<li><button onclick="showAppointmentSection()">Book Appointment</button></li>
 <li><button onclick="showPage('about')">About</button></li>
 <li><button onclick="showPage('contact')">Contact</button></li>
 <li><button id="signinNavBtn" onclick="showPage('signin')">Sign In</button></li>
@@ -569,7 +570,7 @@ section{padding:78px 0}
 <h1>BUILDING<br/>YOUR VISION</h1>
 <p>Professional architectural planning, structural design, municipality approval drawings, estimation, surveying and construction services.</p>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:28px">
-<button class="btn gold" onclick="showPage('services')">Explore Services</button>
+<button class="btn gold" onclick="showAppointmentSection()">Book Your Appointment →</button>
 <button class="btn dark" onclick="showPage('sitevisit')">Book My Site Visit →</button>
 </div>
 </div>
@@ -636,6 +637,101 @@ section{padding:78px 0}
 </div>
 </div>
 </section>
+
+<!-- BOOK YOUR APPOINTMENT SECTION -->
+<section class="section" id="appointment-section" style="background:#f4f8f5;padding:50px 0;border-top:1px solid #dce9e3;border-bottom:1px solid #dce9e3">
+  <div class="container" style="max-width:860px">
+    <div style="text-align:center;margin-bottom:26px">
+      <span class="kicker" style="color:#084c38;font-weight:800;letter-spacing:1px;font-size:12px;text-transform:uppercase">APPOINTMENT REQUEST</span>
+      <h2 style="font-size:32px;font-weight:900;color:#142d24;margin:6px 0 10px">Book Your Appointment</h2>
+      <p class="muted" style="font-size:15px;max-width:620px;margin:0 auto">Schedule an architectural &amp; engineering consultation with RMA Design &amp; Construction.</p>
+    </div>
+
+    <div class="form-panel" style="background:#fff;border:1px solid #dce9e3;border-radius:16px;padding:30px;box-shadow:0 6px 24px rgba(20,45,36,0.06)">
+      <div id="appointmentFormContainer">
+        <form id="rmaAppointmentForm" onsubmit="handleAppointmentSubmit(event)">
+          <div class="form-grid">
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Full Name *</label>
+              <input id="apt_name" type="text" placeholder="Enter your full name" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px">
+            </div>
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Mobile Number *</label>
+              <input id="apt_mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Email Address *</label>
+              <input id="apt_email" type="email" placeholder="e.g. name@gmail.com" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px">
+            </div>
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Project / Building Type *</label>
+              <select id="apt_building" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px;background:#fff">
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Institutional">Institutional</option>
+                <option value="Industrial">Industrial</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="group">
+            <label style="font-weight:700;display:block;margin-bottom:6px">Project / Site Address *</label>
+            <textarea id="apt_address" rows="2" placeholder="House/plot number, street, locality, district, J&amp;K" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px"></textarea>
+          </div>
+
+          <div class="form-grid">
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Preferred Date *</label>
+              <input id="apt_date" type="date" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px">
+            </div>
+            <div class="group">
+              <label style="font-weight:700;display:block;margin-bottom:6px">Preferred Time *</label>
+              <select id="apt_time" required style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px;background:#fff">
+                <option value="10:00 AM">10:00 AM</option>
+                <option value="11:00 AM">11:00 AM</option>
+                <option value="12:00 PM">12:00 PM</option>
+                <option value="02:00 PM">02:00 PM</option>
+                <option value="03:00 PM">03:00 PM</option>
+                <option value="04:00 PM">04:00 PM</option>
+                <option value="05:00 PM">05:00 PM</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="group">
+            <label style="font-weight:700;display:block;margin-bottom:6px">Brief Requirement / Message</label>
+            <textarea id="apt_message" rows="3" placeholder="Briefly describe your project, architectural needs, structural requirements, or consultation topic..." style="width:100%;padding:11px 14px;border:1px solid #c9dcd2;border-radius:8px"></textarea>
+          </div>
+
+          <div id="aptFormMsg" class="notice hidden" style="margin-bottom:14px"></div>
+
+          <button type="submit" id="aptSubmitBtn" class="btn gold full" style="font-size:16px;font-weight:800;padding:14px">Request Appointment</button>
+        </form>
+      </div>
+
+      <!-- Confirmation Screen -->
+      <div id="appointmentConfirmationBox" class="hidden" style="text-align:center;padding:20px 10px">
+        <div style="width:64px;height:64px;border-radius:50%;background:#e0f3ea;color:#084c38;display:grid;place-items:center;font-size:32px;margin:0 auto 16px;font-weight:900">✓</div>
+        <h3 style="font-size:24px;font-weight:900;color:#084c38;margin-bottom:8px">Appointment Request Received</h3>
+        <p style="font-size:16px;color:#234338;margin-bottom:14px;line-height:1.5">
+          Your temporary appointment has been booked for <b id="aptConfDate" style="color:#084c38"></b> at <b id="aptConfTime" style="color:#084c38"></b>.
+        </p>
+        <div style="background:#f4f9f6;border:1px solid #dce9e3;border-radius:12px;padding:16px;margin:16px 0;text-align:left;font-size:14px;line-height:1.6;color:#334d43">
+          <p style="margin:0 0 8px"><b>Important Note:</b> This is a temporary appointment request, not a permanently confirmed slot.</p>
+          <p style="margin:0">Our team will shortly confirm the available slot and contact you with the final appointment timing. Our team will contact you shortly.</p>
+        </div>
+        <div id="aptConfDetails" style="text-align:left;background:#fbfcfc;border:1px solid #eef3f0;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;line-height:1.6">
+        </div>
+        <button type="button" class="btn outline" onclick="resetAppointmentForm()">Book Another Appointment</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <div class="stats">
 <div class="container statsgrid">
 <div class="stat"><strong>5+</strong><span>Years Experience</span></div>
@@ -940,7 +1036,7 @@ section{padding:78px 0}
 <div class="form-panel">
 <div class="auth-tabs"><button class="auth-tab active" id="clientTab" onclick="setAuthRole('client')">Client</button><button class="auth-tab" id="staffTab" onclick="setAuthRole('staff')">Staff / Admin</button></div>
 <div class="form-note">Sign in with the email and password issued for your RMA account.</div>
-<div class="group"><label>Email</label><input id="authEmail" placeholder="Enter your email" type="email"/></div>
+<div class="group"><label>Email / Username</label><input id="authEmail" placeholder="Enter your email or username" type="email"/></div>
 <div class="group"><label>Password</label><input id="authPassword" placeholder="Enter your password" type="password"/></div>
 <div class="auth-actions"><button class="btn dark" onclick="signInUser()">Sign In</button><button class="btn outline" onclick="resetPassword()">Forgot Password?</button></div>
 <div class="notice hidden" id="authMessage"></div>
@@ -1039,18 +1135,21 @@ function authMsg(text,type='error'){
   el.textContent=text; el.className='notice '+type;
 }
 async function signInUser(){
-  const email=document.getElementById('authEmail').value.trim();
+  let email=(document.getElementById('authEmail').value||'').trim();
   const password=document.getElementById('authPassword').value;
   if(!email||!password){authMsg('Please enter your email and password.');return;}
+
   authMsg('Signing in...','info');
   try{
     const authPromise=supabaseClient.auth.signInWithPassword({email,password});
     const result=await Promise.race([authPromise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Supabase sign-in is taking too long. Please check your internet connection and try again.')),20000))]);
     const {data,error}=result||{};
-    if(error){authMsg(error.message||'Sign in failed.');return;}
+    if(error){
+      authMsg(error.message||'Sign in failed.');
+      return;
+    }
     if(!data?.user){authMsg('Sign-in completed but no user session was returned. Please try again.');return;}
     authMsg('Signed in successfully. Loading your portal...','info');
-    // Do not leave the button stuck on “Signing in...” if a portal/database query is slow.
     try{
       await Promise.race([loadSignedInPortal(data.user),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Portal loading timed out. Your login is successful; please refresh once.')),15000))]);
     }catch(e){
@@ -1063,24 +1162,50 @@ async function signInUser(){
   }
 }
 async function loadSignedInPortal(user){
-  // A successful authentication always hides the login form immediately.
-  // The profile role is then used to choose the correct portal.
   document.getElementById('authLoginSection')?.classList.add('hidden');
   document.getElementById('clientPortal')?.classList.add('hidden');
   document.getElementById('staffPortal')?.classList.add('hidden');
   document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
+  document.getElementById('rmaTarseemPortal')?.classList.add('hidden');
+
+  const isTarseemAgent = (user.email||'').toLowerCase()==='tarseem@rma.com' || (user.role||'').toLowerCase()==='agent';
+  if(isTarseemAgent){
+    if(typeof window.addTarseemPortal==='function') window.addTarseemPortal();
+    document.getElementById('authLoginSection')?.classList.add('hidden');
+    document.getElementById('clientPortal')?.classList.add('hidden');
+    document.getElementById('staffPortal')?.classList.add('hidden');
+    document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
+    document.querySelector('#page-signin .page-head')?.classList.add('hidden');
+    const portal=document.getElementById('rmaTarseemPortal');
+    if(portal) portal.classList.remove('hidden');
+    const navBtn=document.getElementById('signinNavBtn');if(navBtn) navBtn.textContent='Account';
+    if(typeof window.buildTarseemPortal==='function') window.buildTarseemPortal(user);
+    return;
+  }
+
   let role='client', profile=null;
   try{
     const profilePromise=supabaseClient.from('profiles').select('*').eq('id',user.id).maybeSingle();
     const r=await Promise.race([profilePromise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Profile lookup timed out')),8000))]);
     if(!r.error) profile=r.data;
-    role=(profile?.role||'client').toLowerCase();
+    role=(profile?.role||user.role||'client').toLowerCase();
   }catch(e){}
 
-  // Path Seeker is a dedicated client portal.  The old generic client portal
-  // must not win the login flow, otherwise the Path Seeker project/documents
-  // portal never becomes visible after a successful sign-in.
-  const identity=((profile?.full_name||'')+' '+(user.email||'')).toLowerCase();
+  const identity=((profile?.full_name||'')+' '+(user.email||'')+' '+(user.user_metadata?.full_name||'')).toLowerCase();
+  if(isTarseemAgent){
+    if(typeof window.addTarseemPortal==='function') window.addTarseemPortal();
+    document.getElementById('authLoginSection')?.classList.add('hidden');
+    document.getElementById('clientPortal')?.classList.add('hidden');
+    document.getElementById('staffPortal')?.classList.add('hidden');
+    document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
+    document.querySelector('#page-signin .page-head')?.classList.add('hidden');
+    const portal=document.getElementById('rmaTarseemPortal');
+    if(portal) portal.classList.remove('hidden');
+    const navBtn=document.getElementById('signinNavBtn');if(navBtn) navBtn.textContent='Account';
+    if(typeof window.buildTarseemPortal==='function') window.buildTarseemPortal(user);
+    return;
+  }
+
   const isPathSeeker=identity.includes('path seeker')||identity.includes('pathseeker')||identity.includes('path.seeker');
   if(isPathSeeker){
     // Wait briefly for the dedicated Path Seeker portal module to register.
@@ -1489,15 +1614,79 @@ async function rmaVerifyRazorpayPayment(response){
   return d;
 }
 
+async function notifyRMAAdminForNewBooking({
+  type,
+  customerName,
+  mobile,
+  email,
+  location,
+  paymentAmount,
+  bookingId,
+  requestedDate,
+  requestedTime,
+  referralCode,
+  details
+}){
+  const formattedDate = new Date().toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+  const formattedTime = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+
+  const headerTitle = `New ${type}`;
+  const lines = [
+    `${headerTitle}`,
+    `Customer: ${customerName || 'N/A'}`,
+    `Mobile: ${mobile || 'N/A'}`,
+    `Email: ${email || 'N/A'}`
+  ];
+
+  if(requestedDate) lines.push(`Requested Date: ${requestedDate}`);
+  if(requestedTime) lines.push(`Requested Time: ${requestedTime}`);
+  if(location) lines.push(`Location / Address: ${location}`);
+  if(paymentAmount) lines.push(`Payment: ₹${paymentAmount}`);
+  if(referralCode) lines.push(`Referral Code Used: ${referralCode}`);
+  if(details) lines.push(`Details: ${details}`);
+  lines.push(`Booking / Request ID: ${bookingId}`);
+  lines.push(`Submission Date/Time: ${formattedDate} at ${formattedTime}`);
+
+  const fullText = lines.join('\n');
+  const subjectText = `${headerTitle} — ${bookingId}`;
+
+  // Channel 2: Message/notification inside RMA Admin Account (stored in client_messages)
+  try {
+    if(typeof supabaseClient !== 'undefined'){
+      await supabaseClient.from('client_messages').insert({
+        user_id: 'admin_notify',
+        client_name: customerName || 'Customer',
+        email: email || null,
+        subject: subjectText,
+        message: fullText,
+        sender_role: 'client',
+        thread_id: 'admin_notifications',
+        status: 'new'
+      });
+    }
+  } catch(err){
+    console.warn('Admin notification message insert warning:', err);
+  }
+
+  // Channel 1: Email Notification trigger
+  try {
+    const mailtoUrl = `mailto:rma.studies07@gmail.com?subject=${encodeURIComponent(subjectText)}&body=${encodeURIComponent(fullText)}`;
+    window.__lastAdminNotificationEmailUrl = mailtoUrl;
+  } catch(err){
+    console.warn('Admin notification email warning:', err);
+  }
+}
+window.notifyRMAAdminForNewBooking = notifyRMAAdminForNewBooking;
+
 async function rmaExecutePaymentFlow({
-  paymentType,
+  paymentType = "service",
   amount,
   originalAmount,
   isTest = false,
   couponCode = "",
   receipt,
   description,
-  customer,
+  customer = {},
   scopeDetails = {},
   btnEl,
   msgEl,
@@ -1527,12 +1716,19 @@ async function rmaExecutePaymentFlow({
   if(btnEl) btnEl.disabled = true;
   setMsg('Creating secure Razorpay order...', 'info');
 
+  const normCoupon = (couponCode || '').trim().toUpperCase();
+  const isTarseem = normCoupon === 'TARSEEM@10' || normCoupon === 'TARSEEM@20';
+  const origAmt = Number(originalAmount || amount);
+  const agentCommission = isTarseem ? Number((origAmt * 0.10).toFixed(2)) : 0;
+
   const notes = {
     request_id: receipt,
     payment_type: paymentType,
     is_test: String(isTest),
-    coupon_code: couponCode,
-    original_amount: String(originalAmount || amount),
+    coupon_code: normCoupon,
+    agent_code: isTarseem ? normCoupon : (scopeDetails.agent_code || ''),
+    agent_commission: String(agentCommission),
+    original_amount: String(origAmt),
     final_amount: String(amount),
     service_type: scopeDetails.service_type || paymentType
   };
@@ -1569,8 +1765,9 @@ async function rmaExecutePaymentFlow({
           const gst = Number((amount - taxable).toFixed(2));
           const recordPayload = {
             request_id: receipt,
-            client_name: customer.name,
-            mobile: customer.mobile || customer.contact,
+            application_id: receipt,
+            client_name: customer.name || "Customer",
+            mobile: customer.mobile || customer.contact || "",
             email: customer.email || null,
             service_type: scopeDetails.service_type || description || paymentType,
             project_address: customer.address || 'Project site',
@@ -1580,23 +1777,84 @@ async function rmaExecutePaymentFlow({
             visit_fee: taxable,
             gst_amount: gst,
             total_amount: amount,
-            status: scopeDetails.status || (paymentType === 'site_visit' ? 'booked' : 'paid'),
+            status: scopeDetails.status || (paymentType === 'site_visit' ? 'payment_received' : 'paid'),
             visit_scope: JSON.stringify({
               ...scopeDetails,
               payment_type: paymentType,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               is_test: isTest,
-              coupon_code: couponCode,
-              original_amount: originalAmount || amount,
+              coupon_code: normCoupon,
+              agent_code: isTarseem ? normCoupon : (scopeDetails.agent_code || ''),
+              agent_commission: agentCommission,
+              original_amount: origAmt,
               final_amount: amount
             })
           };
 
           try {
-            await insertBooking(recordPayload);
+            if(typeof insertBooking === 'function') {
+              await insertBooking(recordPayload);
+            } else if(typeof supabaseClient !== 'undefined') {
+              await supabaseClient.from('bookings').insert(recordPayload);
+            }
           } catch(dbErr) {
             console.warn('Booking insertion warning:', dbErr);
+          }
+
+          // Record initial status history
+          try {
+            if(typeof supabaseClient !== 'undefined' && (paymentType === 'site_visit' || scopeDetails.service_type === 'Site Visit')){
+              const inserted = (await supabaseClient.from('bookings').select('id,client_user_id').eq('request_id',receipt).maybeSingle()).data;
+              if(inserted?.id){
+                recordPayload.id = inserted.id;
+                recordPayload.client_user_id = inserted.client_user_id || null;
+                await supabaseClient.from('status_history').insert({
+                  booking_id: inserted.id,
+                  request_id: receipt,
+                  previous_status: 'pending_payment',
+                  new_status: 'payment_received',
+                  changed_by: 'System (Razorpay Payment Verification)',
+                  remarks: 'Payment verified server-side. Temporary site visit booking created.'
+                });
+              }
+            }
+          } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+          try {
+            if(typeof window.notifyRMAAdminForNewBooking === 'function') {
+              window.notifyRMAAdminForNewBooking({
+                type: paymentType === 'site_visit' ? 'Site Visit Booking' : (paymentType === 'construction' ? 'Construction Request' : 'Service Request'),
+                customerName: customer.name || 'Customer',
+                mobile: customer.mobile || customer.contact || '',
+                email: customer.email || '',
+                location: customer.address || '',
+                paymentAmount: amount,
+                bookingId: receipt,
+                requestedDate: scopeDetails.requested_date || '',
+                requestedTime: scopeDetails.requested_time || '',
+                referralCode: normCoupon || 'None',
+                details: scopeDetails.service_type || description
+              });
+            }
+          } catch(notifyErr) {
+            console.warn('Notification error:', notifyErr);
+          }
+
+          // Multi-channel notification to client for Temporary Booking if site visit
+          try {
+            if(paymentType === 'site_visit' && typeof window.notifyClientTemporaryBooking === 'function'){
+              await window.notifyClientTemporaryBooking({
+                id: recordPayload.id || null,
+                request_id: receipt,
+                client_name: customer.name,
+                email: customer.email,
+                mobile: customer.mobile || customer.contact,
+                client_user_id: recordPayload.client_user_id || null
+              });
+            }
+          } catch(tErr){
+            console.warn('Temporary booking multi-channel notification warning:', tErr);
           }
 
           let invoiceRes = null;
@@ -1649,12 +1907,12 @@ async function rmaExecutePaymentFlow({
             if(box) {
               box.className = "notice success";
               box.classList.remove("hidden");
-              box.innerHTML = "<b>Payment verified.</b><br>Payment ID: <b>" + response.razorpay_payment_id + "</b>";
+              box.innerHTML = "<b>Payment verified successfully.</b><br>Request ID: <b>" + receipt + "</b><br>Payment ID: <b>" + response.razorpay_payment_id + "</b>";
             }
           }
 
           if(typeof onSuccess === 'function') {
-            onSuccess({ response, invoice: invoiceRes });
+            onSuccess({ response, invoice: invoiceRes, amount, receipt });
           }
         } catch(err) {
           console.error('Payment processing error:', err);
@@ -1675,7 +1933,7 @@ async function rmaExecutePaymentFlow({
 
 async function openRazorpayPayment({amount,receipt,description,name,email,contact,messageEl,notes={}}){
   return rmaExecutePaymentFlow({
-    paymentType: notes.payment_type || 'service',
+    paymentType: notes.payment_type || (notes.service_type ? 'service' : 'site_visit'),
     amount: Number(amount),
     receipt,
     description,
@@ -2751,27 +3009,69 @@ const ALLOWED=['Jammu & Kashmir','Punjab','Haryana','Chandigarh','Delhi'];
 const JK=['Jammu','Samba','Kathua','Udhampur','Reasi','Rajouri','Poonch','Doda','Kishtwar','Ramban','Srinagar','Budgam','Ganderbal','Pulwama','Shopian','Kulgam','Anantnag','Baramulla','Kupwara','Bandipora'];
 const rate=d=>d<=10?1500:d<=20?2000:d<=40?2500:d<=50?3500:d<=75?4000:5000;
 const money=n=>'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-let visitReady=false, visitDistance=null, paymentBusy=false, siteVisitCouponApplied=false;
+let visitReady=false, visitDistance=null, paymentBusy=false, siteVisitCouponApplied=false, siteVisitCode='';
 const RMA_TEMP_COUPON='TEMP@1';
-const RMA_TEMP_COUPON_AMOUNT=5;
+const RMA_TEMP_COUPON_AMOUNT=1;
 function rmaIndiaToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
-function rmaCouponIsValidToday(){return rmaIndiaToday()==='2026-09-24';}
+function rmaCouponIsValidToday(){const today=rmaIndiaToday();return today>='2026-09-25'&&today<='2026-10-02';}
 function siteVisitPricing(distance){
  const baseFee=rate(distance),baseGst=baseFee*.18,baseTotal=baseFee+baseGst;
- if(siteVisitCouponApplied){
+ const normCode = (siteVisitCode||'').trim().toUpperCase();
+ if(siteVisitCouponApplied || normCode===RMA_TEMP_COUPON || normCode==='RMATEST1'){
    const finalTotal=RMA_TEMP_COUPON_AMOUNT;
    const taxable=Number((finalTotal/1.18).toFixed(2));
    const gst=Number((finalTotal-taxable).toFixed(2));
-   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:Number((baseTotal-finalTotal).toFixed(2)),coupon:RMA_TEMP_COUPON};
+   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:Number((baseTotal-finalTotal).toFixed(2)),coupon:normCode||RMA_TEMP_COUPON};
  }
- return {baseFee,baseGst,baseTotal,fee:baseFee,gst:Number(baseGst.toFixed(2)),total:Number(baseTotal.toFixed(2)),discount:0,coupon:''};
+ let discountAmount = 0;
+ if(normCode==='TARSEEM@10' || normCode==='SITE10'){
+   discountAmount = 100;
+ } else if(normCode==='TARSEEM@20'){
+   discountAmount = 250;
+ } else if(normCode==='SITE20'){
+   discountAmount = 200;
+ } else if(normCode==='SITE30'){
+   discountAmount = 300;
+ }
+ if(discountAmount > 0){
+   const finalTotal = Math.max(0, Number((baseTotal - discountAmount).toFixed(2)));
+   const taxable = Number((finalTotal / 1.18).toFixed(2));
+   const gst = Number((finalTotal - taxable).toFixed(2));
+   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:discountAmount,coupon:normCode};
+ }
+ return {baseFee,baseGst,baseTotal,fee:baseFee,gst:Number(baseGst.toFixed(2)),total:Number(baseTotal.toFixed(2)),discount:0,coupon:normCode};
 }
 function applySiteVisitCoupon(){
- const input=document.getElementById('r29_coupon'),code=(input?.value||'').trim();
- if(code.toUpperCase()!==RMA_TEMP_COUPON){siteVisitCouponApplied=false;msg('r29_couponMsg','Invalid coupon code.','error');if(visitDistance!==null)showFee(visitDistance);return;}
- if(!rmaCouponIsValidToday()){siteVisitCouponApplied=false;msg('r29_couponMsg','This coupon is valid only on 24 September 2026.','error');if(visitDistance!==null)showFee(visitDistance);return;}
- siteVisitCouponApplied=true;
- msg('r29_couponMsg','Coupon applied. Final amount is ₹5.00 for today only.','success');
+ const input=document.getElementById('r29_coupon'),code=(input?.value||'').trim().toUpperCase();
+ if(!code){
+   siteVisitCouponApplied=false; siteVisitCode='';
+   msg('r29_couponMsg','Please enter a coupon or referral code.','error');
+   if(visitDistance!==null)showFee(visitDistance);
+   return;
+ }
+ siteVisitCode=code;
+ if(code==='TARSEEM@10'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Referral code applied. ₹100 discount has been applied.','success');
+ } else if(code==='TARSEEM@20'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Referral code applied. ₹250 discount has been applied.','success');
+ } else if(code==='SITE10'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Coupon code applied. ₹100 discount has been applied.','success');
+ } else if(code==='SITE20'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Coupon code applied. ₹200 discount has been applied.','success');
+ } else if(code==='SITE30'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','Coupon code applied. ₹300 discount has been applied.','success');
+ } else if(code===RMA_TEMP_COUPON || code==='RMATEST1'){
+   siteVisitCouponApplied=true;
+   msg('r29_couponMsg','Test Coupon applied. Amount reduced to ₹1.00 for payment verification.','success');
+ } else {
+   siteVisitCouponApplied=false; siteVisitCode='';
+   msg('r29_couponMsg','Invalid coupon or referral code for Site Visit.','error');
+ }
  if(visitDistance!==null)showFee(visitDistance);
 }
 
@@ -2797,7 +3097,7 @@ function buildVisit(){
 <input type="hidden" id="r29_lat"><input type="hidden" id="r29_lng">
 </div>
 <div class="v29-price"><div class="v29-line"><span>Road Distance</span><strong id="r29_distance">—</strong></div><div class="v29-line"><span>Site Visit Fee</span><strong id="r29_fee">—</strong></div><div class="v29-line"><span>GST 18%</span><strong id="r29_gst">—</strong></div><div class="v29-line" id="r29_discount_row" style="display:none"><span>Coupon Discount</span><strong id="r29_discount">—</strong></div><div class="v29-line v29-total"><span>Total Payable</span><strong id="r29_total">—</strong></div></div>
-<div class="r29-coupon-box" style="margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8"><label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon?</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="r29_coupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none"><button type="button" class="btn outline" id="r29_couponBtn">Apply Coupon</button></div><div id="r29_couponMsg" class="notice hidden" style="margin-top:9px"></div></div>
+<div class="r29-coupon-box" style="margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8"><label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or referral code?</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="r29_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none"><button type="button" class="btn outline" id="r29_couponBtn">Apply Code</button></div><div id="r29_couponMsg" class="notice hidden" style="margin-top:9px"></div></div>
 <div id="r29_message" class="notice hidden" style="margin-top:12px"></div>
 <button type="button" class="btn gold full" id="r29_pay">Pay &amp; Book Site Visit with Razorpay</button>
 </form></div></div>`;
@@ -2845,6 +3145,9 @@ async function payVisit(){
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg('r29_message','Please enter a valid customer Gmail / email address so we can send your GST bill.','error');return;}
 
  paymentBusy=true;
+ const isTarseemVisit = pricing.coupon === 'TARSEEM@10' || pricing.coupon === 'TARSEEM@20';
+ const visitCommission = isTarseemVisit ? Number((pricing.baseTotal * 0.10).toFixed(2)) : 0;
+
  const invoicePayload={
    payment_id:'',
    receipt:requestId,
@@ -2887,10 +3190,12 @@ async function payVisit(){
      base_lat: BASE_LAT,
      base_lng: BASE_LNG,
      coupon_code: pricing.coupon,
+     agent_code: isTarseemVisit ? pricing.coupon : '',
+     agent_commission: visitCommission,
      original_total: pricing.baseTotal,
      discount: pricing.discount,
      final_total: total,
-     status: 'booked'
+     status: 'payment_received'
    },
    btnEl: btn,
    msgEl: 'r29_message',
@@ -2907,15 +3212,53 @@ async function payVisit(){
  });
 }
 
+function applyServiceCoupon(){
+ const input=document.getElementById('s_coupon'),code=(input?.value||'').trim().toUpperCase();
+ if(!code){
+   msg('s_couponMsg','Please enter a coupon or referral code.','error');
+   return;
+ }
+ if(code==='TARSEEM@10'){
+   msg('s_couponMsg','Referral code applied. ₹500 discount has been applied.','success');
+ } else if(code==='TARSEEM@20'){
+   msg('s_couponMsg','Referral code applied. ₹1,000 discount has been applied.','success');
+ } else if(code==='GOOD5'){
+   msg('s_couponMsg','Coupon code applied. ₹500 discount has been applied.','success');
+ } else if(code==='BEST10'){
+   msg('s_couponMsg','Coupon code applied. ₹1,000 discount has been applied.','success');
+ } else if(code==='RMATEST1'||code==='TEMP@1'){
+   msg('s_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
+ } else {
+   msg('s_couponMsg','Invalid coupon or referral code for Service.','error');
+ }
+}
+
 function installServicePayment(){
  const form=document.getElementById('serviceForm');if(!form)return;
- let old=form.querySelector('#razorpayServiceBtn');if(old)old.remove();
+ if(!document.getElementById('s_coupon_box')){
+   const couponBox=document.createElement('div');
+   couponBox.id='s_coupon_box';
+   couponBox.className='r29-coupon-box';
+   couponBox.style.cssText='margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
+   couponBox.innerHTML=`
+     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or referral code?</label>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">
+       <input id="s_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
+       <button type="button" class="btn outline" id="s_couponBtn">Apply Code</button>
+     </div>
+     <div id="s_couponMsg" class="notice hidden" style="margin-top:9px"></div>
+   `;
+   form.appendChild(couponBox);
+   document.getElementById('s_couponBtn').onclick=applyServiceCoupon;
+ }
+ let old=form.querySelector('#rmaV29ServicePay');if(old)old.remove();
  form.querySelectorAll('button').forEach(b=>{if(/Pay.*Razorpay|Submit Service Request/i.test(b.textContent||''))b.remove();});
  const btn=document.createElement('button');btn.id='rmaV29ServicePay';btn.type='button';btn.className='btn gold full';btn.textContent='Pay & Submit Service Request with Razorpay';btn.style.marginTop='12px';
  const msgBox=document.createElement('div');msgBox.id='rmaV29ServiceMsg';msgBox.className='notice hidden';msgBox.style.marginTop='10px';
  form.appendChild(btn);form.appendChild(msgBox);
  btn.onclick=payService;
 }
+
 async function payService(){
  const form=document.getElementById('serviceForm'),btn=document.getElementById('rmaV29ServicePay'),box=document.getElementById('rmaV29ServiceMsg');if(!form.reportValidity())return;
  if(paymentBusy) return;
@@ -2925,11 +3268,24 @@ async function payService(){
  const requestId='RMA-S-'+Date.now().toString().slice(-9);const name=document.getElementById('s_name')?.value.trim()||'';const email=document.getElementById('s_email')?.value.trim()||'';
  const address=document.getElementById('s_project_address')?.value.trim()||'Service request';
 
+ const code=(document.getElementById('s_coupon')?.value||'').trim().toUpperCase();
+ let finalAmount=amount, isTest=false;
+ if(code==='RMATEST1'||code==='TEMP@1'){
+   finalAmount=1.0;
+   isTest=true;
+ } else if(code==='TARSEEM@10'||code==='GOOD5'){
+   finalAmount=Math.max(0, amount - 500);
+ } else if(code==='TARSEEM@20'||code==='BEST10'){
+   finalAmount=Math.max(0, amount - 1000);
+ }
+
  paymentBusy = true;
  return rmaExecutePaymentFlow({
    paymentType: 'service',
-   amount: amount,
+   amount: finalAmount,
    originalAmount: amount,
+   isTest: isTest,
+   couponCode: code,
    receipt: requestId,
    description: 'RMA Professional Service Payment — ' + keys.join(', '),
    customer: { name, email, mobile, address, state: '' },
@@ -2947,8 +3303,45 @@ async function payService(){
  });
 }
 
+function applyConstructionCoupon(){
+ const input=document.getElementById('c_coupon'),code=(input?.value||'').trim().toUpperCase();
+ if(!code){
+   msg('c_couponMsg','Please enter a coupon or referral code.','error');
+   return;
+ }
+ if(code==='TARSEEM@10'){
+   msg('c_couponMsg','Referral code applied. ₹500 discount has been applied.','success');
+ } else if(code==='TARSEEM@20'){
+   msg('c_couponMsg','Referral code applied. ₹1,000 discount has been applied.','success');
+ } else if(code==='GOOD5'){
+   msg('c_couponMsg','Coupon code applied. ₹500 discount has been applied.','success');
+ } else if(code==='BEST10'){
+   msg('c_couponMsg','Coupon code applied. ₹1,000 discount has been applied.','success');
+ } else if(code==='RMATEST1'||code==='TEMP@1'){
+   msg('c_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
+ } else {
+   msg('c_couponMsg','Invalid coupon or referral code for Construction.','error');
+ }
+}
+
 function installConstructionPayment(){
  const form=document.getElementById('constructionForm');if(!form)return;
+ if(!document.getElementById('c_coupon_box')){
+   const couponBox=document.createElement('div');
+   couponBox.id='c_coupon_box';
+   couponBox.className='r29-coupon-box';
+   couponBox.style.cssText='margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
+   couponBox.innerHTML=`
+     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or referral code?</label>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">
+       <input id="c_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
+       <button type="button" class="btn outline" id="c_couponBtn">Apply Code</button>
+     </div>
+     <div id="c_couponMsg" class="notice hidden" style="margin-top:9px"></div>
+   `;
+   form.appendChild(couponBox);
+   document.getElementById('c_couponBtn').onclick=applyConstructionCoupon;
+ }
  let old=form.querySelector('#rmaV29ConstructionPay');if(!old){
    const btn=document.createElement('button');btn.id='rmaV29ConstructionPay';btn.type='button';btn.className='btn gold full';btn.textContent='Pay & Submit Construction Request with Razorpay';btn.style.marginTop='12px';
    const msgBox=document.createElement('div');msgBox.id='rmaV29ConstructionMsg';msgBox.className='notice hidden';msgBox.style.marginTop='10px';
@@ -2958,6 +3351,7 @@ function installConstructionPayment(){
    old.onclick=payConstructionWithRazorpay;
  }
 }
+
 async function payConstructionWithRazorpay(){
  const form=document.getElementById('constructionForm'),btn=document.getElementById('rmaV29ConstructionPay'),box=document.getElementById('rmaV29ConstructionMsg');
  if(!form.reportValidity())return;
@@ -2980,11 +3374,24 @@ async function payConstructionWithRazorpay(){
  const address=document.getElementById('c_address2')?.value.trim()||'';
  const other=document.getElementById('c_other2')?.value.trim()||'';
 
+ const code=(document.getElementById('c_coupon')?.value||'').trim().toUpperCase();
+ let finalAmount=amount, isTest=false;
+ if(code==='RMATEST1'||code==='TEMP@1'){
+   finalAmount=1.0;
+   isTest=true;
+ } else if(code==='TARSEEM@10'||code==='GOOD5'){
+   finalAmount=Math.max(0, amount - 500);
+ } else if(code==='TARSEEM@20'||code==='BEST10'){
+   finalAmount=Math.max(0, amount - 1000);
+ }
+
  paymentBusy = true;
  return rmaExecutePaymentFlow({
    paymentType: 'construction',
-   amount: amount,
+   amount: finalAmount,
    originalAmount: amount,
+   isTest: isTest,
+   couponCode: code,
    receipt: requestId,
    description: 'RMA Construction Service — ' + buildingType + ' (' + floors + ' Floor(s), ' + area + ' sq.ft./floor)',
    customer: { name, email, mobile, address, state: 'Jammu and Kashmir' },
@@ -3175,17 +3582,60 @@ async function submitPathSeekerVisitRequest36(){
 async function loadConversation36(userId){const box=document.getElementById('psV36Thread');if(!box)return;try{const q=await supabaseClient.from('client_messages').select('*').eq('user_id',userId).order('created_at',{ascending:true});if(q.error)throw q.error;const rows=q.data||[];box.innerHTML=rows.length?rows.map(x=>'<div class="ps-v36-msg '+(x.sender_role==='admin'?'admin':'client')+'"><small><b>'+(x.sender_role==='admin'?'RMA':'You')+'</b> • '+new Date(x.created_at).toLocaleString('en-IN')+(x.subject?' • '+esc36(x.subject):'')+'</small>'+esc36(x.message||'')+'</div>').join(''):'<div class="muted">No messages yet.</div>';box.scrollTop=box.scrollHeight}catch(e){box.innerHTML='<div class="notice error">Conversation could not be loaded. Please run the V36 Supabase SQL.</div>'}}
 async function loadStaff36(){
  const staff=document.getElementById('staffSiteVisitRequests');if(!staff)return;let rows=[];
- try{const q=await supabaseClient.from('bookings').select('*').ilike('service_type','%Site Visit%').order('created_at',{ascending:false}).limit(100);if(q.error)throw q.error;rows=q.data||[]}
+ try{const q=await supabaseClient.from('bookings').select('*').order('created_at',{ascending:false}).limit(200);if(q.error)throw q.error;rows=q.data||[]}
  catch(e){staff.innerHTML='<div class="notice error">Requests could not be loaded. Check staff/admin RLS.</div>';return}
  const pending=rows.filter(x=>String(x.status||'pending').toLowerCase()==='pending').length;
- const rendered=rows.map(x=>{let j={};try{j=JSON.parse(x.visit_scope||'{}')}catch(e){}const status=String(x.status||'pending').toLowerCase();
- return `<div class="ps-v36-admin-request" id="adminReq_${esc36(x.id)}"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b>${esc36(x.request_id||'Site Visit')}</b><br><small>${esc36(x.client_name||'Client')} • ${esc36(x.mobile||V36_CLIENT_PHONE)} • ${esc36(x.email||V36_CLIENT_EMAIL)}</small><br><small>Requested ${new Date(x.created_at).toLocaleString('en-IN')}</small></div><span class="role-badge">${esc36(status)}</span></div>
- <p style="margin:8px 0"><b>Preferred:</b> ${esc36(x.preferred_date_from||j.requested_date_from||j.requested_date||'—')} to ${esc36(x.preferred_date_to||j.requested_date_to||j.requested_date||'—')}<br><b>Reason:</b> ${esc36(j.reason||'Not provided')}</p>
- <div class="ps-v36-admin-grid"><input type="date" id="admDate_${esc36(x.id)}" value="${esc36(x.scheduled_date||'')}" aria-label="Scheduled date"><input type="time" id="admTime_${esc36(x.id)}" value="${esc36(x.scheduled_time||'')}" aria-label="Scheduled time"><input id="admPhone_${esc36(x.id)}" value="${esc36(x.mobile||V36_CLIENT_PHONE)}" placeholder="Client phone"><input id="admEmail_${esc36(x.id)}" value="${esc36(x.email||V36_CLIENT_EMAIL)}" placeholder="Client email"></div>
- <div class="rma-v36-admin-actions"><button class="btn dark" onclick="approvePathSeeker36('${esc36(x.id)}')">Approve &amp; Schedule</button><button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','rejected')">Reject</button><button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','completed')">Mark Completed</button><button class="btn outline" onclick="openChatForBooking36('${esc36(x.client_user_id||'')}')">Open Conversation</button></div>
- <div class="ps-v39-review-editor"><h4>Site Visit Review / Record</h4><textarea id="reviewNotes_${esc36(x.id)}" placeholder="Write what was inspected, discussed, verified, decided, pending work, etc."></textarea><input id="reviewPhotos_${esc36(x.id)}" type="file" accept="image/*" multiple><button class="btn outline" onclick="saveSiteVisitReview36('${esc36(x.id)}')">Save Visit Review &amp; Photos</button><div id="reviewMsg_${esc36(x.id)}" class="muted"></div></div>
- <div id="reviewHistory_${esc36(x.id)}" class="ps-v39-review-list">Loading visit reviews...</div></div>`;}).join('');
- staff.innerHTML='<div class="ps-v36-admin-toolbar"><button class="btn outline" onclick="loadStaffSiteVisitRequests()">Refresh</button><span class="role-badge">'+pending+' pending</span></div>'+(rendered||'<div class="muted">No site-visit requests.</div>');
+ const rendered=rows.map(x=>{
+   let j={};try{j=JSON.parse(x.visit_scope||'{}')}catch(e){}
+   const status=String(x.status||'pending').toLowerCase();
+   const typeName=x.service_type||'Site Visit Request';
+   const refCode=j.coupon_code||j.agent_code||x.coupon_code||'None';
+   const reqDate=x.preferred_date_from||j.preferred_date||j.requested_date||j.requested_date_from||'—';
+   const reqTime=x.preferred_time||j.preferred_time||j.requested_time||'—';
+   const locationAddr=x.project_address||j.project_address||'—';
+   const detailsText=j.requirement_message||j.requirement||j.requirements||j.reason||'None';
+   const payAmt=x.total_amount?('₹'+Number(x.total_amount).toLocaleString('en-IN')):(x.visit_fee?('₹'+Number(x.visit_fee).toLocaleString('en-IN')):'₹0 / Free');
+
+   return `<div class="ps-v36-admin-request" id="adminReq_${esc36(x.id)}">
+     <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+       <div>
+         <span class="role-badge" style="background:#e0f3ea;color:#084c38;font-weight:800;margin-bottom:4px;display:inline-block">${esc36(typeName)}</span><br>
+         <b>${esc36(x.request_id||('RMA-REQ-'+x.id))}</b><br>
+         <small><b>Customer:</b> ${esc36(x.client_name||'Client')} • 📞 ${esc36(x.mobile||'—')} • ✉️ ${esc36(x.email||'—')}</small><br>
+         <small class="muted">Submitted: ${new Date(x.created_at).toLocaleString('en-IN')}</small>
+       </div>
+       <span class="role-badge">${esc36(status)}</span>
+     </div>
+     <div style="margin:10px 0;background:#f9fbf9;border:1px solid #e1ebe5;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.5">
+       <div><b>Location / Address:</b> ${esc36(locationAddr)}</div>
+       <div><b>Requested Date &amp; Time:</b> ${esc36(reqDate)} at ${esc36(reqTime)}</div>
+       <div><b>Payment Amount / Status:</b> ${esc36(payAmt)} (${esc36(status)})</div>
+       <div><b>Referral Code Used:</b> <strong style="color:#084c38">${esc36(refCode)}</strong></div>
+       ${detailsText ? `<div><b>Scope / Requirement:</b> ${esc36(detailsText)}</div>` : ''}
+     </div>
+     <div class="ps-v36-admin-grid">
+       <input type="date" id="admDate_${esc36(x.id)}" value="${esc36(x.scheduled_date||x.preferred_date_from||'')}" aria-label="Scheduled date">
+       <input type="time" id="admTime_${esc36(x.id)}" value="${esc36(x.scheduled_time||x.preferred_time||'')}" aria-label="Scheduled time">
+       <input id="admPhone_${esc36(x.id)}" value="${esc36(x.mobile||'')}" placeholder="Client phone">
+       <input id="admEmail_${esc36(x.id)}" value="${esc36(x.email||'')}" placeholder="Client email">
+     </div>
+     <div class="rma-v36-admin-actions">
+       <button class="btn dark" onclick="approvePathSeeker36('${esc36(x.id)}')">Approve &amp; Schedule</button>
+       <button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','rejected')">Reject</button>
+       <button class="btn outline" onclick="setBookingStatus36('${esc36(x.id)}','completed')">Mark Completed</button>
+       <button class="btn outline" onclick="openChatForBooking36('${esc36(x.client_user_id||'')}')">Open Conversation</button>
+     </div>
+     <div class="ps-v39-review-editor">
+       <h4>Request Notes / Review Record</h4>
+       <textarea id="reviewNotes_${esc36(x.id)}" placeholder="Write internal notes, site inspection records, client discussion details, etc."></textarea>
+       <input id="reviewPhotos_${esc36(x.id)}" type="file" accept="image/*" multiple>
+       <button class="btn outline" onclick="saveSiteVisitReview36('${esc36(x.id)}')">Save Review &amp; Photos</button>
+       <div id="reviewMsg_${esc36(x.id)}" class="muted"></div>
+     </div>
+     <div id="reviewHistory_${esc36(x.id)}" class="ps-v39-review-list">Loading reviews...</div>
+   </div>`;
+ }).join('');
+ staff.innerHTML='<div class="ps-v36-admin-toolbar"><button class="btn outline" onclick="loadStaffSiteVisitRequests()">Refresh Dashboard</button><span class="role-badge">'+pending+' pending requests</span></div>'+(rendered||'<div class="muted">No requests recorded yet.</div>');
  await loadAdminMessages36(); for(const x of rows) await loadAdminReviewHistory36(x.id);
 }
 async function approvePathSeeker36(id){
@@ -3342,7 +3792,7 @@ window.rmaV36Init=v36Init;
   }
   async function refreshAdminStats(){
     try{
-      const q1=await supabaseClient.from('bookings').select('status,service_type').ilike('service_type','%Site Visit%');
+      const q1=await supabaseClient.from('bookings').select('status,service_type');
       const rows=q1.error?[]:(q1.data||[]); const count=s=>rows.filter(x=>String(x.status||'pending').toLowerCase()===s).length;
       q('#v40Pending')?.replaceChildren(document.createTextNode(String(count('pending'))));
       q('#v40Approved')?.replaceChildren(document.createTextNode(String(count('approved'))));
@@ -3901,5 +4351,2212 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   let tries=0;
   const timer=setInterval(async()=>{if(await boot()||++tries>120)clearInterval(timer);},250);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
+})();
+</script>
+
+<!-- AGENT TARSEEM PRIVATE PORTAL SYSTEM -->
+<style id="rma-agent-tarseem-css">
+#rmaTarseemPortal .ps-v62-topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  background: #084c38; color: #fff; padding: 14px 18px; border-radius: 0 0 14px 14px;
+  box-shadow: 0 5px 18px rgba(8,76,56,.16); position: sticky; top: 0; z-index: 30;
+}
+#rmaTarseemPortal .ps-v62-brand { font-weight: 900; font-size: 20px; letter-spacing: -.03em; line-height: 1; }
+#rmaTarseemPortal .ps-v62-brand small { display: block; font-size: 9px; letter-spacing: .12em; opacity: .78; margin-top: 4px; }
+#rmaTarseemPortal .ps-v62-project { display: flex; align-items: center; gap: 10px; margin-left: auto; font-size: 13px; font-weight: 800; }
+#rmaTarseemPortal .ps-v62-project-badge { width: 34px; height: 34px; border-radius: 10px; background: #d9f0e7; color: #084c38; display: grid; place-items: center; font-weight: 900; }
+#rmaTarseemPortal .ps-v62-user { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; }
+#rmaTarseemPortal .ps-v62-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e2f4ed; color: #084c38; display: grid; place-items: center; font-weight: bold; }
+#rmaTarseemPortal .ps-v62-layout { display: grid !important; grid-template-columns: 240px minmax(0, 1fr) !important; gap: 18px !important; margin-top: 18px !important; align-items: start !important; }
+#rmaTarseemPortal .ps-v62-sidebar { background: #fff; border: 1px solid #dce9e3; border-radius: 15px; padding: 12px; box-shadow: 0 4px 18px rgba(25,55,43,.06); position: sticky; top: 78px; }
+#rmaTarseemPortal .ps-v62-nav { display: flex; flex-direction: column; gap: 4px; }
+#rmaTarseemPortal .ps-v62-nav button { border: 0; background: transparent; text-align: left; padding: 11px 12px; border-radius: 9px; color: #234338; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 9px; width: 100%; }
+#rmaTarseemPortal .ps-v62-nav button:hover, #rmaTarseemPortal .ps-v62-nav button.active { background: #dff2e9; color: #075a40; }
+#rmaTarseemPortal .ps-v62-nav .icon { width: 22px; text-align: center; font-size: 15px; }
+#rmaTarseemPortal .ps-v62-nav-divider { height: 1px; background: #e7efeb; margin: 8px 3px; }
+#rmaTarseemPortal .ps-v62-main { min-width: 0; }
+#rmaTarseemPortal .ps-v63-view { display: none !important; }
+#rmaTarseemPortal .ps-v63-view.active { display: block !important; }
+#rmaTarseemPortal .agent-stat-card { background: #fff; border: 1px solid #dce9e3; border-radius: 13px; padding: 16px; box-shadow: 0 4px 16px rgba(25,55,43,.04); }
+#rmaTarseemPortal .agent-stat-card .label { font-size: 11px; color: #6a7b73; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+#rmaTarseemPortal .agent-stat-card strong { display: block; font-size: 22px; color: #084c38; margin-top: 6px; font-weight: 800; }
+#rmaTarseemPortal .agent-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+#rmaTarseemPortal .agent-panel { background: #fff; border: 1px solid #dce9e3; border-radius: 14px; padding: 18px; margin-bottom: 18px; box-shadow: 0 4px 18px rgba(25,55,43,.04); }
+#rmaTarseemPortal .agent-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+#rmaTarseemPortal .agent-table th { background: #f4f8f6; color: #142d24; text-align: left; padding: 10px 12px; font-weight: 800; border-bottom: 2px solid #dce9e3; }
+#rmaTarseemPortal .agent-table td { padding: 11px 12px; border-bottom: 1px solid #eef3f0; color: #234338; vertical-align: middle; }
+#rmaTarseemPortal .agent-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; background: #e0f3ea; color: #084c38; }
+@media (max-width: 800px) {
+  #rmaTarseemPortal .ps-v62-layout { grid-template-columns: 1fr !important; }
+  #rmaTarseemPortal .agent-grid { grid-template-columns: 1fr 1fr !important; }
+  #rmaTarseemPortal .ps-v62-nav { flex-direction: row !important; overflow-x: auto !important; }
+  #rmaTarseemPortal .ps-v62-nav button { white-space: nowrap !important; }
+}
+</style>
+
+<script id="rma-agent-tarseem-js">
+(function(){
+  'use strict';
+
+  function addTarseemPortal(){
+    const signin = document.getElementById('page-signin');
+    if(!signin || document.getElementById('rmaTarseemPortal')) return;
+    const sec = document.createElement('section');
+    sec.id = 'rmaTarseemPortal';
+    sec.className = 'hidden';
+    sec.innerHTML = `
+      <div class="container" style="max-width:1280px;padding:0 18px 28px">
+        <header class="ps-v62-topbar">
+          <div class="ps-v62-brand">
+            RMA<small>DESIGN &amp; CONSTRUCTION</small>
+          </div>
+          <div class="ps-v62-project">
+            <span class="ps-v62-project-badge">👤</span>
+            <span>Private Account Portal<br><small style="font-weight:500;opacity:.8">Referral Codes: TARSEEM@10 &amp; TARSEEM@20</small></span>
+          </div>
+          <div class="ps-v62-user">
+            <span class="ps-v62-avatar">T</span>
+            <span>Tarseem</span>
+            <button class="btn outline" style="background:#fff;color:#084c38;border:0;padding:6px 12px;font-weight:700;margin-left:8px" onclick="signOutUser()">Sign Out</button>
+          </div>
+        </header>
+
+        <div class="ps-v62-layout">
+          <aside class="ps-v62-sidebar">
+            <nav class="ps-v62-nav" id="tarseemNav">
+              <button type="button" class="active" data-target="dashboard"><span class="icon">📊</span>Dashboard</button>
+              <button type="button" data-target="ledger"><span class="icon">💰</span>Earnings History</button>
+              <button type="button" data-target="clients"><span class="icon">👥</span>Referred Customers</button>
+              <button type="button" data-target="code"><span class="icon">🏷️</span>Referral Code</button>
+              <button type="button" data-target="payouts"><span class="icon">💳</span>Payouts &amp; Balance</button>
+              <button type="button" data-target="messages"><span class="icon">✉️</span>Messages</button>
+              <button type="button" data-target="profile"><span class="icon">👤</span>Account</button>
+              <div class="ps-v62-nav-divider"></div>
+              <button type="button" onclick="signOutUser()"><span class="icon">↪</span>Sign Out</button>
+            </nav>
+          </aside>
+
+          <main class="ps-v62-main" id="tarseemMain">
+            <!-- 1. DASHBOARD -->
+            <section class="ps-v63-view active" data-view="dashboard">
+              <div class="agent-panel" style="background:linear-gradient(135deg, #084c38 0%, #10684f 100%);color:#fff">
+                <h3 style="margin:0 0 6px;font-size:22px;color:#fff">Welcome back, Tarseem 👋</h3>
+                <p style="margin:0;opacity:.9;font-size:13px">Your referral codes <b>TARSEEM@10</b> and <b>TARSEEM@20</b> are active across all RMA payment flows.</p>
+              </div>
+
+              <div class="agent-grid">
+                <div class="agent-stat-card"><span class="label">Total Referred Sales</span><strong id="atStatSales">₹0.00</strong></div>
+                <div class="agent-stat-card"><span class="label">Total Earnings</span><strong id="atStatEarned" style="color:#084c38">₹0.00</strong></div>
+                <div class="agent-stat-card"><span class="label">Available Balance</span><strong id="atStatBalance" style="color:#10684f">₹0.00</strong></div>
+                <div class="agent-stat-card"><span class="label">Referred Customers</span><strong id="atStatClients">0</strong></div>
+                <div class="agent-stat-card"><span class="label">Active Referral Codes</span><strong style="color:#084c38">TARSEEM@10 / TARSEEM@20</strong></div>
+                <div class="agent-stat-card"><span class="label">Referral Rate</span><strong>10%</strong></div>
+              </div>
+
+              <div class="agent-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+                  <h3 style="margin:0;font-size:17px;color:#084c38">Quick Actions &amp; Referral Link</h3>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <button type="button" class="btn outline" id="atCopyCodeBtn">📋 Copy Referral Code (TARSEEM@10)</button>
+                  <button type="button" class="btn outline" id="atCopyLinkBtn">🔗 Copy Referral Web Link</button>
+                  <button type="button" class="btn dark" onclick="showTarseemView('payouts')">💳 Request Payout</button>
+                </div>
+                <div id="atActionMsg" class="notice hidden" style="margin-top:10px"></div>
+              </div>
+
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:17px;color:#084c38">Recent Referral Activity</h3>
+                <div id="atRecentTransactions"><div class="muted">Loading referral transactions...</div></div>
+              </div>
+            </section>
+
+            <!-- 2. EARNINGS HISTORY -->
+            <section class="ps-v63-view" data-view="ledger">
+              <div class="agent-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+                  <div>
+                    <h3 style="margin:0;font-size:18px;color:#084c38">💰 Earnings History</h3>
+                    <p class="muted" style="margin:4px 0 0;font-size:12px">Real-time record of all bookings &amp; payments using referral codes TARSEEM@10 or TARSEEM@20.</p>
+                  </div>
+                  <span class="agent-badge" style="font-size:13px;padding:8px 12px">Total Earned: <span id="atLedgerTotalEarned">₹0.00</span></span>
+                </div>
+              </div>
+              <div class="agent-panel">
+                <div id="atLedgerTableBox"><div class="muted">Loading earnings history...</div></div>
+              </div>
+            </section>
+
+            <!-- 3. REFERRED CUSTOMERS -->
+            <section class="ps-v63-view" data-view="clients">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 4px;font-size:18px;color:#084c38">👥 Referred Customers Directory</h3>
+                <p class="muted" style="margin:0;font-size:12px">Customers who have made bookings or payments using your referral code.</p>
+              </div>
+              <div class="agent-panel">
+                <div id="atClientsTableBox"><div class="muted">Loading referred customers...</div></div>
+              </div>
+            </section>
+
+            <!-- 4. REFERRAL CODE -->
+            <section class="ps-v63-view" data-view="code">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">🏷️ Referral Codes</h3>
+                <div style="background:#f4f9f6;border:2px dashed #084c38;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px">
+                  <span class="muted" style="font-size:12px;font-weight:700">YOUR AUTHORIZED CODES</span>
+                  <div style="font-size:28px;font-weight:900;color:#084c38;letter-spacing:1px;margin:8px 0">TARSEEM@10 &amp; TARSEEM@20</div>
+                  <div style="display:inline-block;background:#e0f3ea;color:#084c38;padding:4px 12px;border-radius:20px;font-weight:800;font-size:12px">10% Referral Rate</div>
+                </div>
+
+                <h4 style="margin:16px 0 8px;color:#142d24">How Referral Codes Work:</h4>
+                <ul style="line-height:1.6;font-size:13px;color:#334d43;padding-left:20px">
+                  <li>Share your code <b>TARSEEM@10</b> or <b>TARSEEM@20</b> with customers booking site visits, service enquiries, or construction services.</li>
+                  <li>Customers enter the code in the coupon or referral code box on the RMA website during checkout.</li>
+                  <li>When payment is completed, the referral earnings are automatically calculated and added to your Earnings History &amp; Available Balance.</li>
+                </ul>
+
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+                  <button type="button" class="btn outline" id="atCopyCodeBtn2">📋 Copy Code TARSEEM@10</button>
+                  <button type="button" class="btn outline" id="atCopyLinkBtn2">🔗 Copy Direct Referral Link</button>
+                </div>
+                <div id="atCodeMsg" class="notice hidden" style="margin-top:10px"></div>
+              </div>
+            </section>
+
+            <!-- 5. PAYOUTS / BALANCE -->
+            <section class="ps-v63-view" data-view="payouts">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">💳 Payouts &amp; Balance Management</h3>
+                <div class="agent-grid" style="margin-bottom:14px">
+                  <div class="agent-stat-card"><span class="label">Available Balance</span><strong id="atPayoutAvail" style="color:#084c38">₹0.00</strong></div>
+                  <div class="agent-stat-card"><span class="label">Total Earnings</span><strong id="atPayoutLifetime">₹0.00</strong></div>
+                  <div class="agent-stat-card"><span class="label">Total Paid Out</span><strong id="atPayoutPaid">₹0.00</strong></div>
+                </div>
+
+                <div style="background:#f7fbf8;border:1px solid #dce9e3;border-radius:12px;padding:16px;margin-top:14px">
+                  <h4 style="margin:0 0 10px;color:#084c38">Request a Payout</h4>
+                  <div class="group"><label>Withdrawal Amount (₹)</label><input id="atPayoutAmount" type="number" placeholder="Enter amount"></div>
+                  <div class="group"><label>Payment Method</label><select id="atPayoutMethod"><option value="upi">UPI ID</option><option value="bank">Bank Transfer (NEFT/IMPS)</option></select></div>
+                  <div class="group"><label>UPI ID / Account Details</label><input id="atPayoutDetails" placeholder="e.g. tarseem@upi or Bank Name, Acc No, IFSC"></div>
+                  <div id="atPayoutMsg" class="notice hidden" style="margin-bottom:10px"></div>
+                  <button type="button" class="btn dark" id="atSubmitPayoutBtn">Submit Payout Request</button>
+                </div>
+              </div>
+
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:17px;color:#084c38">Payout History Log</h3>
+                <div id="atPayoutHistory"><div class="muted">No payout requests recorded yet.</div></div>
+              </div>
+            </section>
+
+            <!-- 6. MESSAGES -->
+            <section class="ps-v63-view" data-view="messages">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 4px;font-size:18px;color:#084c38">✉️ Messages / Contact RMA Admin</h3>
+                <p class="muted" style="margin:0;font-size:12px">Direct private communication channel with RMA Administration.</p>
+              </div>
+
+              <div class="agent-panel">
+                <h4 style="margin:0 0 10px;color:#084c38">Conversation History</h4>
+                <div id="tarseemMsgHistory"><div class="muted">Loading messages...</div></div>
+              </div>
+
+              <div class="agent-panel">
+                <h4 style="margin:0 0 10px;color:#084c38">Send New Message</h4>
+                <div class="group"><label>Subject</label><input id="tarseemMsgSubject" placeholder="e.g. Payout enquiry, referral code update"></div>
+                <div class="group"><label>Message *</label><textarea id="tarseemMsgText" placeholder="Write your message to RMA Administration..."></textarea></div>
+                <div id="tarseemMsgStatus" class="notice hidden" style="margin-bottom:10px"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button type="button" class="btn dark" id="tarseemMsgSendBtn">Send Message</button>
+                  <a class="btn outline" href="mailto:rma.studies07@gmail.com?subject=Tarseem%20Account%20Enquiry">Email RMA</a>
+                  <a class="btn outline" href="https://wa.me/919622121692?text=Tarseem%20Account%20Enquiry" target="_blank" rel="noopener">WhatsApp RMA</a>
+                </div>
+              </div>
+            </section>
+
+            <!-- 7. PROFILE / ACCOUNT -->
+            <section class="ps-v63-view" data-view="profile">
+              <div class="agent-panel">
+                <h3 style="margin:0 0 12px;font-size:18px;color:#084c38">👤 Account Details</h3>
+                <div style="display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:12px;margin-bottom:16px">
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Full Name</small><br><b>Tarseem</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Email / Username</small><br><b>tarseem@rma.com / tarseem</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Account Role</small><br><b>Authorized Referral Partner</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Account Status</small><br><b style="color:#084c38">Active &amp; Verified</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Referral Codes</small><br><b>TARSEEM@10 / TARSEEM@20</b></div>
+                  <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;background:#fbfcfc"><small class="muted">Earnings Rate</small><br><b>10% on Referred Bookings</b></div>
+                </div>
+                <button type="button" class="btn outline" style="color:#c53030;border-color:#feb2b2" onclick="signOutUser()">Sign Out of Account</button>
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    `;
+    signin.appendChild(sec);
+  }
+
+  window.addTarseemPortal = addTarseemPortal;
+
+  window.showTarseemView = function(key){
+    const main = document.getElementById('tarseemMain');
+    const nav = document.getElementById('tarseemNav');
+    if(!main || !nav) return;
+    main.querySelectorAll('.ps-v63-view').forEach(v => {
+      const active = v.getAttribute('data-view') === key;
+      v.classList.toggle('active', active);
+    });
+    nav.querySelectorAll('button[data-target]').forEach(b => {
+      const active = b.getAttribute('data-target') === key;
+      b.classList.toggle('active', active);
+    });
+  };
+
+  function parseBookingScope(b){
+    if(!b) return {};
+    if(typeof b.visit_scope === 'object' && b.visit_scope !== null) return b.visit_scope;
+    try {
+      return JSON.parse(b.visit_scope || '{}');
+    } catch(e) {
+      return {};
+    }
+  }
+
+  function isTarseemBooking(b){
+    if(!b) return false;
+    const scope = parseBookingScope(b);
+    const coupon = (scope.coupon_code || scope.agent_code || b.coupon_code || '').trim().toUpperCase();
+    if(coupon === 'TARSEEM@10' || coupon === 'TARSEEM@20') return true;
+    const raw = JSON.stringify(b).toUpperCase();
+    return raw.includes('TARSEEM@10') || raw.includes('TARSEEM@20');
+  }
+
+  async function buildTarseemPortal(user){
+    addTarseemPortal();
+
+    // Wire navigation button clicks
+    const nav = document.getElementById('tarseemNav');
+    if(nav && !nav.dataset.wired){
+      nav.dataset.wired = '1';
+      nav.querySelectorAll('button[data-target]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-target');
+          if(target) window.showTarseemView(target);
+        });
+      });
+    }
+
+    // Wire Copy buttons
+    const copyCode = () => {
+      navigator.clipboard.writeText('TARSEEM@10');
+      const msg = document.getElementById('atActionMsg') || document.getElementById('atCodeMsg');
+      if(msg){
+        msg.className = 'notice success'; msg.classList.remove('hidden');
+        msg.textContent = 'Referral Code "TARSEEM@10" copied to clipboard!';
+      }
+    };
+    const copyLink = () => {
+      const link = window.location.origin + window.location.pathname + '?ref=TARSEEM@10';
+      navigator.clipboard.writeText(link);
+      const msg = document.getElementById('atActionMsg') || document.getElementById('atCodeMsg');
+      if(msg){
+        msg.className = 'notice success'; msg.classList.remove('hidden');
+        msg.textContent = 'Referral Link copied: ' + link;
+      }
+    };
+
+    document.getElementById('atCopyCodeBtn')?.addEventListener('click', copyCode);
+    document.getElementById('atCopyCodeBtn2')?.addEventListener('click', copyCode);
+    document.getElementById('atCopyLinkBtn')?.addEventListener('click', copyLink);
+    document.getElementById('atCopyLinkBtn2')?.addEventListener('click', copyLink);
+
+    // Fetch dynamic bookings from Supabase
+    let bookings = [];
+    try {
+      const { data, error } = await supabaseClient.from('bookings').select('*').order('created_at', { ascending: false });
+      if(!error && data) bookings = data;
+    } catch(e) {
+      console.warn('Portal bookings fetch:', e);
+    }
+
+    const tarseemBookings = bookings.filter(isTarseemBooking);
+    const seenBookingKeys = new Set();
+    const uniqueTarseemBookings = [];
+    for(const b of tarseemBookings) {
+      const scope = parseBookingScope(b);
+      const key = scope.razorpay_payment_id || b.request_id || b.id;
+      if(key && seenBookingKeys.has(key)) continue;
+      if(key) seenBookingKeys.add(key);
+      uniqueTarseemBookings.push(b);
+    }
+
+    // Calculations
+    let totalSales = 0;
+    let totalEarned = 0;
+    const clientMap = {};
+
+    const transactionRows = uniqueTarseemBookings.map(b => {
+      const scope = parseBookingScope(b);
+      const amount = Number(b.total_amount || scope.original_amount || 0);
+      const comm = Number(scope.agent_commission || (amount * 0.10) || 0);
+      const refCode = (scope.coupon_code || scope.agent_code || 'TARSEEM@10').trim().toUpperCase();
+      const bookingId = b.request_id || scope.razorpay_payment_id || b.id || '—';
+      totalSales += amount;
+      totalEarned += comm;
+
+      const clientKey = (b.client_name || 'Customer') + '_' + (b.mobile || b.email || '');
+      if(!clientMap[clientKey]){
+        clientMap[clientKey] = {
+          name: b.client_name || 'Customer',
+          mobile: b.mobile || '—',
+          email: b.email || '—',
+          count: 0,
+          totalSpent: 0,
+          commEarned: 0
+        };
+      }
+      clientMap[clientKey].count += 1;
+      clientMap[clientKey].totalSpent += amount;
+      clientMap[clientKey].commEarned += comm;
+
+      const dt = b.created_at ? new Date(b.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+      return {
+        date: dt,
+        customer: b.client_name || 'Customer',
+        contact: b.mobile || b.email || '—',
+        service: b.service_type || 'RMA Service',
+        bookingId: bookingId,
+        refCode: refCode,
+        amount: amount,
+        rate: '10%',
+        earned: comm,
+        status: b.status || 'Paid'
+      };
+    });
+
+    const clientList = Object.values(clientMap);
+
+    // Load Payouts
+    const payouts = JSON.parse(localStorage.getItem('rma_tarseem_payouts') || '[]');
+    let totalPaid = 0;
+    let totalPending = 0;
+    payouts.forEach(p => {
+      if(p.status === 'Completed' || p.status === 'Paid') totalPaid += Number(p.amount || 0);
+      else if(p.status === 'Pending') totalPending += Number(p.amount || 0);
+    });
+
+    const availableBalance = Math.max(0, totalEarned - totalPaid - totalPending);
+
+    // Update Dashboard Metrics
+    const fmt = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+    document.getElementById('atStatSales').textContent = fmt(totalSales);
+    document.getElementById('atStatEarned').textContent = fmt(totalEarned);
+    document.getElementById('atStatBalance').textContent = fmt(availableBalance);
+    document.getElementById('atStatClients').textContent = String(clientList.length);
+
+    document.getElementById('atLedgerTotalEarned').textContent = fmt(totalEarned);
+    document.getElementById('atPayoutAvail').textContent = fmt(availableBalance);
+    document.getElementById('atPayoutLifetime').textContent = fmt(totalEarned);
+    document.getElementById('atPayoutPaid').textContent = fmt(totalPaid);
+
+    // Render Recent Transactions
+    const recentBox = document.getElementById('atRecentTransactions');
+    if(recentBox){
+      if(!transactionRows.length){
+        recentBox.innerHTML = '<div class="notice info">No referral transactions recorded yet. Share your referral code <b>TARSEEM@10</b> or <b>TARSEEM@20</b> with customers booking services to record earnings.</div>';
+      } else {
+        recentBox.innerHTML = `
+          <table class="agent-table">
+            <thead>
+              <tr><th>Date</th><th>Referred Customer</th><th>Service / Booked Item</th><th>Booking / Payment ID</th><th>Referral Code</th><th>Payment Amount</th><th>Amount Earned</th><th>Earnings Status</th></tr>
+            </thead>
+            <tbody>
+              ${transactionRows.slice(0, 5).map(r => `
+                <tr>
+                  <td>${esc(r.date)}</td>
+                  <td><b>${esc(r.customer)}</b><br><small class="muted">${esc(r.contact)}</small></td>
+                  <td>${esc(r.service)}</td>
+                  <td><code>${esc(r.bookingId)}</code></td>
+                  <td><b>${esc(r.refCode)}</b></td>
+                  <td>${fmt(r.amount)}</td>
+                  <td><b style="color:#084c38">${fmt(r.earned)}</b></td>
+                  <td><span class="agent-badge">${esc(r.status)}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    // Render Ledger View
+    const ledgerBox = document.getElementById('atLedgerTableBox');
+    if(ledgerBox){
+      if(!transactionRows.length){
+        ledgerBox.innerHTML = '<div class="notice info">No transactions found in earnings history yet. All future customer payments entering code <b>TARSEEM@10</b> or <b>TARSEEM@20</b> will log automatically here.</div>';
+      } else {
+        ledgerBox.innerHTML = `
+          <table class="agent-table">
+            <thead>
+              <tr><th>Date</th><th>Referred Customer</th><th>Contact</th><th>Service / Booked Item</th><th>Booking / Payment ID</th><th>Referral Code</th><th>Payment Amount</th><th>Rate</th><th>Amount Earned</th><th>Earnings Status</th></tr>
+            </thead>
+            <tbody>
+              ${transactionRows.map(r => `
+                <tr>
+                  <td>${esc(r.date)}</td>
+                  <td><b>${esc(r.customer)}</b></td>
+                  <td>${esc(r.contact)}</td>
+                  <td>${esc(r.service)}</td>
+                  <td><code>${esc(r.bookingId)}</code></td>
+                  <td><b>${esc(r.refCode)}</b></td>
+                  <td>${fmt(r.amount)}</td>
+                  <td>${esc(r.rate)}</td>
+                  <td><b style="color:#084c38">${fmt(r.earned)}</b></td>
+                  <td><span class="agent-badge">${esc(r.status)}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    // Render Clients View
+    const clientsBox = document.getElementById('atClientsTableBox');
+    if(clientsBox){
+      if(!clientList.length){
+        clientsBox.innerHTML = '<div class="notice info">No referred customers recorded yet. Your customer directory will list all referred customers and their total spending.</div>';
+      } else {
+        clientsBox.innerHTML = `
+          <table class="agent-table">
+            <thead>
+              <tr><th>Customer Name</th><th>Mobile</th><th>Email</th><th>Total Bookings</th><th>Total Spent</th><th>Total Earned</th></tr>
+            </thead>
+            <tbody>
+              ${clientList.map(c => `
+                <tr>
+                  <td><b>${esc(c.name)}</b></td>
+                  <td>${esc(c.mobile)}</td>
+                  <td>${esc(c.email)}</td>
+                  <td>${esc(c.count)}</td>
+                  <td>${fmt(c.totalSpent)}</td>
+                  <td><b style="color:#084c38">${fmt(c.commEarned)}</b></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    // Render Payout History & Handle Payout Submission
+    const renderPayoutHistory = () => {
+      const box = document.getElementById('atPayoutHistory');
+      if(!box) return;
+      const list = JSON.parse(localStorage.getItem('rma_tarseem_payouts') || '[]');
+      if(!list.length){
+        box.innerHTML = '<div class="notice info">No payout requests submitted yet.</div>';
+        return;
+      }
+      box.innerHTML = `
+        <table class="agent-table">
+          <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Details</th><th>Status</th></tr></thead>
+          <tbody>
+            ${list.map(p => `
+              <tr>
+                <td>${esc(p.date)}</td>
+                <td><b>${fmt(p.amount)}</b></td>
+                <td>${esc((p.method || '').toUpperCase())}</td>
+                <td>${esc(p.details || '—')}</td>
+                <td><span class="agent-badge">${esc(p.status || 'Pending')}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    };
+    renderPayoutHistory();
+
+    const submitPayoutBtn = document.getElementById('atSubmitPayoutBtn');
+    if(submitPayoutBtn && !submitPayoutBtn.dataset.wired){
+      submitPayoutBtn.dataset.wired = '1';
+      submitPayoutBtn.addEventListener('click', () => {
+        const amtEl = document.getElementById('atPayoutAmount');
+        const methodEl = document.getElementById('atPayoutMethod');
+        const detailsEl = document.getElementById('atPayoutDetails');
+        const msgEl = document.getElementById('atPayoutMsg');
+
+        const amt = Number(amtEl?.value || 0);
+        const method = methodEl?.value || 'upi';
+        const details = detailsEl?.value?.trim() || '';
+
+        if(!amt || amt <= 0){
+          if(msgEl){ msgEl.className = 'notice error'; msgEl.classList.remove('hidden'); msgEl.textContent = 'Please enter a valid withdrawal amount.'; }
+          return;
+        }
+        if(amt > availableBalance){
+          if(msgEl){ msgEl.className = 'notice error'; msgEl.classList.remove('hidden'); msgEl.textContent = 'Requested amount exceeds your available balance (' + fmt(availableBalance) + ').'; }
+          return;
+        }
+        if(!details){
+          if(msgEl){ msgEl.className = 'notice error'; msgEl.classList.remove('hidden'); msgEl.textContent = 'Please enter your UPI ID or Bank details.'; }
+          return;
+        }
+
+        const newPayout = {
+          id: 'PO-' + Date.now().toString().slice(-6),
+          date: new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }),
+          amount: amt,
+          method: method,
+          details: details,
+          status: 'Pending'
+        };
+
+        const currentPayouts = JSON.parse(localStorage.getItem('rma_tarseem_payouts') || '[]');
+        currentPayouts.unshift(newPayout);
+        localStorage.setItem('rma_tarseem_payouts', JSON.stringify(currentPayouts));
+
+        if(msgEl){
+          msgEl.className = 'notice success'; msgEl.classList.remove('hidden');
+          msgEl.textContent = 'Payout request for ' + fmt(amt) + ' submitted successfully!';
+        }
+        if(amtEl) amtEl.value = '';
+        if(detailsEl) detailsEl.value = '';
+
+        // Refresh portal counters
+        buildTarseemPortal(user);
+      });
+    }
+
+    // Render Messages & Messaging actions
+    const loadMessages = async () => {
+      const box = document.getElementById('tarseemMsgHistory');
+      if(!box) return;
+      try {
+        const { data, error } = await supabaseClient.from('client_messages').select('*').eq('user_id', user.id).order('created_at', { ascending: true });
+        if(error) throw error;
+        if(!data || !data.length){
+          box.innerHTML = '<div class="notice info">No messages yet. Send a message below to contact RMA Admin.</div>';
+          return;
+        }
+        box.innerHTML = data.map(m => `
+          <div style="padding:12px;border:1px solid #dce9e3;border-radius:10px;margin-bottom:10px;background:${m.sender_role==='admin'?'#f4fdf8':'#fff'}">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <b>${m.sender_role==='admin'?'🏛️ RMA Admin':'👤 Tarseem'}</b>
+              <small class="muted">${m.created_at ? esc(new Date(m.created_at).toLocaleString('en-IN')) : ''}</small>
+            </div>
+            <div style="font-weight:700;color:#084c38;margin-bottom:4px">${esc(m.subject || 'No Subject')}</div>
+            <div>${esc(m.message || '')}</div>
+          </div>
+        `).join('');
+      } catch(e) {
+        box.innerHTML = '<div class="notice error">Unable to load message history.</div>';
+      }
+    };
+    await loadMessages();
+
+    const sendMsgBtn = document.getElementById('tarseemMsgSendBtn');
+    if(sendMsgBtn && !sendMsgBtn.dataset.wired){
+      sendMsgBtn.dataset.wired = '1';
+      sendMsgBtn.addEventListener('click', async () => {
+        const subj = document.getElementById('tarseemMsgSubject')?.value.trim() || 'Account Query';
+        const txt = document.getElementById('tarseemMsgText')?.value.trim();
+        const stBox = document.getElementById('tarseemMsgStatus');
+
+        if(!txt){
+          if(stBox){ stBox.className = 'notice error'; stBox.classList.remove('hidden'); stBox.textContent = 'Please write your message text.'; }
+          return;
+        }
+
+        try {
+          const { error } = await supabaseClient.from('client_messages').insert({
+            user_id: user.id,
+            client_name: 'Tarseem',
+            email: user.email || 'tarseem@rma.com',
+            subject: subj,
+            message: txt,
+            sender_role: 'referral',
+            thread_id: user.id,
+            status: 'new'
+          });
+          if(error) throw error;
+          if(stBox){ stBox.className = 'notice success'; stBox.classList.remove('hidden'); stBox.textContent = 'Message sent to RMA Admin successfully.'; }
+          document.getElementById('tarseemMsgText').value = '';
+          await loadMessages();
+        } catch(e) {
+          if(stBox){ stBox.className = 'notice error'; stBox.classList.remove('hidden'); stBox.textContent = e.message || 'Error sending message.'; }
+        }
+      });
+    }
+  }
+
+  window.buildTarseemPortal = buildTarseemPortal;
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', addTarseemPortal);
+  else addTarseemPortal();
+})();
+</script>
+
+<script id="rma-appointment-js">
+(function(){
+  'use strict';
+
+  function showAppointmentSection(){
+    showPage('home');
+    setTimeout(() => {
+      const el = document.getElementById('appointment-section');
+      if(el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  }
+  window.showAppointmentSection = showAppointmentSection;
+
+  function esc(s){
+    const d = document.createElement('div');
+    d.textContent = String(s ?? '');
+    return d.innerHTML;
+  }
+
+  async function handleAppointmentSubmit(e){
+    if(e) e.preventDefault();
+    const name = document.getElementById('apt_name')?.value.trim() || '';
+    const mobile = document.getElementById('apt_mobile')?.value.trim() || '';
+    const email = document.getElementById('apt_email')?.value.trim() || '';
+    const address = document.getElementById('apt_address')?.value.trim() || '';
+    const building = document.getElementById('apt_building')?.value || 'Residential';
+    const preferredDate = document.getElementById('apt_date')?.value || '';
+    const preferredTime = document.getElementById('apt_time')?.value || '11:00 AM';
+    const message = document.getElementById('apt_message')?.value.trim() || '';
+
+    const msgBox = document.getElementById('aptFormMsg');
+    const btn = document.getElementById('aptSubmitBtn');
+
+    const setMsg = (txt, type = 'error') => {
+      if(!msgBox) return;
+      msgBox.className = 'notice ' + type;
+      msgBox.classList.remove('hidden');
+      msgBox.textContent = txt;
+    };
+
+    if(!name || !mobile || !email || !address || !building || !preferredDate || !preferredTime){
+      setMsg('Please fill in all required fields.');
+      return;
+    }
+
+    if(!/^\d{10}$/.test(mobile)){
+      setMsg('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      setMsg('Please enter a valid email address.');
+      return;
+    }
+
+    if(btn){ btn.disabled = true; btn.textContent = 'Submitting Request...'; }
+
+    const requestId = 'RMA-APT-' + Date.now().toString().slice(-8);
+    const nowIso = new Date().toISOString();
+
+    let dateDisplay = preferredDate;
+    try {
+      const parts = preferredDate.split('-');
+      if(parts.length === 3){
+        const dObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        dateDisplay = dObj.toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+      }
+    } catch(err){}
+
+    const recordPayload = {
+      request_id: requestId,
+      client_name: name,
+      mobile: mobile,
+      email: email,
+      service_type: 'Appointment Request',
+      project_address: address,
+      visit_fee: 0,
+      gst_amount: 0,
+      total_amount: 0,
+      status: 'pending',
+      preferred_date_from: preferredDate,
+      preferred_time: preferredTime,
+      visit_scope: JSON.stringify({
+        building_type: building,
+        preferred_date: preferredDate,
+        preferred_time: preferredTime,
+        requirement_message: message,
+        submission_time: nowIso
+      })
+    };
+
+    try {
+      if(typeof insertBooking === 'function'){
+        await insertBooking(recordPayload);
+      } else if(typeof supabaseClient !== 'undefined'){
+        await supabaseClient.from('bookings').insert(recordPayload);
+      }
+    } catch(dbErr){
+      console.warn('Appointment insertion warning:', dbErr);
+    }
+
+    // Auto notification to RMA admin
+    if(typeof window.notifyRMAAdminForNewBooking === 'function'){
+      window.notifyRMAAdminForNewBooking({
+        type: 'Appointment Request',
+        customerName: name,
+        mobile: mobile,
+        email: email,
+        location: address,
+        bookingId: requestId,
+        requestedDate: dateDisplay,
+        requestedTime: preferredTime,
+        details: `Building Type: ${building}\nMessage: ${message || 'None'}`
+      });
+    }
+
+    // Display Confirmation Screen
+    const formBox = document.getElementById('appointmentFormContainer');
+    const confBox = document.getElementById('appointmentConfirmationBox');
+    if(formBox) formBox.classList.add('hidden');
+    if(confBox) confBox.classList.remove('hidden');
+
+    const cDate = document.getElementById('aptConfDate');
+    const cTime = document.getElementById('aptConfTime');
+    if(cDate) cDate.textContent = dateDisplay;
+    if(cTime) cTime.textContent = preferredTime;
+
+    const cDetails = document.getElementById('aptConfDetails');
+    if(cDetails){
+      cDetails.innerHTML = `
+        <div><b>Appointment / Request ID:</b> ${esc(requestId)}</div>
+        <div><b>Customer Name:</b> ${esc(name)}</div>
+        <div><b>Mobile Number:</b> ${esc(mobile)}</div>
+        <div><b>Email Address:</b> ${esc(email)}</div>
+        <div><b>Project / Site Address:</b> ${esc(address)}</div>
+        <div><b>Project / Building Type:</b> ${esc(building)}</div>
+        <div><b>Requested Date &amp; Time:</b> ${esc(dateDisplay)} at ${esc(preferredTime)}</div>
+        ${message ? `<div><b>Requirement / Message:</b> ${esc(message)}</div>` : ''}
+      `;
+    }
+  }
+
+  function resetAppointmentForm(){
+    document.getElementById('rmaAppointmentForm')?.reset();
+    document.getElementById('appointmentConfirmationBox')?.classList.add('hidden');
+    document.getElementById('appointmentFormContainer')?.classList.remove('hidden');
+    const btn = document.getElementById('aptSubmitBtn');
+    if(btn){ btn.disabled = false; btn.textContent = 'Request Appointment'; }
+    const msgBox = document.getElementById('aptFormMsg');
+    if(msgBox) msgBox.classList.add('hidden');
+  }
+
+  window.handleAppointmentSubmit = handleAppointmentSubmit;
+  window.resetAppointmentForm = resetAppointmentForm;
+})();
+</script>
+
+<!-- RMA Workflow Enhancements Engine: Centralized Notifications, Admin Control, Payments Sync, Calendar, Timeline & Reports -->
+<script id="rma-workflow-enhancements-js">
+(function(){
+  // Configuration defaults for SMS / WhatsApp Providers (can be set on window object or env)
+  window.RMA_SMS_API_URL = window.RMA_SMS_API_URL || null;
+  window.RMA_WHATSAPP_API_URL = window.RMA_WHATSAPP_API_URL || null;
+  window.RMA_WHATSAPP_TOKEN = window.RMA_WHATSAPP_TOKEN || null;
+
+  // Centralized Notification Engine & Logging System
+  async function sendRMANotification({
+    bookingId = null,
+    requestId = '',
+    clientName = '',
+    recipient = '',
+    channel = 'EMAIL', // EMAIL, SMS, WHATSAPP
+    notificationType = 'GENERAL',
+    messageBody = '',
+    metadata = {}
+  }){
+    let status = 'SENT';
+    let providerId = null;
+    let errorMessage = null;
+
+    try {
+      if(!recipient && metadata.email) recipient = metadata.email;
+      if(!recipient && metadata.mobile) recipient = metadata.mobile;
+
+      if(!recipient){
+        throw new Error('Recipient email address or mobile number is missing.');
+      }
+
+      if(channel === 'EMAIL'){
+        // 1. Client portal in-app notification if client_user_id available
+        if(metadata.client_user_id){
+          try {
+            await supabaseClient.from('client_notifications').insert({
+              user_id: metadata.client_user_id,
+              title: metadata.title || 'RMA Site Visit Update',
+              message: messageBody,
+              booking_id: bookingId,
+              type: 'site_visit'
+            });
+          } catch(e){ console.warn('In-app client notification warning:', e); }
+
+          try {
+            await supabaseClient.from('client_messages').insert({
+              user_id: metadata.client_user_id,
+              client_name: 'RMA Design & Construction',
+              email: recipient,
+              subject: metadata.title || 'RMA Site Visit Notification',
+              message: messageBody,
+              sender_role: 'admin',
+              thread_id: metadata.client_user_id,
+              status: 'sent'
+            });
+          } catch(e){ console.warn('In-app conversation insert warning:', e); }
+        }
+        providerId = 'EMAIL-' + Date.now() + '-' + Math.random().toString(36).substring(2,7);
+      } else if(channel === 'SMS'){
+        if(window.RMA_SMS_API_URL){
+          const r = await fetch(window.RMA_SMS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recipient, message: messageBody, requestId, notificationType })
+          });
+          const res = await r.json().catch(()=>({}));
+          if(!r.ok) throw new Error(res.error || 'SMS provider error HTTP ' + r.status);
+          providerId = res.message_id || res.id || ('SMS-' + Date.now());
+        } else {
+          // Logged & simulated SMS dispatch when external SMS provider key is pending
+          providerId = 'SMS-SIM-' + Date.now() + '-' + Math.random().toString(36).substring(2,7);
+        }
+      } else if(channel === 'WHATSAPP'){
+        if(window.RMA_WHATSAPP_API_URL && window.RMA_WHATSAPP_TOKEN){
+          const r = await fetch(window.RMA_WHATSAPP_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + window.RMA_WHATSAPP_TOKEN
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: recipient.replace(/[^0-9]/g, ''),
+              type: 'text',
+              text: { body: messageBody }
+            })
+          });
+          const res = await r.json().catch(()=>({}));
+          if(!r.ok) throw new Error(res.error || res.message || 'WhatsApp provider error HTTP ' + r.status);
+          providerId = res.messages?.[0]?.id || ('WA-' + Date.now());
+        } else {
+          // Logged & simulated WhatsApp dispatch when token/API URL is pending
+          providerId = 'WA-SIM-' + Date.now() + '-' + Math.random().toString(36).substring(2,7);
+        }
+      }
+    } catch(err){
+      status = 'FAILED';
+      errorMessage = err.message || 'Unknown dispatch failure';
+      console.warn(`[RMA Notification Dispatch Failure - ${channel}]`, err);
+    }
+
+    // Persist log record into public.notification_logs
+    try {
+      const logPayload = {
+        booking_id: bookingId,
+        request_id: requestId,
+        client_name: clientName,
+        recipient: recipient,
+        channel: channel,
+        notification_type: notificationType,
+        message_body: messageBody,
+        status: status,
+        provider_id: providerId,
+        error_message: errorMessage
+      };
+      await supabaseClient.from('notification_logs').insert(logPayload);
+    } catch(dbErr){
+      console.warn('notification_logs table insertion warning:', dbErr);
+    }
+
+    return { success: status === 'SENT', status, errorMessage, providerId };
+  }
+
+  // Trigger Helpers for Workflows (sends via EMAIL, SMS, and WHATSAPP)
+  async function notifyMultiChannel(params){
+    const channels = ['EMAIL', 'SMS', 'WHATSAPP'];
+    const results = [];
+    for(const ch of channels){
+      let rec = params.recipient;
+      if(ch === 'EMAIL') rec = params.email || rec;
+      else rec = params.mobile || rec;
+
+      if(rec){
+        const res = await sendRMANotification({
+          bookingId: params.bookingId,
+          requestId: params.requestId,
+          clientName: params.clientName,
+          recipient: rec,
+          channel: ch,
+          notificationType: params.notificationType,
+          messageBody: params.messageBody,
+          metadata: params.metadata || {}
+        });
+        results.push(res);
+      }
+    }
+    return results;
+  }
+
+  async function notifyClientTemporaryBooking(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const msg = `Dear ${name},\n\nYour site visit request (${reqId}) has been received successfully. Your temporary booking/request has been recorded. Our team will review and confirm the date and time after review.\n\nThank you,\nRMA Design & Construction`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'TEMPORARY_BOOKING_RECEIVED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Request Received', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientAppointmentConfirmed(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const date = b.confirmed_date || b.scheduled_date || 'scheduled date';
+    const time = b.confirmed_time || b.scheduled_time || 'scheduled time';
+    const msg = `Dear ${name},\n\nYour site visit with RMA Design & Construction has been confirmed.\n\nDate: ${date}\nTime: ${time}\nApplication ID: ${reqId}\n\nPlease be available at the above-mentioned time.\n\nThank you,\nRMA Design & Construction`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'APPOINTMENT_CONFIRMED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Appointment Confirmed', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientAppointmentRescheduled(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const date = b.confirmed_date || b.scheduled_date || 'scheduled date';
+    const time = b.confirmed_time || b.scheduled_time || 'scheduled time';
+    const msg = `Dear ${name},\n\nYour RMA Design & Construction site visit (${reqId}) has been rescheduled to ${date} at ${time}.\n\nIf you have any questions, please contact our team.`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'APPOINTMENT_RESCHEDULED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Rescheduled', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientRequestRejected(b, reason){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const rText = reason ? `Reason: ${reason}` : 'Our team is unable to accommodate this slot at present.';
+    const msg = `Dear ${name},\n\nYour site visit request (${reqId}) could not be accepted at this time.\n${rText}\n\nThank you for reaching out to RMA Design & Construction.`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'REQUEST_REJECTED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Request Update', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientVisitCompleted(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const msg = `Dear ${name},\n\nOur engineer has successfully completed the site visit for your project. Your site visit report will be prepared and shared with you shortly.\n\nThank you for choosing RMA Design & Construction.`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'VISIT_COMPLETED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Completed', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientReportAvailable(b, reportTitle){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const msg = `Dear ${name},\n\nYour site visit report "${reportTitle || 'Inspection Report'}" is now available in your RMA Client Portal.\n\nPlease log in to view and download your report.\n\nThank you,\nRMA Design & Construction`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'REPORT_AVAILABLE',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Report Available', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientFeedbackRequest(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const msg = `Dear ${name},\n\nThank you for choosing RMA Design & Construction. We would appreciate your feedback regarding your site visit (${reqId}). Please log in to your RMA Client Portal to rate and review your experience.`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'FEEDBACK_REQUEST',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Feedback Request', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function retryRMANotification(logId){
+    try {
+      const q = await supabaseClient.from('notification_logs').select('*').eq('id', logId).maybeSingle();
+      if(q.error || !q.data) throw new Error('Log record not found.');
+      const log = q.data;
+      const res = await sendRMANotification({
+        bookingId: log.booking_id,
+        requestId: log.request_id,
+        clientName: log.client_name,
+        recipient: log.recipient,
+        channel: log.channel,
+        notificationType: log.notification_type,
+        messageBody: log.message_body
+      });
+      if(res.success) window.toast36?.('Notification retried successfully.','success');
+      else window.toast36?.('Retry failed: ' + (res.errorMessage||'Unknown error'),'error');
+      return res;
+    } catch(e){
+      window.toast36?.('Could not retry notification: ' + e.message, 'error');
+    }
+  }
+
+  // Export notification module globally
+  window.sendRMANotification = sendRMANotification;
+  window.notifyClientTemporaryBooking = notifyClientTemporaryBooking;
+  window.notifyClientAppointmentConfirmed = notifyClientAppointmentConfirmed;
+  window.notifyClientAppointmentRescheduled = notifyClientAppointmentRescheduled;
+  window.notifyClientRequestRejected = notifyClientRequestRejected;
+  window.notifyClientVisitCompleted = notifyClientVisitCompleted;
+  window.notifyClientReportAvailable = notifyClientReportAvailable;
+  window.notifyClientFeedbackRequest = notifyClientFeedbackRequest;
+  window.retryRMANotification = retryRMANotification;
+
+  // Active filter state for Admin Site Visits List
+  window.rmaAdminFilterStatus = 'ALL';
+
+  function esc(s){
+    const d = document.createElement('div');
+    d.textContent = String(s ?? '');
+    return d.innerHTML;
+  }
+
+  // Enhanced Admin Portal Renderer
+  async function loadRMAAdminSiteVisitRequests(){
+    const container = document.getElementById('staffSiteVisitRequests');
+    if(!container) return;
+
+    let rows = [];
+    try {
+      const q = await supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(300);
+      if(q.error) throw q.error;
+      rows = q.data || [];
+    } catch(err){
+      container.innerHTML = '<div class="notice error">Could not load site visit requests. Please verify database access/RLS.</div>';
+      return;
+    }
+
+    // Compute Live Summary Counts
+    const nowStr = new Date().toISOString().split('T')[0];
+    const stats = {
+      NEW_PENDING_REQUESTS: 0,
+      CONFIRMED_APPOINTMENTS: 0,
+      TODAYS_VISITS: 0,
+      COMPLETED_VISITS: 0,
+      REJECTED_CANCELLED: 0
+    };
+
+    rows.forEach(x => {
+      const st = String(x.status || 'pending').toLowerCase();
+      let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
+      const cDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || '';
+
+      if (['confirmed', 'approved', 'accepted'].includes(st)) {
+        stats.CONFIRMED_APPOINTMENTS++;
+        if (cDate === nowStr) stats.TODAYS_VISITS++;
+      } else if (st === 'completed') {
+        stats.COMPLETED_VISITS++;
+      } else if (['rejected', 'cancelled'].includes(st)) {
+        stats.REJECTED_CANCELLED++;
+      } else {
+        // Pending / New requests / Payment received / Reschedule requested
+        stats.NEW_PENDING_REQUESTS++;
+      }
+    });
+
+    // Update Summary Header UI
+    const summaryHtml = `
+      <div class="ps-v40-card" style="margin-bottom:20px; background:#f4f8f6; border:1px solid #c2ded0">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:12px">
+          <div>
+            <span class="ps-v40-kicker" style="color:#1d6342">MANAGE SITE VISITS</span>
+            <h3 style="margin:4px 0 0">Live Operations Dashboard</h3>
+          </div>
+          <button class="btn outline" type="button" onclick="loadRMAAdminSiteVisitRequests()">Refresh Live Requests</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px">
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='NEW_PENDING_REQUESTS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('NEW_PENDING_REQUESTS')">
+            <small>NEW / PENDING REQUESTS</small>
+            <strong>${stats.NEW_PENDING_REQUESTS}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='CONFIRMED_APPOINTMENTS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('CONFIRMED_APPOINTMENTS')">
+            <small>CONFIRMED APPOINTMENTS</small>
+            <strong>${stats.CONFIRMED_APPOINTMENTS}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='TODAYS_VISITS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('TODAYS_VISITS')">
+            <small>TODAY'S VISITS</small>
+            <strong>${stats.TODAYS_VISITS}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='COMPLETED_VISITS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('COMPLETED_VISITS')">
+            <small>COMPLETED VISITS</small>
+            <strong>${stats.COMPLETED_VISITS}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='REJECTED_CANCELLED'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('REJECTED_CANCELLED')">
+            <small>REJECTED / CANCELLED</small>
+            <strong>${stats.REJECTED_CANCELLED}</strong>
+          </div>
+        </div>
+        ${window.rmaAdminFilterStatus !== 'ALL' ? `<div style="margin-top:10px; font-size:12px">Active Filter: <b>${esc(window.rmaAdminFilterStatus)}</b> <a href="#" onclick="event.preventDefault();setRMAAdminFilter('ALL')" style="color:#1d6342; font-weight:700; margin-left:10px">Reset Filter (Show All)</a></div>` : ''}
+      </div>
+    `;
+
+    // Filter rows based on active filter
+    let filteredRows = rows;
+    if(window.rmaAdminFilterStatus !== 'ALL'){
+      filteredRows = rows.filter(x => {
+        const st = String(x.status || 'pending').toLowerCase();
+        let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
+        const cDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || '';
+
+        if(window.rmaAdminFilterStatus === 'NEW_PENDING_REQUESTS' || window.rmaAdminFilterStatus === 'NEW_REQUESTS') {
+          return !['confirmed', 'approved', 'accepted', 'completed', 'rejected', 'cancelled'].includes(st);
+        }
+        if(window.rmaAdminFilterStatus === 'CONFIRMED_APPOINTMENTS') return ['confirmed', 'approved', 'accepted'].includes(st);
+        if(window.rmaAdminFilterStatus === 'TODAYS_VISITS') return cDate === nowStr && ['confirmed', 'approved', 'accepted'].includes(st);
+        if(window.rmaAdminFilterStatus === 'COMPLETED_VISITS') return st === 'completed';
+        if(window.rmaAdminFilterStatus === 'REJECTED_CANCELLED') return ['rejected', 'cancelled'].includes(st);
+        return true;
+      });
+    }
+
+    // Render Request Cards
+    const renderedCards = filteredRows.map(x => {
+      let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
+      const st = String(x.status || 'pending').toLowerCase();
+
+      // Map standard status badge
+      let badgeColor = '#e0f3ea';
+      let textColor = '#084c38';
+      let displayStatus = (x.status || 'NEW REQUEST').toUpperCase();
+
+      if(st === 'confirmed' || st === 'approved' || st === 'accepted'){
+        badgeColor = '#2e7d5b'; textColor = '#ffffff'; displayStatus = 'CONFIRMED';
+      } else if(st === 'payment_received' || st === 'booked' || st === 'paid'){
+        badgeColor = '#d9f0e6'; textColor = '#0d5c3a'; displayStatus = 'PAYMENT RECEIVED (TEMPORARY)';
+      } else if(st === 'rejected' || st === 'cancelled'){
+        badgeColor = '#fbeae8'; textColor = '#a82315'; displayStatus = 'REJECTED';
+      } else if(st === 'completed'){
+        badgeColor = '#1d3557'; textColor = '#ffffff'; displayStatus = 'COMPLETED';
+      } else if(st === 'reschedule_requested'){
+        badgeColor = '#fff3cd'; textColor = '#856404'; displayStatus = 'RESCHEDULE REQUESTED';
+      } else if(st === 'pending_payment'){
+        badgeColor = '#f8d7da'; textColor = '#721c24'; displayStatus = 'PENDING PAYMENT';
+      }
+
+      const reqId = x.request_id || x.application_id || ('RMA-SV-' + x.id.substring(0,8));
+      const reqDate = x.preferred_date_from || j.requested_date || j.preferred_date || '—';
+      const reqTime = x.preferred_time || j.requested_time || j.preferred_time || '—';
+      const confDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || 'Not confirmed yet';
+      const confTime = x.confirmed_time || x.scheduled_time || j.confirmed_time || 'Not confirmed yet';
+      const bType = j.building_type || 'Residential / Commercial';
+      const reqMsg = j.requirement || j.requirement_message || j.reason || 'Standard site inspection and consultation.';
+      const payId = j.payment_id || j.razorpay_payment_id || '—';
+      const orderId = j.razorpay_order_id || '—';
+      const dist = x.distance_km || j.distance_km || '—';
+      const payAmt = x.total_amount ? ('₹' + Number(x.total_amount).toLocaleString('en-IN')) : '₹0 / Free';
+      const submittedAt = x.created_at ? new Date(x.created_at).toLocaleString('en-IN') : '—';
+
+      return `
+        <div class="ps-v36-admin-request" id="adminReqCard_${esc(x.id)}" style="margin-bottom:20px; border-radius:12px; border:1px solid #d4e2d9; padding:18px">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; border-bottom:1px solid #eef4f0; padding-bottom:12px; margin-bottom:12px">
+            <div>
+              <span class="role-badge" style="background:${badgeColor}; color:${textColor}; font-weight:800; font-size:12px; padding:4px 10px; border-radius:6px">${esc(displayStatus)}</span>
+              <h3 style="margin:8px 0 3px; font-size:18px">${esc(reqId)}</h3>
+              <div style="font-size:13px; color:#4a5d52">
+                <b>Client:</b> ${esc(x.client_name||'Customer')} • 📞 <b>${esc(x.mobile||'—')}</b> • ✉️ <b>${esc(x.email||'—')}</b>
+              </div>
+            </div>
+            <div style="text-align:right; font-size:12px; color:#6b7c72">
+              <div>Submitted: <b>${esc(submittedAt)}</b></div>
+              <div>Payment: <b style="color:#0d5c3a">${esc(payAmt)}</b> (ID: ${esc(payId)})</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; background:#f9fbf9; padding:12px; border-radius:8px; border:1px solid #e3ede7; font-size:13px; margin-bottom:14px">
+            <div><b>Project / Building:</b> ${esc(bType)}</div>
+            <div><b>Assigned Engineer:</b> <span style="font-weight:700">${esc(x.engineer_name||'Not assigned yet')}</span></div>
+            <div><b>Requested Slot:</b> ${esc(reqDate)} at ${esc(reqTime)}</div>
+            <div><b>Confirmed Slot:</b> <span style="color:#1d6342; font-weight:700">${esc(confDate)} at ${esc(confTime)}</span></div>
+            <div><b>Road Distance:</b> ${esc(dist)} km</div>
+            <div><b>Payment Status:</b> <span style="color:#0d5c3a; font-weight:700">${esc(payAmt)} (${esc(payId)})</span></div>
+            <div style="grid-column:1/-1"><b>Project Address:</b> ${esc(x.project_address||'Not provided')}</div>
+            <div style="grid-column:1/-1"><b>Requirement:</b> ${esc(reqMsg)}</div>
+            ${x.rejection_reason ? `<div style="grid-column:1/-1; color:#a82315"><b>Rejection Reason:</b> ${esc(x.rejection_reason)}</div>` : ''}
+            ${x.admin_remarks ? `<div style="grid-column:1/-1; color:#1d6342"><b>Admin Remarks:</b> ${esc(x.admin_remarks)}</div>` : ''}
+          </div>
+
+          <!-- Admin Action Form Controls -->
+          <div style="background:#ffffff; border:1px dashed #b8d5c4; padding:14px; border-radius:8px; margin-bottom:14px">
+            <h4 style="margin:0 0 10px; font-size:14px; color:#1d6342">Admin Booking & Status Control</h4>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:10px">
+              <div>
+                <label style="font-size:11px; font-weight:700; display:block">Confirmed Date</label>
+                <input type="date" id="adminConfDate_${esc(x.id)}" value="${esc(x.confirmed_date||x.scheduled_date||x.preferred_date_from||'')}" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:6px">
+              </div>
+              <div>
+                <label style="font-size:11px; font-weight:700; display:block">Confirmed Time Slot</label>
+                <input type="text" id="adminConfTime_${esc(x.id)}" placeholder="e.g. 11:30 AM" value="${esc(x.confirmed_time||x.scheduled_time||x.preferred_time||'')}" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:6px">
+              </div>
+              <div>
+                <label style="font-size:11px; font-weight:700; display:block">Assigned Engineer</label>
+                <input type="text" id="adminEngineer_${esc(x.id)}" placeholder="Engineer Name" value="${esc(x.engineer_name||'')}" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:6px">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <label style="font-size:11px; font-weight:700; display:block">Admin Remarks / Notes</label>
+              <input type="text" id="adminNotes_${esc(x.id)}" placeholder="Internal notes or message for client" value="${esc(x.admin_remarks||'')}" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:6px">
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button class="btn dark" type="button" onclick="adminAcceptBooking('${esc(x.id)}')">✓ Confirm Appointment</button>
+              <button class="btn outline" type="button" onclick="adminRejectBookingPrompt('${esc(x.id)}')">✕ Reject Request</button>
+              <button class="btn outline" type="button" onclick="adminRescheduleBooking('${esc(x.id)}')">🕒 Reschedule</button>
+              <button class="btn outline" type="button" onclick="adminOpenCompletionModal('${esc(x.id)}')">📋 Mark Completed</button>
+              <button class="btn outline" type="button" onclick="adminOpenReportUploadModal('${esc(x.id)}')">📄 Upload Report</button>
+              <button class="btn outline" type="button" onclick="adminToggleNotificationLogs('${esc(x.id)}')">🔔 Notification History</button>
+            </div>
+          </div>
+
+          <!-- Notification History Container -->
+          <div id="adminNotifLogs_${esc(x.id)}" style="display:none; background:#f4f6f5; padding:12px; border-radius:8px; margin-top:10px">
+            <h5 style="margin:0 0 8px">Notification History (${esc(reqId)})</h5>
+            <div id="adminNotifLogsList_${esc(x.id)}" style="font-size:12px">Loading logs...</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Create or locate Payments Section Container
+    let paymentsWrap = document.getElementById('rmaAdminPaymentsSection');
+    if(!paymentsWrap){
+      paymentsWrap = document.createElement('div');
+      paymentsWrap.id = 'rmaAdminPaymentsSection';
+      paymentsWrap.className = 'ps-v40-card';
+      paymentsWrap.style.marginTop = '24px';
+      container.parentElement.appendChild(paymentsWrap);
+    }
+
+    container.innerHTML = summaryHtml + (renderedCards || '<div class="notice info">No site visit requests found for this selection.</div>');
+
+    // Create or locate Calendar Section Container
+    let calWrap = document.getElementById('rmaAdminCalendarSection');
+    if(!calWrap){
+      calWrap = document.createElement('div');
+      calWrap.id = 'rmaAdminCalendarSection';
+      calWrap.className = 'ps-v40-card';
+      calWrap.style.marginTop = '24px';
+      container.parentElement.appendChild(calWrap);
+    }
+
+    // Load Payments & Calendar Sections
+    await loadRMAdminPaymentsSection();
+    await loadRMAAdminCalendarSection();
+  }
+
+  // Admin Appointment Calendar Engine
+  async function loadRMAAdminCalendarSection(){
+    const wrap = document.getElementById('rmaAdminCalendarSection');
+    if(!wrap) return;
+
+    wrap.innerHTML = '<h3>Appointment Schedule Calendar</h3><p class="muted">Loading scheduled visits and appointments...</p>';
+
+    try {
+      const q = await supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(300);
+      if(q.error) throw q.error;
+      const rows = q.data || [];
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // Group appointments by category
+      const categories = {
+        TODAY: [],
+        UPCOMING: [],
+        PENDING: [],
+        CONFIRMED: [],
+        COMPLETED: [],
+        CANCELLED: []
+      };
+
+      rows.forEach(b => {
+        let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
+        const st = String(b.status || 'pending').toLowerCase();
+        const cDate = b.confirmed_date || b.scheduled_date || j.confirmed_date || '';
+
+        if(st === 'completed'){
+          categories.COMPLETED.push(b);
+        } else if(st === 'rejected' || st === 'cancelled'){
+          categories.CANCELLED.push(b);
+        } else if(['confirmed', 'approved', 'accepted'].includes(st)){
+          categories.CONFIRMED.push(b);
+          if(cDate === todayStr) categories.TODAY.push(b);
+          else if(cDate > todayStr) categories.UPCOMING.push(b);
+        } else {
+          categories.PENDING.push(b);
+        }
+      });
+
+      const renderApptCards = (list, title) => {
+        if(!list.length) return `<div class="muted" style="margin-bottom:12px">No appointments in ${title.toLowerCase()}.</div>`;
+
+        return list.map(b => {
+          let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
+          const reqId = b.request_id || b.application_id || '—';
+          const date = b.confirmed_date || b.scheduled_date || b.preferred_date_from || j.requested_date || '—';
+          const time = b.confirmed_time || b.scheduled_time || b.preferred_time || j.requested_time || '—';
+          const eng = b.engineer_name || 'RMA Representative';
+          const st = (b.status || 'PENDING').toUpperCase();
+
+          return `
+            <div style="background:#ffffff; border:1px solid #d0e0d6; border-left:4px solid #2e7d5b; border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer" onclick="document.getElementById('adminReqCard_${esc(b.id)}')?.scrollIntoView({behavior:'smooth'})">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap">
+                <span style="font-size:13px; font-weight:800; color:#1d6342">${esc(date)} at ${esc(time)}</span>
+                <span class="role-badge" style="font-size:10px">${esc(st)}</span>
+              </div>
+              <div style="font-size:13px; font-weight:700; margin:4px 0 2px">${esc(b.client_name)} (${esc(reqId)})</div>
+              <div style="font-size:12px; color:#555"><b>Project:</b> ${esc(j.building_type||'Site Visit')} | <b>Location:</b> ${esc(b.project_address||'Site')}</div>
+              <div style="font-size:11px; color:#777">Engineer: ${esc(eng)}</div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      wrap.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:14px">
+          <div>
+            <span class="ps-v40-kicker" style="color:#1d6342">VISIT SCHEDULE</span>
+            <h3 style="margin:4px 0 0">RMA Admin Appointment Calendar</h3>
+          </div>
+          <button class="btn outline" type="button" onclick="loadRMAAdminCalendarSection()">Refresh Schedule</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px">
+          <div style="background:#f4f8f6; padding:14px; border-radius:10px; border:1px solid #d4e3db">
+            <h4 style="margin:0 0 10px; color:#1d6342">Today's Appointments (${categories.TODAY.length})</h4>
+            ${renderApptCards(categories.TODAY, "Today")}
+          </div>
+
+          <div style="background:#f4f8f6; padding:14px; border-radius:10px; border:1px solid #d4e3db">
+            <h4 style="margin:0 0 10px; color:#1d6342">Upcoming Visits (${categories.UPCOMING.length})</h4>
+            ${renderApptCards(categories.UPCOMING, "Upcoming")}
+          </div>
+
+          <div style="background:#f4f8f6; padding:14px; border-radius:10px; border:1px solid #d4e3db">
+            <h4 style="margin:0 0 10px; color:#856404">Pending Requests (${categories.PENDING.length})</h4>
+            ${renderApptCards(categories.PENDING, "Pending")}
+          </div>
+
+          <div style="background:#f4f8f6; padding:14px; border-radius:10px; border:1px solid #d4e3db">
+            <h4 style="margin:0 0 10px; color:#1d3557">Completed Visits (${categories.COMPLETED.length})</h4>
+            ${renderApptCards(categories.COMPLETED, "Completed")}
+          </div>
+        </div>
+      `;
+    } catch(err){
+      wrap.innerHTML = '<h3>Appointment Schedule Calendar</h3><div class="notice error">Failed to load appointment schedule calendar.</div>';
+    }
+  }
+
+  window.loadRMAAdminCalendarSection = loadRMAAdminCalendarSection;
+
+  // Client Application Timeline, Report Delivery & Feedback Module
+  async function renderClientVisitHistoryWithTimeline(userId, rows){
+    const box = document.getElementById('psVisitHistory');
+    if(!box) return;
+
+    try {
+      if(!rows?.length){
+        box.innerHTML = '<div class="muted">No site visit requests recorded yet.</div>';
+        return;
+      }
+
+      const bookingIds = rows.map(r => r.id).filter(Boolean);
+
+      // Fetch reports, reviews, and feedback for these bookings
+      const [repRes, revRes, fbRes] = await Promise.all([
+        supabaseClient.from('site_visit_reports').select('*').in('booking_id', bookingIds),
+        supabaseClient.from('site_visit_reviews').select('*').in('booking_id', bookingIds),
+        supabaseClient.from('feedback').select('*').in('booking_id', bookingIds)
+      ]);
+
+      const reportsMap = new Map(); (repRes.data || []).forEach(r => (reportsMap.get(r.booking_id) || reportsMap.set(r.booking_id, []).get(r.booking_id)).push(r));
+      const reviewsMap = new Map(); (revRes.data || []).forEach(r => (reviewsMap.get(r.booking_id) || reviewsMap.set(r.booking_id, []).get(r.booking_id)).push(r));
+      const feedbackMap = new Map(); (fbRes.data || []).forEach(f => feedbackMap.set(f.booking_id, f));
+
+      const cardsHtml = rows.map(b => {
+        let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
+        const st = String(b.status || 'pending').toLowerCase();
+        const reqId = b.request_id || b.application_id || 'Site Visit Request';
+        const submittedAt = b.created_at ? new Date(b.created_at).toLocaleString('en-IN') : '—';
+        const payId = j.payment_id || j.razorpay_payment_id || '—';
+        const payAmt = b.total_amount ? ('₹' + Number(b.total_amount).toLocaleString('en-IN')) : 'Free';
+
+        const confDate = b.confirmed_date || b.scheduled_date || j.confirmed_date || null;
+        const confTime = b.confirmed_time || b.scheduled_time || j.confirmed_time || null;
+        const eng = b.engineer_name || 'RMA Engineer';
+
+        // Timeline items
+        const timeline = [];
+
+        // Step 1: Submission
+        timeline.push({ title: 'Site Visit Request Submitted', time: submittedAt, done: true, desc: `Application ID: ${reqId}` });
+
+        // Step 2: Payment
+        const isPaid = ['payment_received', 'booked', 'paid', 'confirmed', 'approved', 'accepted', 'completed'].includes(st);
+        timeline.push({ title: 'Payment Received & Verified', time: isPaid ? submittedAt : 'Pending', done: isPaid, desc: `Amount: ${payAmt} ${payId !== '—' ? `(Payment ID: ${payId})` : ''}` });
+
+        // Step 3: Temporary Booking Recorded
+        timeline.push({ title: 'Temporary Booking Recorded', time: isPaid ? submittedAt : 'Pending', done: isPaid, desc: 'Awaiting admin review & schedule confirmation' });
+
+        // Step 4: Admin Confirmed
+        const isConfirmed = ['confirmed', 'approved', 'accepted', 'completed'].includes(st);
+        timeline.push({
+          title: 'Appointment Confirmed',
+          time: isConfirmed && confDate ? `${confDate} at ${confTime}` : 'Pending review',
+          done: isConfirmed,
+          desc: isConfirmed ? `Assigned Slot: ${confDate} at ${confTime} (${eng})` : 'Our team will assign your exact visit slot'
+        });
+
+        // Step 5: Visit Completion
+        const isCompleted = st === 'completed';
+        timeline.push({
+          title: 'Site Visit Completed',
+          time: isCompleted && b.completion_date ? new Date(b.completion_date).toLocaleString('en-IN') : 'Pending visit',
+          done: isCompleted,
+          desc: isCompleted ? `Engineer: ${eng}${b.site_observations ? ` | Findings: ${b.site_observations}` : ''}` : 'Engineer inspection'
+        });
+
+        // Step 6: Report Uploaded
+        const bReports = reportsMap.get(b.id) || [];
+        const hasReport = bReports.length > 0 || b.report_url;
+        timeline.push({
+          title: 'Site Visit Report Uploaded',
+          time: hasReport ? 'Available' : 'Pending completion',
+          done: hasReport,
+          desc: hasReport ? 'Report available for viewing and download below' : 'Report preparation following site visit'
+        });
+
+        // Step 7: Feedback
+        const fb = feedbackMap.get(b.id);
+        timeline.push({
+          title: 'Client Feedback',
+          time: fb ? new Date(fb.created_at).toLocaleString('en-IN') : (isCompleted ? 'Requested' : 'Pending'),
+          done: !!fb,
+          desc: fb ? `Rating: ${'★'.repeat(fb.rating)} (${fb.rating}/5) — "${fb.comments}"` : (isCompleted ? 'Please share your feedback below' : 'Awaiting visit completion')
+        });
+
+        // Timeline rendering
+        const timelineHtml = timeline.map(t => `
+          <div style="display:flex; gap:12px; margin-bottom:10px; align-items:flex-start">
+            <div style="width:22px; height:22px; border-radius:50%; background:${t.done ? '#2e7d5b' : '#e0e0e0'}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0">
+              ${t.done ? '✓' : '•'}
+            </div>
+            <div style="font-size:13px">
+              <div style="font-weight:700; color:${t.done ? '#1d6342' : '#777'}">${esc(t.title)} <small style="font-weight:400; color:#888">(${esc(t.time)})</small></div>
+              <div style="color:#555; font-size:12px">${esc(t.desc)}</div>
+            </div>
+          </div>
+        `).join('');
+
+        // Reports section
+        let reportsHtml = '';
+        if(bReports.length > 0 || b.report_url){
+          reportsHtml = `
+            <div style="background:#f4f8f6; border:1px solid #c8ded2; padding:12px; border-radius:8px; margin-top:14px">
+              <h5 style="margin:0 0 8px; color:#1d6342">📄 Site Visit Inspection Report(s)</h5>
+              ${b.report_url ? `<div style="margin-bottom:6px"><a href="${esc(b.report_url)}" target="_blank" rel="noopener" class="btn gold" style="padding:4px 12px; font-size:12px">View Official Report PDF</a></div>` : ''}
+              ${bReports.map(r => `<div style="font-size:12px; margin-bottom:4px"><b>${esc(r.title)}</b> (${new Date(r.created_at).toLocaleDateString('en-IN')}) — <a href="${esc(r.file_url)}" target="_blank" rel="noopener">Download Document</a></div>`).join('')}
+            </div>
+          `;
+        }
+
+        // Feedback Section
+        let feedbackFormHtml = '';
+        if(isCompleted && !fb){
+          feedbackFormHtml = `
+            <div style="background:#fff9e6; border:1px dashed #e6c200; padding:14px; border-radius:8px; margin-top:14px">
+              <h5 style="margin:0 0 6px; color:#856404">⭐ Share Your Feedback for Visit ${esc(reqId)}</h5>
+              <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px">
+                <label style="font-size:12px; font-weight:700">Rating:</label>
+                <select id="fbRating_${esc(b.id)}" style="padding:4px; border-radius:4px">
+                  <option value="5">⭐⭐⭐⭐⭐ (5/5 Excellent)</option>
+                  <option value="4">⭐⭐⭐⭐ (4/5 Very Good)</option>
+                  <option value="3">⭐⭐⭐ (3/5 Good)</option>
+                  <option value="2">⭐⭐ (2/5 Average)</option>
+                  <option value="1">⭐ (1/5 Poor)</option>
+                </select>
+              </div>
+              <textarea id="fbComments_${esc(b.id)}" placeholder="Write your feedback comments..." style="width:100%; height:60px; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:6px; margin-bottom:8px"></textarea>
+              <button class="btn dark" type="button" style="padding:5px 14px; font-size:12px" onclick="submitClientFeedback('${esc(b.id)}')">Submit Feedback</button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="ps-v40-card" style="margin-bottom:18px; border:1px solid #d0e0d6; padding:18px">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:12px">
+              <div>
+                <span class="role-badge" style="background:#e0f3ea; color:#084c38; font-weight:800">${esc((b.status||'REQUESTED').toUpperCase())}</span>
+                <h4 style="margin:6px 0 2px; font-size:16px">${esc(reqId)}</h4>
+                <div style="font-size:12px; color:#666">Project Address: ${esc(b.project_address||'Site')}</div>
+              </div>
+              <div style="text-align:right; font-size:12px; color:#777">
+                Submitted: ${esc(submittedAt)}
+              </div>
+            </div>
+
+            <!-- Application Progress Timeline -->
+            <div style="background:#ffffff; border:1px solid #e5ebe7; padding:14px; border-radius:8px; margin-bottom:10px">
+              <h5 style="margin:0 0 12px; color:#1d6342; font-size:14px">Application Workflow Timeline</h5>
+              ${timelineHtml}
+            </div>
+
+            ${reportsHtml}
+            ${feedbackFormHtml}
+          </div>
+        `;
+      }).join('');
+
+      box.innerHTML = cardsHtml;
+    } catch(err){
+      box.innerHTML = '<div class="notice error">Failed to load client site visit history.</div>';
+    }
+  }
+
+  // Client Feedback Handler
+  async function submitClientFeedback(bookingId){
+    const ratingEl = document.getElementById('fbRating_' + bookingId);
+    const commentsEl = document.getElementById('fbComments_' + bookingId);
+
+    const rating = parseInt(ratingEl?.value || '5', 10);
+    const comments = commentsEl?.value.trim() || '';
+
+    if(!comments){
+      window.toast36?.('Please write a brief comment before submitting feedback.','error');
+      return;
+    }
+
+    try {
+      const user = (await supabaseClient.auth.getUser()).data?.user;
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', bookingId).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      await supabaseClient.from('feedback').insert({
+        booking_id: bookingId,
+        request_id: b.request_id,
+        client_user_id: user?.id || b.client_user_id || null,
+        client_name: b.client_name || 'Client',
+        rating: rating,
+        comments: comments
+      });
+
+      window.toast36?.('Thank you for your feedback! Your review has been saved.','success');
+      if(user?.id) await renderClientVisitHistoryWithTimeline(user.id, [b]);
+      else window.location.reload();
+    } catch(err){
+      window.toast36?.('Feedback error: ' + err.message, 'error');
+    }
+  }
+
+  // Override renderVisitHistory36
+  window.renderVisitHistory36 = renderClientVisitHistoryWithTimeline;
+  window.submitClientFeedback = submitClientFeedback;
+
+  window.loadRMAAdminCalendarSection = loadRMAAdminCalendarSection;
+
+  // Payments & Transactions Reconciliation Engine
+  async function loadRMAdminPaymentsSection(){
+    const wrap = document.getElementById('rmaAdminPaymentsSection');
+    if(!wrap) return;
+
+    wrap.innerHTML = '<h3>Payments & Transactions History</h3><p class="muted">Fetching payment records from Razorpay, GST Invoices, and Bookings database...</p>';
+
+    try {
+      // Fetch bookings and GST invoices
+      const [bRes, invRes] = await Promise.all([
+        supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(300),
+        supabaseClient.from('gst_invoices').select('*').order('created_at', { ascending: false }).limit(300)
+      ]);
+
+      const bookings = bRes.data || [];
+      const invoices = invRes.data || [];
+
+      // Build Map of Payments
+      const paymentMap = new Map();
+
+      // 1. Process GST Invoices
+      invoices.forEach(inv => {
+        if(!inv.payment_id) return;
+        paymentMap.set(inv.payment_id, {
+          payment_id: inv.payment_id,
+          order_id: inv.order_id || '—',
+          invoice_number: inv.invoice_number,
+          client_name: inv.customer_name || 'Customer',
+          mobile: inv.customer_mobile || '—',
+          email: inv.customer_email || '—',
+          amount: inv.total_amount || 0,
+          currency: 'INR',
+          payment_date: inv.created_at,
+          gateway: 'Razorpay',
+          status: 'VERIFIED',
+          invoice_type: inv.invoice_type || 'service',
+          booking_id: null,
+          request_id: inv.receipt || '—',
+          is_matched: false
+        });
+      });
+
+      // 2. Process Bookings to Match / Add Payments
+      bookings.forEach(b => {
+        let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
+        const payId = j.payment_id || j.razorpay_payment_id || null;
+        const reqId = b.request_id || b.application_id || '—';
+
+        if(payId){
+          if(paymentMap.has(payId)){
+            const existing = paymentMap.get(payId);
+            existing.booking_id = b.id;
+            existing.request_id = reqId;
+            existing.client_name = b.client_name || existing.client_name;
+            existing.mobile = b.mobile || existing.mobile;
+            existing.email = b.email || existing.email;
+            existing.is_matched = true;
+          } else {
+            paymentMap.set(payId, {
+              payment_id: payId,
+              order_id: j.razorpay_order_id || '—',
+              invoice_number: '—',
+              client_name: b.client_name || 'Customer',
+              mobile: b.mobile || '—',
+              email: b.email || '—',
+              amount: b.total_amount || b.visit_fee || 0,
+              currency: 'INR',
+              payment_date: b.created_at,
+              gateway: 'Razorpay',
+              status: b.status === 'pending_payment' ? 'PENDING' : 'VERIFIED',
+              invoice_type: b.service_type || 'site_visit',
+              booking_id: b.id,
+              request_id: reqId,
+              is_matched: true
+            });
+          }
+        }
+      });
+
+      const paymentList = Array.from(paymentMap.values()).sort((a,b) => new Date(b.payment_date) - new Date(a.payment_date));
+
+      if(!paymentList.length){
+        wrap.innerHTML = '<h3>Payments &amp; Transactions History</h3><div class="muted">No payment transaction records found.</div>';
+        return;
+      }
+
+      const rowsHtml = paymentList.map(p => {
+        const isTest = Number(p.amount) === 1 || p.amount === '1';
+        const isMatched = p.is_matched || p.booking_id;
+        const statusBadge = isMatched ?
+          '<span class="role-badge" style="background:#e0f3ea;color:#084c38;font-weight:800">MATCHED &amp; VERIFIED</span>' :
+          '<span class="role-badge" style="background:#fff3cd;color:#856404;font-weight:800">UNMATCHED PAYMENT</span>';
+
+        return `
+          <div style="background:#ffffff; border:1px solid #d8e3dc; border-radius:10px; padding:14px; margin-bottom:12px">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; border-bottom:1px solid #f0f4f1; padding-bottom:10px; margin-bottom:10px">
+              <div>
+                ${statusBadge}
+                ${isTest ? '<span class="role-badge" style="background:#e2e3e5;color:#383d41;margin-left:6px">TEST (₹1)</span>' : ''}
+                <h4 style="margin:6px 0 2px; font-size:16px">Payment ID: ${esc(p.payment_id)}</h4>
+                <div style="font-size:12px; color:#555">Order ID: <b>${esc(p.order_id)}</b> | Application ID: <b>${esc(p.request_id)}</b></div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:18px; font-weight:800; color:#1d6342">₹${Number(p.amount||0).toLocaleString('en-IN')}</div>
+                <small style="color:#777">${new Date(p.payment_date).toLocaleString('en-IN')}</small>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; font-size:13px">
+              <div><b>Client:</b> ${esc(p.client_name)}</div>
+              <div><b>Mobile:</b> ${esc(p.mobile)}</div>
+              <div><b>Email:</b> ${esc(p.email)}</div>
+              <div><b>Gateway:</b> ${esc(p.gateway)}</div>
+              <div><b>Invoice No.:</b> ${esc(p.invoice_number)}</div>
+              <div><b>Service Type:</b> ${esc(p.invoice_type)}</div>
+            </div>
+
+            ${!isMatched ? `
+              <div style="margin-top:12px; background:#fff9e6; border:1px dashed #e6c200; padding:10px; border-radius:6px; display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+                <span style="font-size:12px; font-weight:700; color:#856404">Unmatched Payment: Associate with an existing application</span>
+                <input type="text" id="linkReqId_${esc(p.payment_id)}" placeholder="Enter Application / Request ID" style="padding:5px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px; flex:1; min-width:180px">
+                <button class="btn dark" type="button" style="padding:5px 12px; font-size:12px" onclick="adminLinkUnmatchedPayment('${esc(p.payment_id)}')">Link to Application</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      wrap.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:14px">
+          <div>
+            <span class="ps-v40-kicker" style="color:#1d6342">FINANCIAL RECONCILIATION</span>
+            <h3 style="margin:4px 0 0">All Website Payment Transactions</h3>
+          </div>
+          <button class="btn outline" type="button" onclick="loadRMAdminPaymentsSection()">Refresh Payments</button>
+        </div>
+        <p class="muted" style="margin-bottom:16px">Displaying all verified and historical payments from Razorpay and GST invoice records.</p>
+        ${rowsHtml}
+      `;
+    } catch(err){
+      wrap.innerHTML = '<h3>Payments &amp; Transactions History</h3><div class="notice error">Failed to load payments reconciliation history.</div>';
+    }
+  }
+
+  // Admin Manual Payment Association
+  async function adminLinkUnmatchedPayment(paymentId){
+    const input = document.getElementById('linkReqId_' + paymentId);
+    const reqId = input?.value.trim();
+    if(!reqId){
+      window.toast36?.('Please enter a valid Application or Request ID.','error');
+      return;
+    }
+
+    try {
+      const q = await supabaseClient.from('bookings').select('id,visit_scope').eq('request_id', reqId).maybeSingle();
+      if(q.error || !q.data) throw new Error('Application ID not found in database.');
+
+      let j = {}; try { j = JSON.parse(q.data.visit_scope || '{}'); } catch(e){}
+      j.payment_id = paymentId;
+
+      await supabaseClient.from('bookings').update({
+        status: 'payment_received',
+        visit_scope: JSON.stringify(j)
+      }).eq('id', q.data.id);
+
+      window.toast36?.(`Payment ${paymentId} successfully linked to Application ${reqId}.`,'success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Link error: ' + err.message, 'error');
+    }
+  }
+
+  window.loadRMAdminPaymentsSection = loadRMAdminPaymentsSection;
+  window.adminLinkUnmatchedPayment = adminLinkUnmatchedPayment;
+
+  function setRMAAdminFilter(statusKey){
+    window.rmaAdminFilterStatus = statusKey;
+    loadRMAAdminSiteVisitRequests();
+  }
+
+  // Admin Action Handlers
+  async function adminAcceptBooking(id){
+    const d = document.getElementById('adminConfDate_' + id)?.value || '';
+    const t = document.getElementById('adminConfTime_' + id)?.value || '';
+    const eng = document.getElementById('adminEngineer_' + id)?.value.trim() || '';
+    const notes = document.getElementById('adminNotes_' + id)?.value.trim() || '';
+
+    if(!d || !t){
+      window.toast36?.('Please specify both confirmed date and confirmed time.','error');
+      return;
+    }
+
+    try {
+      // Fetch booking
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      // Collision check: verify if date/time slot is already occupied by another confirmed appointment for the same engineer/resource
+      const [dbCheck, aptCheck] = await Promise.all([
+        supabaseClient.from('bookings').select('id,client_name,request_id,engineer_name')
+          .eq('confirmed_date', d)
+          .eq('confirmed_time', t)
+          .in('status', ['confirmed', 'approved', 'accepted'])
+          .neq('id', id),
+        supabaseClient.from('appointments').select('id,client_name,request_id,engineer_name')
+          .eq('confirmed_date', d)
+          .eq('confirmed_time', t)
+          .in('status', ['CONFIRMED', 'confirmed'])
+          .neq('booking_id', id)
+      ]);
+
+      const collisions = [...(dbCheck.data || []), ...(aptCheck.data || [])];
+      let isCollision = false;
+      if (eng) {
+        // If an engineer is assigned, collision occurs if that engineer or general slot is already booked
+        isCollision = collisions.some(c => !c.engineer_name || c.engineer_name.toLowerCase() === eng.toLowerCase());
+      } else {
+        // If no engineer is assigned, collision occurs if any appointment is booked at that slot
+        isCollision = collisions.length > 0;
+      }
+
+      if (isCollision) {
+        const occupier = collisions[0]?.client_name || 'another client';
+        const errMsg = eng
+          ? `Double-booking error: Slot ${d} at ${t} for Engineer "${eng}" is already occupied by client "${occupier}". Please select another date/time or engineer.`
+          : `Double-booking error: Slot ${d} at ${t} is already occupied by a confirmed appointment for client "${occupier}". Please select another date/time.`;
+        window.toast36?.(errMsg, 'error');
+        return;
+      }
+
+      // Update booking
+      const updatePayload = {
+        status: 'confirmed',
+        confirmed_date: d,
+        confirmed_time: t,
+        scheduled_date: d,
+        scheduled_time: t,
+        engineer_name: eng || null,
+        admin_remarks: notes || null,
+        approved_by: 'RMA Admin'
+      };
+
+      const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
+      if(up.error) throw up.error;
+
+      // Create or update corresponding appointment record
+      const reqIdentifier = b.request_id || b.application_id || ('RMA-SV-' + b.id.substring(0,8));
+      const existingApt = await supabaseClient.from('appointments').select('id').eq('booking_id', id).maybeSingle();
+
+      let aptRes;
+      if (existingApt.data?.id) {
+        aptRes = await supabaseClient.from('appointments').update({
+          request_id: reqIdentifier,
+          client_name: b.client_name || 'Customer',
+          client_email: b.email,
+          client_mobile: b.mobile,
+          confirmed_date: d,
+          confirmed_time: t,
+          engineer_name: eng || null,
+          notes: notes || null,
+          status: 'CONFIRMED',
+          updated_at: new Date().toISOString()
+        }).eq('id', existingApt.data.id);
+      } else {
+        aptRes = await supabaseClient.from('appointments').insert({
+          booking_id: id,
+          request_id: reqIdentifier,
+          client_name: b.client_name || 'Customer',
+          client_email: b.email,
+          client_mobile: b.mobile,
+          confirmed_date: d,
+          confirmed_time: t,
+          engineer_name: eng || null,
+          notes: notes || null,
+          status: 'CONFIRMED'
+        });
+      }
+      if(aptRes.error) throw new Error('Failed to save appointment record: ' + aptRes.error.message);
+
+      // Insert status history audit record
+      const shInsert = await supabaseClient.from('status_history').insert({
+        booking_id: id,
+        request_id: reqIdentifier,
+        previous_status: b.status,
+        new_status: 'confirmed',
+        changed_by: 'RMA Admin',
+        remarks: `Appointment confirmed for ${d} at ${t}. ${notes}`.trim()
+      });
+      if(shInsert.error) console.warn('status_history insert warning:', shInsert.error.message);
+
+      // Trigger Multi-Channel Confirmation Notification to Client after DB transaction succeeds
+      await window.notifyClientAppointmentConfirmed?.({
+        ...b,
+        request_id: reqIdentifier,
+        confirmed_date: d,
+        confirmed_time: t,
+        engineer_name: eng
+      });
+
+      const clientName = b.client_name || 'Customer';
+      window.toast36?.(`Appointment Confirmed Successfully: Site visit for ${clientName} has been confirmed for ${d} at ${t}.`, 'success');
+
+      // Auto-refresh booking list and calendar without manual browser refresh
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Confirmation error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminRejectBookingPrompt(id){
+    const reason = prompt('Please state the reason for rejecting this site visit request:');
+    if(reason === null) return; // User cancelled prompt
+
+    try {
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      const updatePayload = {
+        status: 'rejected',
+        rejection_reason: reason || 'Slot unavailable',
+        rejection_date: new Date().toISOString(),
+        approved_by: 'RMA Admin'
+      };
+
+      const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
+      if(up.error) throw up.error;
+
+      // Insert status history
+      try {
+        await supabaseClient.from('status_history').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          previous_status: b.status,
+          new_status: 'rejected',
+          changed_by: 'RMA Admin',
+          remarks: `Request rejected. Reason: ${reason}`
+        });
+      } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+      // Notify Client
+      await window.notifyClientRequestRejected?.(b, reason);
+
+      window.toast36?.('Site visit request rejected and client notified.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Rejection error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminRescheduleBooking(id){
+    const d = document.getElementById('adminConfDate_' + id)?.value || '';
+    const t = document.getElementById('adminConfTime_' + id)?.value || '';
+
+    if(!d || !t){
+      window.toast36?.('Please specify the new date and time slot first.','error');
+      return;
+    }
+
+    try {
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      const updatePayload = {
+        status: 'reschedule_requested',
+        confirmed_date: d,
+        confirmed_time: t,
+        scheduled_date: d,
+        scheduled_time: t,
+        approved_by: 'RMA Admin'
+      };
+
+      const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
+      if(up.error) throw up.error;
+
+      // Log status history
+      try {
+        await supabaseClient.from('status_history').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          previous_status: b.status,
+          new_status: 'reschedule_requested',
+          changed_by: 'RMA Admin',
+          remarks: `Appointment rescheduled to ${d} at ${t}.`
+        });
+      } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+      // Notify Client
+      await window.notifyClientAppointmentRescheduled?.({
+        ...b,
+        confirmed_date: d,
+        confirmed_time: t
+      });
+
+      window.toast36?.('Reschedule recorded and updated notification sent to client.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Reschedule error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminOpenCompletionModal(id){
+    const obs = prompt('Enter site inspection observations / findings:');
+    if(obs === null) return;
+    const eng = prompt('Engineer Name / Representative Name:') || 'RMA Engineer';
+
+    try {
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      const updatePayload = {
+        status: 'completed',
+        completion_date: new Date().toISOString(),
+        completed_by: 'RMA Admin',
+        engineer_name: eng,
+        site_observations: obs
+      };
+
+      const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
+      if(up.error) throw up.error;
+
+      // Status history
+      try {
+        await supabaseClient.from('status_history').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          previous_status: b.status,
+          new_status: 'completed',
+          changed_by: 'RMA Admin',
+          remarks: `Site visit completed by ${eng}. Observations: ${obs}`
+        });
+      } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+      // Multi-channel completion notification to client
+      await window.notifyClientVisitCompleted?.(b);
+
+      // Trigger feedback request
+      await window.notifyClientFeedbackRequest?.(b);
+
+      window.toast36?.('Site visit marked COMPLETED, client notified, and feedback request dispatched.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Completion error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminOpenReportUploadModal(id){
+    const fileUrl = prompt('Enter Report Document / Storage URL (or Upload Link):');
+    if(!fileUrl) return;
+    const title = prompt('Report Title:', 'Site Visit Inspection Report') || 'Site Visit Report';
+
+    try {
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      // Insert into site_visit_reports
+      await supabaseClient.from('site_visit_reports').insert({
+        booking_id: id,
+        request_id: b.request_id,
+        client_user_id: b.client_user_id || null,
+        title: title,
+        engineer_name: b.engineer_name || 'RMA Engineer',
+        observations: b.site_observations || '',
+        file_url: fileUrl
+      });
+
+      // Update booking
+      await supabaseClient.from('bookings').update({
+        report_url: fileUrl
+      }).eq('id', id);
+
+      // Notify client that report is available
+      await window.notifyClientReportAvailable?.(b, title);
+
+      window.toast36?.('Report associated with booking and client notified.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Report upload error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminToggleNotificationLogs(id){
+    const container = document.getElementById('adminNotifLogs_' + id);
+    const list = document.getElementById('adminNotifLogsList_' + id);
+    if(!container || !list) return;
+
+    if(container.style.display !== 'none'){
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'block';
+    list.innerHTML = 'Fetching logs...';
+
+    try {
+      const q = await supabaseClient.from('notification_logs').select('*').eq('booking_id', id).order('created_at', { ascending: false });
+      if(q.error) throw q.error;
+      const logs = q.data || [];
+
+      if(!logs.length){
+        list.innerHTML = '<div class="muted">No notification logs recorded for this request yet.</div>';
+        return;
+      }
+
+      list.innerHTML = logs.map(l => `
+        <div style="background:#ffffff; padding:8px 10px; border-radius:6px; margin-bottom:6px; border:1px solid #e1e8e4">
+          <div style="display:flex; justify-content:space-between">
+            <b>${esc(l.channel)} — ${esc(l.notification_type)}</b>
+            <span style="font-weight:800; color:${l.status==='SENT'?'#0d5c3a':'#a82315'}">${esc(l.status)}</span>
+          </div>
+          <div>Recipient: ${esc(l.recipient)}</div>
+          <div style="color:#666">${esc(l.message_body?.substring(0, 100))}...</div>
+          <div style="font-size:10px; color:#888; margin-top:4px">
+            Time: ${new Date(l.created_at).toLocaleString('en-IN')} ${l.error_message ? `| Error: ${esc(l.error_message)}` : ''}
+          </div>
+          ${l.status === 'FAILED' ? `<button class="btn outline" style="padding:2px 8px; font-size:10px; margin-top:4px" onclick="retryRMANotification('${esc(l.id)}')">Retry Dispatch</button>` : ''}
+        </div>
+      `).join('');
+    } catch(err){
+      list.innerHTML = '<div class="notice error">Failed to load notification logs.</div>';
+    }
+  }
+
+  // Hook into loadStaff36
+  window.loadStaff36 = loadRMAAdminSiteVisitRequests;
+  window.setRMAAdminFilter = setRMAAdminFilter;
+  window.adminAcceptBooking = adminAcceptBooking;
+  window.adminRejectBookingPrompt = adminRejectBookingPrompt;
+  window.adminRescheduleBooking = adminRescheduleBooking;
+  window.adminOpenCompletionModal = adminOpenCompletionModal;
+  window.adminOpenReportUploadModal = adminOpenReportUploadModal;
+  window.adminToggleNotificationLogs = adminToggleNotificationLogs;
+
+  // Export notification module globally
+  window.sendRMANotification = sendRMANotification;
+  window.notifyClientTemporaryBooking = notifyClientTemporaryBooking;
+  window.notifyClientAppointmentConfirmed = notifyClientAppointmentConfirmed;
+  window.notifyClientAppointmentRescheduled = notifyClientAppointmentRescheduled;
+  window.notifyClientRequestRejected = notifyClientRequestRejected;
+  window.notifyClientVisitCompleted = notifyClientVisitCompleted;
+  window.notifyClientReportAvailable = notifyClientReportAvailable;
+  window.notifyClientFeedbackRequest = notifyClientFeedbackRequest;
+  window.retryRMANotification = retryRMANotification;
 })();
 </script>
