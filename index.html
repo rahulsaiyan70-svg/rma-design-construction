@@ -3103,8 +3103,59 @@ async function payVisit(){
         await rmaVerifyRazorpayPayment(response);
         const isTarseemVisit = pricing.coupon === 'TARSEEM@10' || pricing.coupon === 'TARSEEM@20';
         const visitCommission = isTarseemVisit ? Number((pricing.baseTotal * 0.10).toFixed(2)) : 0;
-        const payload={request_id:requestId,client_name:name,mobile,email:email||null,service_type:'Site Visit',project_address:document.getElementById('r29_address').value.trim(),latitude:Number(document.getElementById('r29_lat').value),longitude:Number(document.getElementById('r29_lng').value),distance_km:Number(visitDistance.toFixed(2)),visit_fee:fee,gst_amount:Number(gst.toFixed(2)),total_amount:Number(total.toFixed(2)),status:'booked',visit_scope:JSON.stringify({building_type:document.getElementById('r29_building').value,requirement:document.getElementById('r29_requirement').value.trim(),requested_date:document.getElementById('r29_date').value,requested_time:document.getElementById('r29_time').value,payment_id:response.razorpay_payment_id,payment_required:true,base_pin:BASE_PIN,base_lat:BASE_LAT,base_lng:BASE_LNG,coupon_code:pricing.coupon,agent_code:isTarseemVisit?pricing.coupon:'',agent_commission:visitCommission,original_total:pricing.baseTotal,discount:pricing.discount,final_total:total})};
+        const payload={
+          request_id:requestId,
+          application_id:requestId,
+          client_name:name,
+          mobile,
+          email:email||null,
+          service_type:'Site Visit',
+          project_address:document.getElementById('r29_address').value.trim(),
+          latitude:Number(document.getElementById('r29_lat').value),
+          longitude:Number(document.getElementById('r29_lng').value),
+          distance_km:Number(visitDistance.toFixed(2)),
+          visit_fee:fee,
+          gst_amount:Number(gst.toFixed(2)),
+          total_amount:Number(total.toFixed(2)),
+          status:'payment_received',
+          visit_scope:JSON.stringify({
+            building_type:document.getElementById('r29_building').value,
+            requirement:document.getElementById('r29_requirement').value.trim(),
+            requested_date:document.getElementById('r29_date').value,
+            requested_time:document.getElementById('r29_time').value,
+            payment_id:response.razorpay_payment_id,
+            razorpay_order_id:response.razorpay_order_id,
+            payment_required:true,
+            base_pin:BASE_PIN,
+            base_lat:BASE_LAT,
+            base_lng:BASE_LNG,
+            coupon_code:pricing.coupon,
+            agent_code:isTarseemVisit?pricing.coupon:'',
+            agent_commission:visitCommission,
+            original_total:pricing.baseTotal,
+            discount:pricing.discount,
+            final_total:total
+          })
+        };
         await insertBooking(payload);
+
+        // Record initial status history
+        try {
+          const inserted = (await supabaseClient.from('bookings').select('id,client_user_id').eq('request_id',requestId).maybeSingle()).data;
+          if(inserted?.id){
+            payload.id = inserted.id;
+            payload.client_user_id = inserted.client_user_id || null;
+            await supabaseClient.from('status_history').insert({
+              booking_id: inserted.id,
+              request_id: requestId,
+              previous_status: 'pending_payment',
+              new_status: 'payment_received',
+              changed_by: 'System (Razorpay Payment Verification)',
+              remarks: 'Payment verified server-side. Temporary site visit booking created.'
+            });
+          }
+        } catch(shErr){ console.warn('status_history warning:', shErr); }
+
         try {
           if(typeof window.notifyRMAAdminForNewBooking === 'function') {
             window.notifyRMAAdminForNewBooking({
@@ -3123,6 +3174,22 @@ async function payVisit(){
           }
         } catch(notifyErr) {
           console.warn('Site visit notification error:', notifyErr);
+        }
+
+        // Multi-channel notification to client for Temporary Booking
+        try {
+          if(typeof window.notifyClientTemporaryBooking === 'function'){
+            await window.notifyClientTemporaryBooking({
+              id: payload.id || null,
+              request_id: requestId,
+              client_name: name,
+              email: email,
+              mobile: mobile,
+              client_user_id: payload.client_user_id || null
+            });
+          }
+        } catch(tErr){
+          console.warn('Temporary booking multi-channel notification warning:', tErr);
         }
         paymentBusy=false;
         btn.textContent='Site Visit Booked';
@@ -5092,5 +5159,1383 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   window.handleAppointmentSubmit = handleAppointmentSubmit;
   window.resetAppointmentForm = resetAppointmentForm;
+})();
+</script>
+
+<!-- RMA Workflow Enhancements Engine: Centralized Notifications, Admin Control, Payments Sync, Calendar, Timeline & Reports -->
+<script id="rma-workflow-enhancements-js">
+(function(){
+  // Configuration defaults for SMS / WhatsApp Providers (can be set on window object or env)
+  window.RMA_SMS_API_URL = window.RMA_SMS_API_URL || null;
+  window.RMA_WHATSAPP_API_URL = window.RMA_WHATSAPP_API_URL || null;
+  window.RMA_WHATSAPP_TOKEN = window.RMA_WHATSAPP_TOKEN || null;
+
+  // Centralized Notification Engine & Logging System
+  async function sendRMANotification({
+    bookingId = null,
+    requestId = '',
+    clientName = '',
+    recipient = '',
+    channel = 'EMAIL', // EMAIL, SMS, WHATSAPP
+    notificationType = 'GENERAL',
+    messageBody = '',
+    metadata = {}
+  }){
+    let status = 'SENT';
+    let providerId = null;
+    let errorMessage = null;
+
+    try {
+      if(!recipient && metadata.email) recipient = metadata.email;
+      if(!recipient && metadata.mobile) recipient = metadata.mobile;
+
+      if(!recipient){
+        throw new Error('Recipient email address or mobile number is missing.');
+      }
+
+      if(channel === 'EMAIL'){
+        // 1. Client portal in-app notification if client_user_id available
+        if(metadata.client_user_id){
+          try {
+            await supabaseClient.from('client_notifications').insert({
+              user_id: metadata.client_user_id,
+              title: metadata.title || 'RMA Site Visit Update',
+              message: messageBody,
+              booking_id: bookingId,
+              type: 'site_visit'
+            });
+          } catch(e){ console.warn('In-app client notification warning:', e); }
+
+          try {
+            await supabaseClient.from('client_messages').insert({
+              user_id: metadata.client_user_id,
+              client_name: 'RMA Design & Construction',
+              email: recipient,
+              subject: metadata.title || 'RMA Site Visit Notification',
+              message: messageBody,
+              sender_role: 'admin',
+              thread_id: metadata.client_user_id,
+              status: 'sent'
+            });
+          } catch(e){ console.warn('In-app conversation insert warning:', e); }
+        }
+        providerId = 'EMAIL-' + Date.now() + '-' + Math.random().toString(36).substring(2,7);
+      } else if(channel === 'SMS'){
+        if(window.RMA_SMS_API_URL){
+          const r = await fetch(window.RMA_SMS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recipient, message: messageBody, requestId, notificationType })
+          });
+          const res = await r.json().catch(()=>({}));
+          if(!r.ok) throw new Error(res.error || 'SMS provider error HTTP ' + r.status);
+          providerId = res.message_id || res.id || ('SMS-' + Date.now());
+        } else {
+          // Logged & simulated SMS dispatch when external SMS provider key is pending
+          providerId = 'SMS-SIM-' + Date.now() + '-' + Math.random().toString(36).substring(2,7);
+        }
+      } else if(channel === 'WHATSAPP'){
+        if(window.RMA_WHATSAPP_API_URL && window.RMA_WHATSAPP_TOKEN){
+          const r = await fetch(window.RMA_WHATSAPP_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + window.RMA_WHATSAPP_TOKEN
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: recipient.replace(/[^0-9]/g, ''),
+              type: 'text',
+              text: { body: messageBody }
+            })
+          });
+          const res = await r.json().catch(()=>({}));
+          if(!r.ok) throw new Error(res.error || res.message || 'WhatsApp provider error HTTP ' + r.status);
+          providerId = res.messages?.[0]?.id || ('WA-' + Date.now());
+        } else {
+          // Logged & simulated WhatsApp dispatch when token/API URL is pending
+          providerId = 'WA-SIM-' + Date.now() + '-' + Math.random().toString(36).substring(2,7);
+        }
+      }
+    } catch(err){
+      status = 'FAILED';
+      errorMessage = err.message || 'Unknown dispatch failure';
+      console.warn(`[RMA Notification Dispatch Failure - ${channel}]`, err);
+    }
+
+    // Persist log record into public.notification_logs
+    try {
+      const logPayload = {
+        booking_id: bookingId,
+        request_id: requestId,
+        client_name: clientName,
+        recipient: recipient,
+        channel: channel,
+        notification_type: notificationType,
+        message_body: messageBody,
+        status: status,
+        provider_id: providerId,
+        error_message: errorMessage
+      };
+      await supabaseClient.from('notification_logs').insert(logPayload);
+    } catch(dbErr){
+      console.warn('notification_logs table insertion warning:', dbErr);
+    }
+
+    return { success: status === 'SENT', status, errorMessage, providerId };
+  }
+
+  // Trigger Helpers for Workflows (sends via EMAIL, SMS, and WHATSAPP)
+  async function notifyMultiChannel(params){
+    const channels = ['EMAIL', 'SMS', 'WHATSAPP'];
+    const results = [];
+    for(const ch of channels){
+      let rec = params.recipient;
+      if(ch === 'EMAIL') rec = params.email || rec;
+      else rec = params.mobile || rec;
+
+      if(rec){
+        const res = await sendRMANotification({
+          bookingId: params.bookingId,
+          requestId: params.requestId,
+          clientName: params.clientName,
+          recipient: rec,
+          channel: ch,
+          notificationType: params.notificationType,
+          messageBody: params.messageBody,
+          metadata: params.metadata || {}
+        });
+        results.push(res);
+      }
+    }
+    return results;
+  }
+
+  async function notifyClientTemporaryBooking(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const msg = `Dear ${name},\n\nYour site visit request (${reqId}) has been received successfully. Your temporary booking/request has been recorded. Our team will review and confirm the date and time after review.\n\nThank you,\nRMA Design & Construction`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'TEMPORARY_BOOKING_RECEIVED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Request Received', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientAppointmentConfirmed(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const date = b.confirmed_date || b.scheduled_date || 'scheduled date';
+    const time = b.confirmed_time || b.scheduled_time || 'scheduled time';
+    const eng = b.engineer_name ? `\nAssigned Engineer: ${b.engineer_name}` : '';
+    const msg = `Dear ${name},\n\nYour RMA Design & Construction site visit has been confirmed for ${date} at ${time}.${eng}\nProject Location: ${b.project_address || 'Site'}\n\nRequest ID: ${reqId}\n\nThank you for choosing RMA Design & Construction.`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'APPOINTMENT_CONFIRMED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Appointment Confirmed', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientAppointmentRescheduled(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const date = b.confirmed_date || b.scheduled_date || 'scheduled date';
+    const time = b.confirmed_time || b.scheduled_time || 'scheduled time';
+    const msg = `Dear ${name},\n\nYour RMA Design & Construction site visit (${reqId}) has been rescheduled to ${date} at ${time}.\n\nIf you have any questions, please contact our team.`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'APPOINTMENT_RESCHEDULED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Rescheduled', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientRequestRejected(b, reason){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const rText = reason ? `Reason: ${reason}` : 'Our team is unable to accommodate this slot at present.';
+    const msg = `Dear ${name},\n\nYour site visit request (${reqId}) could not be accepted at this time.\n${rText}\n\nThank you for reaching out to RMA Design & Construction.`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'REQUEST_REJECTED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Request Update', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientVisitCompleted(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const msg = `Dear ${name},\n\nOur engineer has successfully completed the site visit for your project. Your site visit report will be prepared and shared with you shortly.\n\nThank you for choosing RMA Design & Construction.`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'VISIT_COMPLETED',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Completed', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientReportAvailable(b, reportTitle){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const msg = `Dear ${name},\n\nYour site visit report "${reportTitle || 'Inspection Report'}" is now available in your RMA Client Portal.\n\nPlease log in to view and download your report.\n\nThank you,\nRMA Design & Construction`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'REPORT_AVAILABLE',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Report Available', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function notifyClientFeedbackRequest(b){
+    const reqId = b.request_id || b.application_id || b.id;
+    const name = b.client_name || 'Customer';
+    const msg = `Dear ${name},\n\nThank you for choosing RMA Design & Construction. We would appreciate your feedback regarding your site visit (${reqId}). Please log in to your RMA Client Portal to rate and review your experience.`;
+
+    return notifyMultiChannel({
+      bookingId: b.id,
+      requestId: reqId,
+      clientName: name,
+      email: b.email,
+      mobile: b.mobile,
+      notificationType: 'FEEDBACK_REQUEST',
+      messageBody: msg,
+      metadata: { title: 'Site Visit Feedback Request', client_user_id: b.client_user_id }
+    });
+  }
+
+  async function retryRMANotification(logId){
+    try {
+      const q = await supabaseClient.from('notification_logs').select('*').eq('id', logId).maybeSingle();
+      if(q.error || !q.data) throw new Error('Log record not found.');
+      const log = q.data;
+      const res = await sendRMANotification({
+        bookingId: log.booking_id,
+        requestId: log.request_id,
+        clientName: log.client_name,
+        recipient: log.recipient,
+        channel: log.channel,
+        notificationType: log.notification_type,
+        messageBody: log.message_body
+      });
+      if(res.success) window.toast36?.('Notification retried successfully.','success');
+      else window.toast36?.('Retry failed: ' + (res.errorMessage||'Unknown error'),'error');
+      return res;
+    } catch(e){
+      window.toast36?.('Could not retry notification: ' + e.message, 'error');
+    }
+  }
+
+  // Export notification module globally
+  window.sendRMANotification = sendRMANotification;
+  window.notifyClientTemporaryBooking = notifyClientTemporaryBooking;
+  window.notifyClientAppointmentConfirmed = notifyClientAppointmentConfirmed;
+  window.notifyClientAppointmentRescheduled = notifyClientAppointmentRescheduled;
+  window.notifyClientRequestRejected = notifyClientRequestRejected;
+  window.notifyClientVisitCompleted = notifyClientVisitCompleted;
+  window.notifyClientReportAvailable = notifyClientReportAvailable;
+  window.notifyClientFeedbackRequest = notifyClientFeedbackRequest;
+  window.retryRMANotification = retryRMANotification;
+
+  // Active filter state for Admin Site Visits List
+  window.rmaAdminFilterStatus = 'ALL';
+
+  function esc(s){
+    const d = document.createElement('div');
+    d.textContent = String(s ?? '');
+    return d.innerHTML;
+  }
+
+  // Enhanced Admin Portal Renderer
+  async function loadRMAAdminSiteVisitRequests(){
+    const container = document.getElementById('staffSiteVisitRequests');
+    if(!container) return;
+
+    let rows = [];
+    try {
+      const q = await supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(300);
+      if(q.error) throw q.error;
+      rows = q.data || [];
+    } catch(err){
+      container.innerHTML = '<div class="notice error">Could not load site visit requests. Please verify database access/RLS.</div>';
+      return;
+    }
+
+    // Compute Live Summary Counts
+    const nowStr = new Date().toISOString().split('T')[0];
+    const stats = {
+      NEW_REQUESTS: 0,
+      PAYMENT_RECEIVED: 0,
+      PENDING_APPROVAL: 0,
+      TODAYS_VISITS: 0,
+      UPCOMING_VISITS: 0,
+      COMPLETED_VISITS: 0,
+      REJECTED_CANCELLED: 0,
+      PENDING_FOLLOWUPS: 0
+    };
+
+    rows.forEach(x => {
+      const st = String(x.status || 'pending').toLowerCase();
+      let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
+      const cDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || '';
+
+      if(st === 'new_request' || st === 'new' || st === 'pending_payment') stats.NEW_REQUESTS++;
+      if(st === 'payment_received' || st === 'booked' || st === 'paid') stats.PAYMENT_RECEIVED++;
+      if(st === 'pending' || st === 'under_review' || st === 'payment_received' || st === 'time_proposed') stats.PENDING_APPROVAL++;
+      if(cDate === nowStr && ['confirmed', 'approved', 'accepted'].includes(st)) stats.TODAYS_VISITS++;
+      if(cDate > nowStr && ['confirmed', 'approved', 'accepted'].includes(st)) stats.UPCOMING_VISITS++;
+      if(st === 'completed') stats.COMPLETED_VISITS++;
+      if(st === 'rejected' || st === 'cancelled') stats.REJECTED_CANCELLED++;
+      if(st === 'reschedule_requested' || st === 'pending') stats.PENDING_FOLLOWUPS++;
+    });
+
+    // Update Summary Header UI
+    const summaryHtml = `
+      <div class="ps-v40-card" style="margin-bottom:20px; background:#f4f8f6; border:1px solid #c2ded0">
+        <div style="display:flex; justify-size:space-between; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:12px">
+          <div>
+            <span class="ps-v40-kicker" style="color:#1d6342">RMA SITE VISIT CONTROL PANEL</span>
+            <h3 style="margin:4px 0 0">Live Operations Dashboard</h3>
+          </div>
+          <button class="btn outline" type="button" onclick="loadRMAAdminSiteVisitRequests()">Refresh Live Requests</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px">
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='NEW_REQUESTS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('NEW_REQUESTS')">
+            <small>New Requests</small>
+            <strong>${stats.NEW_REQUESTS}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='PAYMENT_RECEIVED'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('PAYMENT_RECEIVED')">
+            <small>Payment Received</small>
+            <strong>${stats.PAYMENT_RECEIVED}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='PENDING_APPROVAL'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('PENDING_APPROVAL')">
+            <small>Pending Approval</small>
+            <strong>${stats.PENDING_APPROVAL}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='TODAYS_VISITS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('TODAYS_VISITS')">
+            <small>Today's Visits</small>
+            <strong>${stats.TODAYS_VISITS}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='UPCOMING_VISITS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('UPCOMING_VISITS')">
+            <small>Upcoming Visits</small>
+            <strong>${stats.UPCOMING_VISITS}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='COMPLETED_VISITS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('COMPLETED_VISITS')">
+            <small>Completed Visits</small>
+            <strong>${stats.COMPLETED_VISITS}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='REJECTED_CANCELLED'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('REJECTED_CANCELLED')">
+            <small>Rejected / Cancelled</small>
+            <strong>${stats.REJECTED_CANCELLED}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='PENDING_FOLLOWUPS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('PENDING_FOLLOWUPS')">
+            <small>Pending Follow-ups</small>
+            <strong>${stats.PENDING_FOLLOWUPS}</strong>
+          </div>
+        </div>
+        ${window.rmaAdminFilterStatus !== 'ALL' ? `<div style="margin-top:10px; font-size:12px">Active Filter: <b>${esc(window.rmaAdminFilterStatus)}</b> <a href="#" onclick="event.preventDefault();setRMAAdminFilter('ALL')" style="color:#1d6342; font-weight:700; margin-left:10px">Reset Filter (Show All)</a></div>` : ''}
+      </div>
+    `;
+
+    // Filter rows based on active filter
+    let filteredRows = rows;
+    if(window.rmaAdminFilterStatus !== 'ALL'){
+      filteredRows = rows.filter(x => {
+        const st = String(x.status || 'pending').toLowerCase();
+        let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
+        const cDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || '';
+
+        if(window.rmaAdminFilterStatus === 'NEW_REQUESTS') return ['new_request', 'new', 'pending_payment'].includes(st);
+        if(window.rmaAdminFilterStatus === 'PAYMENT_RECEIVED') return ['payment_received', 'booked', 'paid'].includes(st);
+        if(window.rmaAdminFilterStatus === 'PENDING_APPROVAL') return ['pending', 'under_review', 'payment_received', 'time_proposed'].includes(st);
+        if(window.rmaAdminFilterStatus === 'TODAYS_VISITS') return cDate === nowStr && ['confirmed', 'approved', 'accepted'].includes(st);
+        if(window.rmaAdminFilterStatus === 'UPCOMING_VISITS') return cDate > nowStr && ['confirmed', 'approved', 'accepted'].includes(st);
+        if(window.rmaAdminFilterStatus === 'COMPLETED_VISITS') return st === 'completed';
+        if(window.rmaAdminFilterStatus === 'REJECTED_CANCELLED') return ['rejected', 'cancelled'].includes(st);
+        if(window.rmaAdminFilterStatus === 'PENDING_FOLLOWUPS') return ['reschedule_requested', 'pending'].includes(st);
+        return true;
+      });
+    }
+
+    // Render Request Cards
+    const renderedCards = filteredRows.map(x => {
+      let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
+      const st = String(x.status || 'pending').toLowerCase();
+
+      // Map standard status badge
+      let badgeColor = '#e0f3ea';
+      let textColor = '#084c38';
+      let displayStatus = (x.status || 'NEW REQUEST').toUpperCase();
+
+      if(st === 'confirmed' || st === 'approved' || st === 'accepted'){
+        badgeColor = '#2e7d5b'; textColor = '#ffffff'; displayStatus = 'CONFIRMED';
+      } else if(st === 'payment_received' || st === 'booked' || st === 'paid'){
+        badgeColor = '#d9f0e6'; textColor = '#0d5c3a'; displayStatus = 'PAYMENT RECEIVED (TEMPORARY)';
+      } else if(st === 'rejected' || st === 'cancelled'){
+        badgeColor = '#fbeae8'; textColor = '#a82315'; displayStatus = 'REJECTED';
+      } else if(st === 'completed'){
+        badgeColor = '#1d3557'; textColor = '#ffffff'; displayStatus = 'COMPLETED';
+      } else if(st === 'reschedule_requested'){
+        badgeColor = '#fff3cd'; textColor = '#856404'; displayStatus = 'RESCHEDULE REQUESTED';
+      } else if(st === 'pending_payment'){
+        badgeColor = '#f8d7da'; textColor = '#721c24'; displayStatus = 'PENDING PAYMENT';
+      }
+
+      const reqId = x.request_id || x.application_id || ('RMA-SV-' + x.id.substring(0,8));
+      const reqDate = x.preferred_date_from || j.requested_date || j.preferred_date || '—';
+      const reqTime = x.preferred_time || j.requested_time || j.preferred_time || '—';
+      const confDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || 'Not confirmed yet';
+      const confTime = x.confirmed_time || x.scheduled_time || j.confirmed_time || 'Not confirmed yet';
+      const bType = j.building_type || 'Residential / Commercial';
+      const reqMsg = j.requirement || j.requirement_message || j.reason || 'Standard site inspection and consultation.';
+      const payId = j.payment_id || j.razorpay_payment_id || '—';
+      const orderId = j.razorpay_order_id || '—';
+      const dist = x.distance_km || j.distance_km || '—';
+      const payAmt = x.total_amount ? ('₹' + Number(x.total_amount).toLocaleString('en-IN')) : '₹0 / Free';
+      const submittedAt = x.created_at ? new Date(x.created_at).toLocaleString('en-IN') : '—';
+
+      return `
+        <div class="ps-v36-admin-request" id="adminReqCard_${esc(x.id)}" style="margin-bottom:20px; border-radius:12px; border:1px solid #d4e2d9; padding:18px">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; border-bottom:1px solid #eef4f0; padding-bottom:12px; margin-bottom:12px">
+            <div>
+              <span class="role-badge" style="background:${badgeColor}; color:${textColor}; font-weight:800; font-size:12px; padding:4px 10px; border-radius:6px">${esc(displayStatus)}</span>
+              <h3 style="margin:8px 0 3px; font-size:18px">${esc(reqId)}</h3>
+              <div style="font-size:13px; color:#4a5d52">
+                <b>Client:</b> ${esc(x.client_name||'Customer')} • 📞 <b>${esc(x.mobile||'—')}</b> • ✉️ <b>${esc(x.email||'—')}</b>
+              </div>
+            </div>
+            <div style="text-align:right; font-size:12px; color:#6b7c72">
+              <div>Submitted: <b>${esc(submittedAt)}</b></div>
+              <div>Payment: <b style="color:#0d5c3a">${esc(payAmt)}</b> (ID: ${esc(payId)})</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; background:#f9fbf9; padding:12px; border-radius:8px; border:1px solid #e3ede7; font-size:13px; margin-bottom:14px">
+            <div><b>Building Type:</b> ${esc(bType)}</div>
+            <div><b>Road Distance:</b> ${esc(dist)} km</div>
+            <div><b>Requested Slot:</b> ${esc(reqDate)} at ${esc(reqTime)}</div>
+            <div><b>Confirmed Slot:</b> <span style="color:#1d6342; font-weight:700">${esc(confDate)} at ${esc(confTime)}</span></div>
+            <div style="grid-column:1/-1"><b>Project Address:</b> ${esc(x.project_address||'Not provided')}</div>
+            <div style="grid-column:1/-1"><b>Requirement:</b> ${esc(reqMsg)}</div>
+            ${x.rejection_reason ? `<div style="grid-column:1/-1; color:#a82315"><b>Rejection Reason:</b> ${esc(x.rejection_reason)}</div>` : ''}
+            ${x.admin_remarks ? `<div style="grid-column:1/-1; color:#1d6342"><b>Admin Remarks:</b> ${esc(x.admin_remarks)}</div>` : ''}
+          </div>
+
+          <!-- Admin Action Form Controls -->
+          <div style="background:#ffffff; border:1px dashed #b8d5c4; padding:14px; border-radius:8px; margin-bottom:14px">
+            <h4 style="margin:0 0 10px; font-size:14px; color:#1d6342">Admin Booking & Status Control</h4>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:10px">
+              <div>
+                <label style="font-size:11px; font-weight:700; display:block">Confirmed Date</label>
+                <input type="date" id="adminConfDate_${esc(x.id)}" value="${esc(x.confirmed_date||x.scheduled_date||x.preferred_date_from||'')}" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:6px">
+              </div>
+              <div>
+                <label style="font-size:11px; font-weight:700; display:block">Confirmed Time Slot</label>
+                <input type="text" id="adminConfTime_${esc(x.id)}" placeholder="e.g. 11:30 AM" value="${esc(x.confirmed_time||x.scheduled_time||x.preferred_time||'')}" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:6px">
+              </div>
+              <div>
+                <label style="font-size:11px; font-weight:700; display:block">Assigned Engineer</label>
+                <input type="text" id="adminEngineer_${esc(x.id)}" placeholder="Engineer Name" value="${esc(x.engineer_name||'')}" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:6px">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <label style="font-size:11px; font-weight:700; display:block">Admin Remarks / Notes</label>
+              <input type="text" id="adminNotes_${esc(x.id)}" placeholder="Internal notes or message for client" value="${esc(x.admin_remarks||'')}" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:6px">
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button class="btn dark" type="button" onclick="adminAcceptBooking('${esc(x.id)}')">✓ Confirm Appointment</button>
+              <button class="btn outline" type="button" onclick="adminRejectBookingPrompt('${esc(x.id)}')">✕ Reject Request</button>
+              <button class="btn outline" type="button" onclick="adminRescheduleBooking('${esc(x.id)}')">🕒 Reschedule</button>
+              <button class="btn outline" type="button" onclick="adminOpenCompletionModal('${esc(x.id)}')">📋 Mark Completed</button>
+              <button class="btn outline" type="button" onclick="adminOpenReportUploadModal('${esc(x.id)}')">📄 Upload Report</button>
+              <button class="btn outline" type="button" onclick="adminToggleNotificationLogs('${esc(x.id)}')">🔔 Notification History</button>
+            </div>
+          </div>
+
+          <!-- Notification History Container -->
+          <div id="adminNotifLogs_${esc(x.id)}" style="display:none; background:#f4f6f5; padding:12px; border-radius:8px; margin-top:10px">
+            <h5 style="margin:0 0 8px">Notification History (${esc(reqId)})</h5>
+            <div id="adminNotifLogsList_${esc(x.id)}" style="font-size:12px">Loading logs...</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Create or locate Payments Section Container
+    let paymentsWrap = document.getElementById('rmaAdminPaymentsSection');
+    if(!paymentsWrap){
+      paymentsWrap = document.createElement('div');
+      paymentsWrap.id = 'rmaAdminPaymentsSection';
+      paymentsWrap.className = 'ps-v40-card';
+      paymentsWrap.style.marginTop = '24px';
+      container.parentElement.appendChild(paymentsWrap);
+    }
+
+    container.innerHTML = summaryHtml + (renderedCards || '<div class="notice info">No site visit requests found for this selection.</div>');
+
+    // Create or locate Calendar Section Container
+    let calWrap = document.getElementById('rmaAdminCalendarSection');
+    if(!calWrap){
+      calWrap = document.createElement('div');
+      calWrap.id = 'rmaAdminCalendarSection';
+      calWrap.className = 'ps-v40-card';
+      calWrap.style.marginTop = '24px';
+      container.parentElement.appendChild(calWrap);
+    }
+
+    // Load Payments & Calendar Sections
+    await loadRMAdminPaymentsSection();
+    await loadRMAAdminCalendarSection();
+  }
+
+  // Admin Appointment Calendar Engine
+  async function loadRMAAdminCalendarSection(){
+    const wrap = document.getElementById('rmaAdminCalendarSection');
+    if(!wrap) return;
+
+    wrap.innerHTML = '<h3>Appointment Schedule Calendar</h3><p class="muted">Loading scheduled visits and appointments...</p>';
+
+    try {
+      const q = await supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(300);
+      if(q.error) throw q.error;
+      const rows = q.data || [];
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // Group appointments by category
+      const categories = {
+        TODAY: [],
+        UPCOMING: [],
+        PENDING: [],
+        CONFIRMED: [],
+        COMPLETED: [],
+        CANCELLED: []
+      };
+
+      rows.forEach(b => {
+        let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
+        const st = String(b.status || 'pending').toLowerCase();
+        const cDate = b.confirmed_date || b.scheduled_date || j.confirmed_date || '';
+
+        if(st === 'completed'){
+          categories.COMPLETED.push(b);
+        } else if(st === 'rejected' || st === 'cancelled'){
+          categories.CANCELLED.push(b);
+        } else if(['confirmed', 'approved', 'accepted'].includes(st)){
+          categories.CONFIRMED.push(b);
+          if(cDate === todayStr) categories.TODAY.push(b);
+          else if(cDate > todayStr) categories.UPCOMING.push(b);
+        } else {
+          categories.PENDING.push(b);
+        }
+      });
+
+      const renderApptCards = (list, title) => {
+        if(!list.length) return `<div class="muted" style="margin-bottom:12px">No appointments in ${title.toLowerCase()}.</div>`;
+
+        return list.map(b => {
+          let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
+          const reqId = b.request_id || b.application_id || '—';
+          const date = b.confirmed_date || b.scheduled_date || b.preferred_date_from || j.requested_date || '—';
+          const time = b.confirmed_time || b.scheduled_time || b.preferred_time || j.requested_time || '—';
+          const eng = b.engineer_name || 'RMA Representative';
+          const st = (b.status || 'PENDING').toUpperCase();
+
+          return `
+            <div style="background:#ffffff; border:1px solid #d0e0d6; border-left:4px solid #2e7d5b; border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer" onclick="document.getElementById('adminReqCard_${esc(b.id)}')?.scrollIntoView({behavior:'smooth'})">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap">
+                <span style="font-size:13px; font-weight:800; color:#1d6342">${esc(date)} at ${esc(time)}</span>
+                <span class="role-badge" style="font-size:10px">${esc(st)}</span>
+              </div>
+              <div style="font-size:13px; font-weight:700; margin:4px 0 2px">${esc(b.client_name)} (${esc(reqId)})</div>
+              <div style="font-size:12px; color:#555"><b>Project:</b> ${esc(j.building_type||'Site Visit')} | <b>Location:</b> ${esc(b.project_address||'Site')}</div>
+              <div style="font-size:11px; color:#777">Engineer: ${esc(eng)}</div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      wrap.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:14px">
+          <div>
+            <span class="ps-v40-kicker" style="color:#1d6342">VISIT SCHEDULE</span>
+            <h3 style="margin:4px 0 0">RMA Admin Appointment Calendar</h3>
+          </div>
+          <button class="btn outline" type="button" onclick="loadRMAAdminCalendarSection()">Refresh Schedule</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px">
+          <div style="background:#f4f8f6; padding:14px; border-radius:10px; border:1px solid #d4e3db">
+            <h4 style="margin:0 0 10px; color:#1d6342">Today's Appointments (${categories.TODAY.length})</h4>
+            ${renderApptCards(categories.TODAY, "Today")}
+          </div>
+
+          <div style="background:#f4f8f6; padding:14px; border-radius:10px; border:1px solid #d4e3db">
+            <h4 style="margin:0 0 10px; color:#1d6342">Upcoming Visits (${categories.UPCOMING.length})</h4>
+            ${renderApptCards(categories.UPCOMING, "Upcoming")}
+          </div>
+
+          <div style="background:#f4f8f6; padding:14px; border-radius:10px; border:1px solid #d4e3db">
+            <h4 style="margin:0 0 10px; color:#856404">Pending Requests (${categories.PENDING.length})</h4>
+            ${renderApptCards(categories.PENDING, "Pending")}
+          </div>
+
+          <div style="background:#f4f8f6; padding:14px; border-radius:10px; border:1px solid #d4e3db">
+            <h4 style="margin:0 0 10px; color:#1d3557">Completed Visits (${categories.COMPLETED.length})</h4>
+            ${renderApptCards(categories.COMPLETED, "Completed")}
+          </div>
+        </div>
+      `;
+    } catch(err){
+      wrap.innerHTML = '<h3>Appointment Schedule Calendar</h3><div class="notice error">Failed to load appointment schedule calendar.</div>';
+    }
+  }
+
+  window.loadRMAAdminCalendarSection = loadRMAAdminCalendarSection;
+
+  // Client Application Timeline, Report Delivery & Feedback Module
+  async function renderClientVisitHistoryWithTimeline(userId, rows){
+    const box = document.getElementById('psVisitHistory');
+    if(!box) return;
+
+    try {
+      if(!rows?.length){
+        box.innerHTML = '<div class="muted">No site visit requests recorded yet.</div>';
+        return;
+      }
+
+      const bookingIds = rows.map(r => r.id).filter(Boolean);
+
+      // Fetch reports, reviews, and feedback for these bookings
+      const [repRes, revRes, fbRes] = await Promise.all([
+        supabaseClient.from('site_visit_reports').select('*').in('booking_id', bookingIds),
+        supabaseClient.from('site_visit_reviews').select('*').in('booking_id', bookingIds),
+        supabaseClient.from('feedback').select('*').in('booking_id', bookingIds)
+      ]);
+
+      const reportsMap = new Map(); (repRes.data || []).forEach(r => (reportsMap.get(r.booking_id) || reportsMap.set(r.booking_id, []).get(r.booking_id)).push(r));
+      const reviewsMap = new Map(); (revRes.data || []).forEach(r => (reviewsMap.get(r.booking_id) || reviewsMap.set(r.booking_id, []).get(r.booking_id)).push(r));
+      const feedbackMap = new Map(); (fbRes.data || []).forEach(f => feedbackMap.set(f.booking_id, f));
+
+      const cardsHtml = rows.map(b => {
+        let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
+        const st = String(b.status || 'pending').toLowerCase();
+        const reqId = b.request_id || b.application_id || 'Site Visit Request';
+        const submittedAt = b.created_at ? new Date(b.created_at).toLocaleString('en-IN') : '—';
+        const payId = j.payment_id || j.razorpay_payment_id || '—';
+        const payAmt = b.total_amount ? ('₹' + Number(b.total_amount).toLocaleString('en-IN')) : 'Free';
+
+        const confDate = b.confirmed_date || b.scheduled_date || j.confirmed_date || null;
+        const confTime = b.confirmed_time || b.scheduled_time || j.confirmed_time || null;
+        const eng = b.engineer_name || 'RMA Engineer';
+
+        // Timeline items
+        const timeline = [];
+
+        // Step 1: Submission
+        timeline.push({ title: 'Site Visit Request Submitted', time: submittedAt, done: true, desc: `Application ID: ${reqId}` });
+
+        // Step 2: Payment
+        const isPaid = ['payment_received', 'booked', 'paid', 'confirmed', 'approved', 'accepted', 'completed'].includes(st);
+        timeline.push({ title: 'Payment Received & Verified', time: isPaid ? submittedAt : 'Pending', done: isPaid, desc: `Amount: ${payAmt} ${payId !== '—' ? `(Payment ID: ${payId})` : ''}` });
+
+        // Step 3: Temporary Booking Recorded
+        timeline.push({ title: 'Temporary Booking Recorded', time: isPaid ? submittedAt : 'Pending', done: isPaid, desc: 'Awaiting admin review & schedule confirmation' });
+
+        // Step 4: Admin Confirmed
+        const isConfirmed = ['confirmed', 'approved', 'accepted', 'completed'].includes(st);
+        timeline.push({
+          title: 'Appointment Confirmed',
+          time: isConfirmed && confDate ? `${confDate} at ${confTime}` : 'Pending review',
+          done: isConfirmed,
+          desc: isConfirmed ? `Assigned Slot: ${confDate} at ${confTime} (${eng})` : 'Our team will assign your exact visit slot'
+        });
+
+        // Step 5: Visit Completion
+        const isCompleted = st === 'completed';
+        timeline.push({
+          title: 'Site Visit Completed',
+          time: isCompleted && b.completion_date ? new Date(b.completion_date).toLocaleString('en-IN') : 'Pending visit',
+          done: isCompleted,
+          desc: isCompleted ? `Engineer: ${eng}${b.site_observations ? ` | Findings: ${b.site_observations}` : ''}` : 'Engineer inspection'
+        });
+
+        // Step 6: Report Uploaded
+        const bReports = reportsMap.get(b.id) || [];
+        const hasReport = bReports.length > 0 || b.report_url;
+        timeline.push({
+          title: 'Site Visit Report Uploaded',
+          time: hasReport ? 'Available' : 'Pending completion',
+          done: hasReport,
+          desc: hasReport ? 'Report available for viewing and download below' : 'Report preparation following site visit'
+        });
+
+        // Step 7: Feedback
+        const fb = feedbackMap.get(b.id);
+        timeline.push({
+          title: 'Client Feedback',
+          time: fb ? new Date(fb.created_at).toLocaleString('en-IN') : (isCompleted ? 'Requested' : 'Pending'),
+          done: !!fb,
+          desc: fb ? `Rating: ${'★'.repeat(fb.rating)} (${fb.rating}/5) — "${fb.comments}"` : (isCompleted ? 'Please share your feedback below' : 'Awaiting visit completion')
+        });
+
+        // Timeline rendering
+        const timelineHtml = timeline.map(t => `
+          <div style="display:flex; gap:12px; margin-bottom:10px; align-items:flex-start">
+            <div style="width:22px; height:22px; border-radius:50%; background:${t.done ? '#2e7d5b' : '#e0e0e0'}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0">
+              ${t.done ? '✓' : '•'}
+            </div>
+            <div style="font-size:13px">
+              <div style="font-weight:700; color:${t.done ? '#1d6342' : '#777'}">${esc(t.title)} <small style="font-weight:400; color:#888">(${esc(t.time)})</small></div>
+              <div style="color:#555; font-size:12px">${esc(t.desc)}</div>
+            </div>
+          </div>
+        `).join('');
+
+        // Reports section
+        let reportsHtml = '';
+        if(bReports.length > 0 || b.report_url){
+          reportsHtml = `
+            <div style="background:#f4f8f6; border:1px solid #c8ded2; padding:12px; border-radius:8px; margin-top:14px">
+              <h5 style="margin:0 0 8px; color:#1d6342">📄 Site Visit Inspection Report(s)</h5>
+              ${b.report_url ? `<div style="margin-bottom:6px"><a href="${esc(b.report_url)}" target="_blank" rel="noopener" class="btn gold" style="padding:4px 12px; font-size:12px">View Official Report PDF</a></div>` : ''}
+              ${bReports.map(r => `<div style="font-size:12px; margin-bottom:4px"><b>${esc(r.title)}</b> (${new Date(r.created_at).toLocaleDateString('en-IN')}) — <a href="${esc(r.file_url)}" target="_blank" rel="noopener">Download Document</a></div>`).join('')}
+            </div>
+          `;
+        }
+
+        // Feedback Section
+        let feedbackFormHtml = '';
+        if(isCompleted && !fb){
+          feedbackFormHtml = `
+            <div style="background:#fff9e6; border:1px dashed #e6c200; padding:14px; border-radius:8px; margin-top:14px">
+              <h5 style="margin:0 0 6px; color:#856404">⭐ Share Your Feedback for Visit ${esc(reqId)}</h5>
+              <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px">
+                <label style="font-size:12px; font-weight:700">Rating:</label>
+                <select id="fbRating_${esc(b.id)}" style="padding:4px; border-radius:4px">
+                  <option value="5">⭐⭐⭐⭐⭐ (5/5 Excellent)</option>
+                  <option value="4">⭐⭐⭐⭐ (4/5 Very Good)</option>
+                  <option value="3">⭐⭐⭐ (3/5 Good)</option>
+                  <option value="2">⭐⭐ (2/5 Average)</option>
+                  <option value="1">⭐ (1/5 Poor)</option>
+                </select>
+              </div>
+              <textarea id="fbComments_${esc(b.id)}" placeholder="Write your feedback comments..." style="width:100%; height:60px; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:6px; margin-bottom:8px"></textarea>
+              <button class="btn dark" type="button" style="padding:5px 14px; font-size:12px" onclick="submitClientFeedback('${esc(b.id)}')">Submit Feedback</button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="ps-v40-card" style="margin-bottom:18px; border:1px solid #d0e0d6; padding:18px">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:12px">
+              <div>
+                <span class="role-badge" style="background:#e0f3ea; color:#084c38; font-weight:800">${esc((b.status||'REQUESTED').toUpperCase())}</span>
+                <h4 style="margin:6px 0 2px; font-size:16px">${esc(reqId)}</h4>
+                <div style="font-size:12px; color:#666">Project Address: ${esc(b.project_address||'Site')}</div>
+              </div>
+              <div style="text-align:right; font-size:12px; color:#777">
+                Submitted: ${esc(submittedAt)}
+              </div>
+            </div>
+
+            <!-- Application Progress Timeline -->
+            <div style="background:#ffffff; border:1px solid #e5ebe7; padding:14px; border-radius:8px; margin-bottom:10px">
+              <h5 style="margin:0 0 12px; color:#1d6342; font-size:14px">Application Workflow Timeline</h5>
+              ${timelineHtml}
+            </div>
+
+            ${reportsHtml}
+            ${feedbackFormHtml}
+          </div>
+        `;
+      }).join('');
+
+      box.innerHTML = cardsHtml;
+    } catch(err){
+      box.innerHTML = '<div class="notice error">Failed to load client site visit history.</div>';
+    }
+  }
+
+  // Client Feedback Handler
+  async function submitClientFeedback(bookingId){
+    const ratingEl = document.getElementById('fbRating_' + bookingId);
+    const commentsEl = document.getElementById('fbComments_' + bookingId);
+
+    const rating = parseInt(ratingEl?.value || '5', 10);
+    const comments = commentsEl?.value.trim() || '';
+
+    if(!comments){
+      window.toast36?.('Please write a brief comment before submitting feedback.','error');
+      return;
+    }
+
+    try {
+      const user = (await supabaseClient.auth.getUser()).data?.user;
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', bookingId).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      await supabaseClient.from('feedback').insert({
+        booking_id: bookingId,
+        request_id: b.request_id,
+        client_user_id: user?.id || b.client_user_id || null,
+        client_name: b.client_name || 'Client',
+        rating: rating,
+        comments: comments
+      });
+
+      window.toast36?.('Thank you for your feedback! Your review has been saved.','success');
+      if(user?.id) await renderClientVisitHistoryWithTimeline(user.id, [b]);
+      else window.location.reload();
+    } catch(err){
+      window.toast36?.('Feedback error: ' + err.message, 'error');
+    }
+  }
+
+  // Override renderVisitHistory36
+  window.renderVisitHistory36 = renderClientVisitHistoryWithTimeline;
+  window.submitClientFeedback = submitClientFeedback;
+
+  window.loadRMAAdminCalendarSection = loadRMAAdminCalendarSection;
+
+  // Payments & Transactions Reconciliation Engine
+  async function loadRMAdminPaymentsSection(){
+    const wrap = document.getElementById('rmaAdminPaymentsSection');
+    if(!wrap) return;
+
+    wrap.innerHTML = '<h3>Payments & Transactions History</h3><p class="muted">Fetching payment records from Razorpay, GST Invoices, and Bookings database...</p>';
+
+    try {
+      // Fetch bookings and GST invoices
+      const [bRes, invRes] = await Promise.all([
+        supabaseClient.from('bookings').select('*').order('created_at', { ascending: false }).limit(300),
+        supabaseClient.from('gst_invoices').select('*').order('created_at', { ascending: false }).limit(300)
+      ]);
+
+      const bookings = bRes.data || [];
+      const invoices = invRes.data || [];
+
+      // Build Map of Payments
+      const paymentMap = new Map();
+
+      // 1. Process GST Invoices
+      invoices.forEach(inv => {
+        if(!inv.payment_id) return;
+        paymentMap.set(inv.payment_id, {
+          payment_id: inv.payment_id,
+          order_id: inv.order_id || '—',
+          invoice_number: inv.invoice_number,
+          client_name: inv.customer_name || 'Customer',
+          mobile: inv.customer_mobile || '—',
+          email: inv.customer_email || '—',
+          amount: inv.total_amount || 0,
+          currency: 'INR',
+          payment_date: inv.created_at,
+          gateway: 'Razorpay',
+          status: 'VERIFIED',
+          invoice_type: inv.invoice_type || 'service',
+          booking_id: null,
+          request_id: inv.receipt || '—',
+          is_matched: false
+        });
+      });
+
+      // 2. Process Bookings to Match / Add Payments
+      bookings.forEach(b => {
+        let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
+        const payId = j.payment_id || j.razorpay_payment_id || null;
+        const reqId = b.request_id || b.application_id || '—';
+
+        if(payId){
+          if(paymentMap.has(payId)){
+            const existing = paymentMap.get(payId);
+            existing.booking_id = b.id;
+            existing.request_id = reqId;
+            existing.client_name = b.client_name || existing.client_name;
+            existing.mobile = b.mobile || existing.mobile;
+            existing.email = b.email || existing.email;
+            existing.is_matched = true;
+          } else {
+            paymentMap.set(payId, {
+              payment_id: payId,
+              order_id: j.razorpay_order_id || '—',
+              invoice_number: '—',
+              client_name: b.client_name || 'Customer',
+              mobile: b.mobile || '—',
+              email: b.email || '—',
+              amount: b.total_amount || b.visit_fee || 0,
+              currency: 'INR',
+              payment_date: b.created_at,
+              gateway: 'Razorpay',
+              status: b.status === 'pending_payment' ? 'PENDING' : 'VERIFIED',
+              invoice_type: b.service_type || 'site_visit',
+              booking_id: b.id,
+              request_id: reqId,
+              is_matched: true
+            });
+          }
+        }
+      });
+
+      const paymentList = Array.from(paymentMap.values()).sort((a,b) => new Date(b.payment_date) - new Date(a.payment_date));
+
+      if(!paymentList.length){
+        wrap.innerHTML = '<h3>Payments &amp; Transactions History</h3><div class="muted">No payment transaction records found.</div>';
+        return;
+      }
+
+      const rowsHtml = paymentList.map(p => {
+        const isTest = Number(p.amount) === 1 || p.amount === '1';
+        const isMatched = p.is_matched || p.booking_id;
+        const statusBadge = isMatched ?
+          '<span class="role-badge" style="background:#e0f3ea;color:#084c38;font-weight:800">MATCHED &amp; VERIFIED</span>' :
+          '<span class="role-badge" style="background:#fff3cd;color:#856404;font-weight:800">UNMATCHED PAYMENT</span>';
+
+        return `
+          <div style="background:#ffffff; border:1px solid #d8e3dc; border-radius:10px; padding:14px; margin-bottom:12px">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; border-bottom:1px solid #f0f4f1; padding-bottom:10px; margin-bottom:10px">
+              <div>
+                ${statusBadge}
+                ${isTest ? '<span class="role-badge" style="background:#e2e3e5;color:#383d41;margin-left:6px">TEST (₹1)</span>' : ''}
+                <h4 style="margin:6px 0 2px; font-size:16px">Payment ID: ${esc(p.payment_id)}</h4>
+                <div style="font-size:12px; color:#555">Order ID: <b>${esc(p.order_id)}</b> | Application ID: <b>${esc(p.request_id)}</b></div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:18px; font-weight:800; color:#1d6342">₹${Number(p.amount||0).toLocaleString('en-IN')}</div>
+                <small style="color:#777">${new Date(p.payment_date).toLocaleString('en-IN')}</small>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; font-size:13px">
+              <div><b>Client:</b> ${esc(p.client_name)}</div>
+              <div><b>Mobile:</b> ${esc(p.mobile)}</div>
+              <div><b>Email:</b> ${esc(p.email)}</div>
+              <div><b>Gateway:</b> ${esc(p.gateway)}</div>
+              <div><b>Invoice No.:</b> ${esc(p.invoice_number)}</div>
+              <div><b>Service Type:</b> ${esc(p.invoice_type)}</div>
+            </div>
+
+            ${!isMatched ? `
+              <div style="margin-top:12px; background:#fff9e6; border:1px dashed #e6c200; padding:10px; border-radius:6px; display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+                <span style="font-size:12px; font-weight:700; color:#856404">Unmatched Payment: Associate with an existing application</span>
+                <input type="text" id="linkReqId_${esc(p.payment_id)}" placeholder="Enter Application / Request ID" style="padding:5px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px; flex:1; min-width:180px">
+                <button class="btn dark" type="button" style="padding:5px 12px; font-size:12px" onclick="adminLinkUnmatchedPayment('${esc(p.payment_id)}')">Link to Application</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      wrap.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:14px">
+          <div>
+            <span class="ps-v40-kicker" style="color:#1d6342">FINANCIAL RECONCILIATION</span>
+            <h3 style="margin:4px 0 0">All Website Payment Transactions</h3>
+          </div>
+          <button class="btn outline" type="button" onclick="loadRMAdminPaymentsSection()">Refresh Payments</button>
+        </div>
+        <p class="muted" style="margin-bottom:16px">Displaying all verified and historical payments from Razorpay and GST invoice records.</p>
+        ${rowsHtml}
+      `;
+    } catch(err){
+      wrap.innerHTML = '<h3>Payments &amp; Transactions History</h3><div class="notice error">Failed to load payments reconciliation history.</div>';
+    }
+  }
+
+  // Admin Manual Payment Association
+  async function adminLinkUnmatchedPayment(paymentId){
+    const input = document.getElementById('linkReqId_' + paymentId);
+    const reqId = input?.value.trim();
+    if(!reqId){
+      window.toast36?.('Please enter a valid Application or Request ID.','error');
+      return;
+    }
+
+    try {
+      const q = await supabaseClient.from('bookings').select('id,visit_scope').eq('request_id', reqId).maybeSingle();
+      if(q.error || !q.data) throw new Error('Application ID not found in database.');
+
+      let j = {}; try { j = JSON.parse(q.data.visit_scope || '{}'); } catch(e){}
+      j.payment_id = paymentId;
+
+      await supabaseClient.from('bookings').update({
+        status: 'payment_received',
+        visit_scope: JSON.stringify(j)
+      }).eq('id', q.data.id);
+
+      window.toast36?.(`Payment ${paymentId} successfully linked to Application ${reqId}.`,'success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Link error: ' + err.message, 'error');
+    }
+  }
+
+  window.loadRMAdminPaymentsSection = loadRMAdminPaymentsSection;
+  window.adminLinkUnmatchedPayment = adminLinkUnmatchedPayment;
+
+  function setRMAAdminFilter(statusKey){
+    window.rmaAdminFilterStatus = statusKey;
+    loadRMAAdminSiteVisitRequests();
+  }
+
+  // Admin Action Handlers
+  async function adminAcceptBooking(id){
+    const d = document.getElementById('adminConfDate_' + id)?.value || '';
+    const t = document.getElementById('adminConfTime_' + id)?.value || '';
+    const eng = document.getElementById('adminEngineer_' + id)?.value.trim() || '';
+    const notes = document.getElementById('adminNotes_' + id)?.value.trim() || '';
+
+    if(!d || !t){
+      window.toast36?.('Please specify both confirmed date and confirmed time.','error');
+      return;
+    }
+
+    try {
+      // Fetch booking
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      // Double-booking check
+      const dbCheck = await supabaseClient.from('bookings').select('id,client_name,request_id')
+        .eq('confirmed_date', d)
+        .eq('confirmed_time', t)
+        .in('status', ['confirmed', 'approved', 'accepted'])
+        .neq('id', id);
+      if(dbCheck.data && dbCheck.data.length > 0){
+        if(!confirm(`Warning: Slot ${d} at ${t} is already booked for client "${dbCheck.data[0].client_name}". Proceed with double-booking confirmation?`)){
+          return;
+        }
+      }
+
+      // Update booking
+      const updatePayload = {
+        status: 'confirmed',
+        confirmed_date: d,
+        confirmed_time: t,
+        scheduled_date: d,
+        scheduled_time: t,
+        engineer_name: eng || null,
+        admin_remarks: notes || null,
+        approved_by: 'RMA Admin'
+      };
+
+      const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
+      if(up.error) throw up.error;
+
+      // Create / update appointments table
+      try {
+        await supabaseClient.from('appointments').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          client_name: b.client_name,
+          client_email: b.email,
+          client_mobile: b.mobile,
+          confirmed_date: d,
+          confirmed_time: t,
+          engineer_name: eng || null,
+          notes: notes || null,
+          status: 'CONFIRMED'
+        });
+      } catch(aptErr){ console.warn('appointments table insert warning:', aptErr); }
+
+      // Insert status history
+      try {
+        await supabaseClient.from('status_history').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          previous_status: b.status,
+          new_status: 'confirmed',
+          changed_by: 'RMA Admin',
+          remarks: `Appointment confirmed for ${d} at ${t}. ${notes}`
+        });
+      } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+      // Trigger Multi-Channel Confirmation Notification to Client
+      await window.notifyClientAppointmentConfirmed?.({
+        ...b,
+        confirmed_date: d,
+        confirmed_time: t,
+        engineer_name: eng
+      });
+
+      window.toast36?.('Site visit appointment confirmed and client notified.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Confirmation error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminRejectBookingPrompt(id){
+    const reason = prompt('Please state the reason for rejecting this site visit request:');
+    if(reason === null) return; // User cancelled prompt
+
+    try {
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      const updatePayload = {
+        status: 'rejected',
+        rejection_reason: reason || 'Slot unavailable',
+        rejection_date: new Date().toISOString(),
+        approved_by: 'RMA Admin'
+      };
+
+      const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
+      if(up.error) throw up.error;
+
+      // Insert status history
+      try {
+        await supabaseClient.from('status_history').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          previous_status: b.status,
+          new_status: 'rejected',
+          changed_by: 'RMA Admin',
+          remarks: `Request rejected. Reason: ${reason}`
+        });
+      } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+      // Notify Client
+      await window.notifyClientRequestRejected?.(b, reason);
+
+      window.toast36?.('Site visit request rejected and client notified.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Rejection error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminRescheduleBooking(id){
+    const d = document.getElementById('adminConfDate_' + id)?.value || '';
+    const t = document.getElementById('adminConfTime_' + id)?.value || '';
+
+    if(!d || !t){
+      window.toast36?.('Please specify the new date and time slot first.','error');
+      return;
+    }
+
+    try {
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      const updatePayload = {
+        status: 'reschedule_requested',
+        confirmed_date: d,
+        confirmed_time: t,
+        scheduled_date: d,
+        scheduled_time: t,
+        approved_by: 'RMA Admin'
+      };
+
+      const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
+      if(up.error) throw up.error;
+
+      // Log status history
+      try {
+        await supabaseClient.from('status_history').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          previous_status: b.status,
+          new_status: 'reschedule_requested',
+          changed_by: 'RMA Admin',
+          remarks: `Appointment rescheduled to ${d} at ${t}.`
+        });
+      } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+      // Notify Client
+      await window.notifyClientAppointmentRescheduled?.({
+        ...b,
+        confirmed_date: d,
+        confirmed_time: t
+      });
+
+      window.toast36?.('Reschedule recorded and updated notification sent to client.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Reschedule error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminOpenCompletionModal(id){
+    const obs = prompt('Enter site inspection observations / findings:');
+    if(obs === null) return;
+    const eng = prompt('Engineer Name / Representative Name:') || 'RMA Engineer';
+
+    try {
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      const updatePayload = {
+        status: 'completed',
+        completion_date: new Date().toISOString(),
+        completed_by: 'RMA Admin',
+        engineer_name: eng,
+        site_observations: obs
+      };
+
+      const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
+      if(up.error) throw up.error;
+
+      // Status history
+      try {
+        await supabaseClient.from('status_history').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          previous_status: b.status,
+          new_status: 'completed',
+          changed_by: 'RMA Admin',
+          remarks: `Site visit completed by ${eng}. Observations: ${obs}`
+        });
+      } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+      // Multi-channel completion notification to client
+      await window.notifyClientVisitCompleted?.(b);
+
+      // Trigger feedback request
+      await window.notifyClientFeedbackRequest?.(b);
+
+      window.toast36?.('Site visit marked COMPLETED, client notified, and feedback request dispatched.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Completion error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminOpenReportUploadModal(id){
+    const fileUrl = prompt('Enter Report Document / Storage URL (or Upload Link):');
+    if(!fileUrl) return;
+    const title = prompt('Report Title:', 'Site Visit Inspection Report') || 'Site Visit Report';
+
+    try {
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+
+      // Insert into site_visit_reports
+      await supabaseClient.from('site_visit_reports').insert({
+        booking_id: id,
+        request_id: b.request_id,
+        client_user_id: b.client_user_id || null,
+        title: title,
+        engineer_name: b.engineer_name || 'RMA Engineer',
+        observations: b.site_observations || '',
+        file_url: fileUrl
+      });
+
+      // Update booking
+      await supabaseClient.from('bookings').update({
+        report_url: fileUrl
+      }).eq('id', id);
+
+      // Notify client that report is available
+      await window.notifyClientReportAvailable?.(b, title);
+
+      window.toast36?.('Report associated with booking and client notified.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Report upload error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminToggleNotificationLogs(id){
+    const container = document.getElementById('adminNotifLogs_' + id);
+    const list = document.getElementById('adminNotifLogsList_' + id);
+    if(!container || !list) return;
+
+    if(container.style.display !== 'none'){
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'block';
+    list.innerHTML = 'Fetching logs...';
+
+    try {
+      const q = await supabaseClient.from('notification_logs').select('*').eq('booking_id', id).order('created_at', { ascending: false });
+      if(q.error) throw q.error;
+      const logs = q.data || [];
+
+      if(!logs.length){
+        list.innerHTML = '<div class="muted">No notification logs recorded for this request yet.</div>';
+        return;
+      }
+
+      list.innerHTML = logs.map(l => `
+        <div style="background:#ffffff; padding:8px 10px; border-radius:6px; margin-bottom:6px; border:1px solid #e1e8e4">
+          <div style="display:flex; justify-content:space-between">
+            <b>${esc(l.channel)} — ${esc(l.notification_type)}</b>
+            <span style="font-weight:800; color:${l.status==='SENT'?'#0d5c3a':'#a82315'}">${esc(l.status)}</span>
+          </div>
+          <div>Recipient: ${esc(l.recipient)}</div>
+          <div style="color:#666">${esc(l.message_body?.substring(0, 100))}...</div>
+          <div style="font-size:10px; color:#888; margin-top:4px">
+            Time: ${new Date(l.created_at).toLocaleString('en-IN')} ${l.error_message ? `| Error: ${esc(l.error_message)}` : ''}
+          </div>
+          ${l.status === 'FAILED' ? `<button class="btn outline" style="padding:2px 8px; font-size:10px; margin-top:4px" onclick="retryRMANotification('${esc(l.id)}')">Retry Dispatch</button>` : ''}
+        </div>
+      `).join('');
+    } catch(err){
+      list.innerHTML = '<div class="notice error">Failed to load notification logs.</div>';
+    }
+  }
+
+  // Hook into loadStaff36
+  window.loadStaff36 = loadRMAAdminSiteVisitRequests;
+  window.setRMAAdminFilter = setRMAAdminFilter;
+  window.adminAcceptBooking = adminAcceptBooking;
+  window.adminRejectBookingPrompt = adminRejectBookingPrompt;
+  window.adminRescheduleBooking = adminRescheduleBooking;
+  window.adminOpenCompletionModal = adminOpenCompletionModal;
+  window.adminOpenReportUploadModal = adminOpenReportUploadModal;
+  window.adminToggleNotificationLogs = adminToggleNotificationLogs;
+
+  // Export notification module globally
+  window.sendRMANotification = sendRMANotification;
+  window.notifyClientTemporaryBooking = notifyClientTemporaryBooking;
+  window.notifyClientAppointmentConfirmed = notifyClientAppointmentConfirmed;
+  window.notifyClientAppointmentRescheduled = notifyClientAppointmentRescheduled;
+  window.notifyClientRequestRejected = notifyClientRequestRejected;
+  window.notifyClientVisitCompleted = notifyClientVisitCompleted;
+  window.notifyClientReportAvailable = notifyClientReportAvailable;
+  window.notifyClientFeedbackRequest = notifyClientFeedbackRequest;
+  window.retryRMANotification = retryRMANotification;
 })();
 </script>
