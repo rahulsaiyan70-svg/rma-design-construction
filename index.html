@@ -5333,8 +5333,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const name = b.client_name || 'Customer';
     const date = b.confirmed_date || b.scheduled_date || 'scheduled date';
     const time = b.confirmed_time || b.scheduled_time || 'scheduled time';
-    const eng = b.engineer_name ? `\nAssigned Engineer: ${b.engineer_name}` : '';
-    const msg = `Dear ${name},\n\nYour RMA Design & Construction site visit has been confirmed for ${date} at ${time}.${eng}\nProject Location: ${b.project_address || 'Site'}\n\nRequest ID: ${reqId}\n\nThank you for choosing RMA Design & Construction.`;
+    const msg = `Dear ${name},\n\nYour site visit with RMA Design & Construction has been confirmed.\n\nDate: ${date}\nTime: ${time}\nApplication ID: ${reqId}\n\nPlease be available at the above-mentioned time.\n\nThank you,\nRMA Design & Construction`;
 
     return notifyMultiChannel({
       bookingId: b.id,
@@ -5496,14 +5495,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     // Compute Live Summary Counts
     const nowStr = new Date().toISOString().split('T')[0];
     const stats = {
-      NEW_REQUESTS: 0,
-      PAYMENT_RECEIVED: 0,
-      PENDING_APPROVAL: 0,
+      NEW_PENDING_REQUESTS: 0,
+      CONFIRMED_APPOINTMENTS: 0,
       TODAYS_VISITS: 0,
-      UPCOMING_VISITS: 0,
       COMPLETED_VISITS: 0,
-      REJECTED_CANCELLED: 0,
-      PENDING_FOLLOWUPS: 0
+      REJECTED_CANCELLED: 0
     };
 
     rows.forEach(x => {
@@ -5511,58 +5507,49 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
       const cDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || '';
 
-      if(st === 'new_request' || st === 'new' || st === 'pending_payment') stats.NEW_REQUESTS++;
-      if(st === 'payment_received' || st === 'booked' || st === 'paid') stats.PAYMENT_RECEIVED++;
-      if(st === 'pending' || st === 'under_review' || st === 'payment_received' || st === 'time_proposed') stats.PENDING_APPROVAL++;
-      if(cDate === nowStr && ['confirmed', 'approved', 'accepted'].includes(st)) stats.TODAYS_VISITS++;
-      if(cDate > nowStr && ['confirmed', 'approved', 'accepted'].includes(st)) stats.UPCOMING_VISITS++;
-      if(st === 'completed') stats.COMPLETED_VISITS++;
-      if(st === 'rejected' || st === 'cancelled') stats.REJECTED_CANCELLED++;
-      if(st === 'reschedule_requested' || st === 'pending') stats.PENDING_FOLLOWUPS++;
+      if (['confirmed', 'approved', 'accepted'].includes(st)) {
+        stats.CONFIRMED_APPOINTMENTS++;
+        if (cDate === nowStr) stats.TODAYS_VISITS++;
+      } else if (st === 'completed') {
+        stats.COMPLETED_VISITS++;
+      } else if (['rejected', 'cancelled'].includes(st)) {
+        stats.REJECTED_CANCELLED++;
+      } else {
+        // Pending / New requests / Payment received / Reschedule requested
+        stats.NEW_PENDING_REQUESTS++;
+      }
     });
 
     // Update Summary Header UI
     const summaryHtml = `
       <div class="ps-v40-card" style="margin-bottom:20px; background:#f4f8f6; border:1px solid #c2ded0">
-        <div style="display:flex; justify-size:space-between; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:12px">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:12px">
           <div>
-            <span class="ps-v40-kicker" style="color:#1d6342">RMA SITE VISIT CONTROL PANEL</span>
+            <span class="ps-v40-kicker" style="color:#1d6342">MANAGE SITE VISITS</span>
             <h3 style="margin:4px 0 0">Live Operations Dashboard</h3>
           </div>
           <button class="btn outline" type="button" onclick="loadRMAAdminSiteVisitRequests()">Refresh Live Requests</button>
         </div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px">
-          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='NEW_REQUESTS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('NEW_REQUESTS')">
-            <small>New Requests</small>
-            <strong>${stats.NEW_REQUESTS}</strong>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px">
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='NEW_PENDING_REQUESTS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('NEW_PENDING_REQUESTS')">
+            <small>NEW / PENDING REQUESTS</small>
+            <strong>${stats.NEW_PENDING_REQUESTS}</strong>
           </div>
-          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='PAYMENT_RECEIVED'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('PAYMENT_RECEIVED')">
-            <small>Payment Received</small>
-            <strong>${stats.PAYMENT_RECEIVED}</strong>
-          </div>
-          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='PENDING_APPROVAL'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('PENDING_APPROVAL')">
-            <small>Pending Approval</small>
-            <strong>${stats.PENDING_APPROVAL}</strong>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='CONFIRMED_APPOINTMENTS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('CONFIRMED_APPOINTMENTS')">
+            <small>CONFIRMED APPOINTMENTS</small>
+            <strong>${stats.CONFIRMED_APPOINTMENTS}</strong>
           </div>
           <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='TODAYS_VISITS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('TODAYS_VISITS')">
-            <small>Today's Visits</small>
+            <small>TODAY'S VISITS</small>
             <strong>${stats.TODAYS_VISITS}</strong>
           </div>
-          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='UPCOMING_VISITS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('UPCOMING_VISITS')">
-            <small>Upcoming Visits</small>
-            <strong>${stats.UPCOMING_VISITS}</strong>
-          </div>
           <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='COMPLETED_VISITS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('COMPLETED_VISITS')">
-            <small>Completed Visits</small>
+            <small>COMPLETED VISITS</small>
             <strong>${stats.COMPLETED_VISITS}</strong>
           </div>
           <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='REJECTED_CANCELLED'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('REJECTED_CANCELLED')">
-            <small>Rejected / Cancelled</small>
+            <small>REJECTED / CANCELLED</small>
             <strong>${stats.REJECTED_CANCELLED}</strong>
-          </div>
-          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='PENDING_FOLLOWUPS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('PENDING_FOLLOWUPS')">
-            <small>Pending Follow-ups</small>
-            <strong>${stats.PENDING_FOLLOWUPS}</strong>
           </div>
         </div>
         ${window.rmaAdminFilterStatus !== 'ALL' ? `<div style="margin-top:10px; font-size:12px">Active Filter: <b>${esc(window.rmaAdminFilterStatus)}</b> <a href="#" onclick="event.preventDefault();setRMAAdminFilter('ALL')" style="color:#1d6342; font-weight:700; margin-left:10px">Reset Filter (Show All)</a></div>` : ''}
@@ -5577,14 +5564,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
         const cDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || '';
 
-        if(window.rmaAdminFilterStatus === 'NEW_REQUESTS') return ['new_request', 'new', 'pending_payment'].includes(st);
-        if(window.rmaAdminFilterStatus === 'PAYMENT_RECEIVED') return ['payment_received', 'booked', 'paid'].includes(st);
-        if(window.rmaAdminFilterStatus === 'PENDING_APPROVAL') return ['pending', 'under_review', 'payment_received', 'time_proposed'].includes(st);
+        if(window.rmaAdminFilterStatus === 'NEW_PENDING_REQUESTS' || window.rmaAdminFilterStatus === 'NEW_REQUESTS') {
+          return !['confirmed', 'approved', 'accepted', 'completed', 'rejected', 'cancelled'].includes(st);
+        }
+        if(window.rmaAdminFilterStatus === 'CONFIRMED_APPOINTMENTS') return ['confirmed', 'approved', 'accepted'].includes(st);
         if(window.rmaAdminFilterStatus === 'TODAYS_VISITS') return cDate === nowStr && ['confirmed', 'approved', 'accepted'].includes(st);
-        if(window.rmaAdminFilterStatus === 'UPCOMING_VISITS') return cDate > nowStr && ['confirmed', 'approved', 'accepted'].includes(st);
         if(window.rmaAdminFilterStatus === 'COMPLETED_VISITS') return st === 'completed';
         if(window.rmaAdminFilterStatus === 'REJECTED_CANCELLED') return ['rejected', 'cancelled'].includes(st);
-        if(window.rmaAdminFilterStatus === 'PENDING_FOLLOWUPS') return ['reschedule_requested', 'pending'].includes(st);
         return true;
       });
     }
@@ -5643,10 +5629,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           </div>
 
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; background:#f9fbf9; padding:12px; border-radius:8px; border:1px solid #e3ede7; font-size:13px; margin-bottom:14px">
-            <div><b>Building Type:</b> ${esc(bType)}</div>
-            <div><b>Road Distance:</b> ${esc(dist)} km</div>
+            <div><b>Project / Building:</b> ${esc(bType)}</div>
+            <div><b>Assigned Engineer:</b> <span style="font-weight:700">${esc(x.engineer_name||'Not assigned yet')}</span></div>
             <div><b>Requested Slot:</b> ${esc(reqDate)} at ${esc(reqTime)}</div>
             <div><b>Confirmed Slot:</b> <span style="color:#1d6342; font-weight:700">${esc(confDate)} at ${esc(confTime)}</span></div>
+            <div><b>Road Distance:</b> ${esc(dist)} km</div>
+            <div><b>Payment Status:</b> <span style="color:#0d5c3a; font-weight:700">${esc(payAmt)} (${esc(payId)})</span></div>
             <div style="grid-column:1/-1"><b>Project Address:</b> ${esc(x.project_address||'Not provided')}</div>
             <div style="grid-column:1/-1"><b>Requirement:</b> ${esc(reqMsg)}</div>
             ${x.rejection_reason ? `<div style="grid-column:1/-1; color:#a82315"><b>Rejection Reason:</b> ${esc(x.rejection_reason)}</div>` : ''}
@@ -6230,16 +6218,37 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
       const b = bRes.data;
 
-      // Double-booking check
-      const dbCheck = await supabaseClient.from('bookings').select('id,client_name,request_id')
-        .eq('confirmed_date', d)
-        .eq('confirmed_time', t)
-        .in('status', ['confirmed', 'approved', 'accepted'])
-        .neq('id', id);
-      if(dbCheck.data && dbCheck.data.length > 0){
-        if(!confirm(`Warning: Slot ${d} at ${t} is already booked for client "${dbCheck.data[0].client_name}". Proceed with double-booking confirmation?`)){
-          return;
-        }
+      // Collision check: verify if date/time slot is already occupied by another confirmed appointment for the same engineer/resource
+      const [dbCheck, aptCheck] = await Promise.all([
+        supabaseClient.from('bookings').select('id,client_name,request_id,engineer_name')
+          .eq('confirmed_date', d)
+          .eq('confirmed_time', t)
+          .in('status', ['confirmed', 'approved', 'accepted'])
+          .neq('id', id),
+        supabaseClient.from('appointments').select('id,client_name,request_id,engineer_name')
+          .eq('confirmed_date', d)
+          .eq('confirmed_time', t)
+          .in('status', ['CONFIRMED', 'confirmed'])
+          .neq('booking_id', id)
+      ]);
+
+      const collisions = [...(dbCheck.data || []), ...(aptCheck.data || [])];
+      let isCollision = false;
+      if (eng) {
+        // If an engineer is assigned, collision occurs if that engineer or general slot is already booked
+        isCollision = collisions.some(c => !c.engineer_name || c.engineer_name.toLowerCase() === eng.toLowerCase());
+      } else {
+        // If no engineer is assigned, collision occurs if any appointment is booked at that slot
+        isCollision = collisions.length > 0;
+      }
+
+      if (isCollision) {
+        const occupier = collisions[0]?.client_name || 'another client';
+        const errMsg = eng
+          ? `Double-booking error: Slot ${d} at ${t} for Engineer "${eng}" is already occupied by client "${occupier}". Please select another date/time or engineer.`
+          : `Double-booking error: Slot ${d} at ${t} is already occupied by a confirmed appointment for client "${occupier}". Please select another date/time.`;
+        window.toast36?.(errMsg, 'error');
+        return;
       }
 
       // Update booking
@@ -6257,12 +6266,29 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
       if(up.error) throw up.error;
 
-      // Create / update appointments table
-      try {
-        await supabaseClient.from('appointments').insert({
+      // Create or update corresponding appointment record
+      const reqIdentifier = b.request_id || b.application_id || ('RMA-SV-' + b.id.substring(0,8));
+      const existingApt = await supabaseClient.from('appointments').select('id').eq('booking_id', id).maybeSingle();
+
+      let aptRes;
+      if (existingApt.data?.id) {
+        aptRes = await supabaseClient.from('appointments').update({
+          request_id: reqIdentifier,
+          client_name: b.client_name || 'Customer',
+          client_email: b.email,
+          client_mobile: b.mobile,
+          confirmed_date: d,
+          confirmed_time: t,
+          engineer_name: eng || null,
+          notes: notes || null,
+          status: 'CONFIRMED',
+          updated_at: new Date().toISOString()
+        }).eq('id', existingApt.data.id);
+      } else {
+        aptRes = await supabaseClient.from('appointments').insert({
           booking_id: id,
-          request_id: b.request_id,
-          client_name: b.client_name,
+          request_id: reqIdentifier,
+          client_name: b.client_name || 'Customer',
           client_email: b.email,
           client_mobile: b.mobile,
           confirmed_date: d,
@@ -6271,29 +6297,33 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           notes: notes || null,
           status: 'CONFIRMED'
         });
-      } catch(aptErr){ console.warn('appointments table insert warning:', aptErr); }
+      }
+      if(aptRes.error) throw new Error('Failed to save appointment record: ' + aptRes.error.message);
 
-      // Insert status history
-      try {
-        await supabaseClient.from('status_history').insert({
-          booking_id: id,
-          request_id: b.request_id,
-          previous_status: b.status,
-          new_status: 'confirmed',
-          changed_by: 'RMA Admin',
-          remarks: `Appointment confirmed for ${d} at ${t}. ${notes}`
-        });
-      } catch(shErr){ console.warn('status_history warning:', shErr); }
+      // Insert status history audit record
+      const shInsert = await supabaseClient.from('status_history').insert({
+        booking_id: id,
+        request_id: reqIdentifier,
+        previous_status: b.status,
+        new_status: 'confirmed',
+        changed_by: 'RMA Admin',
+        remarks: `Appointment confirmed for ${d} at ${t}. ${notes}`.trim()
+      });
+      if(shInsert.error) console.warn('status_history insert warning:', shInsert.error.message);
 
-      // Trigger Multi-Channel Confirmation Notification to Client
+      // Trigger Multi-Channel Confirmation Notification to Client after DB transaction succeeds
       await window.notifyClientAppointmentConfirmed?.({
         ...b,
+        request_id: reqIdentifier,
         confirmed_date: d,
         confirmed_time: t,
         engineer_name: eng
       });
 
-      window.toast36?.('Site visit appointment confirmed and client notified.','success');
+      const clientName = b.client_name || 'Customer';
+      window.toast36?.(`Appointment Confirmed Successfully: Site visit for ${clientName} has been confirmed for ${d} at ${t}.`, 'success');
+
+      // Auto-refresh booking list and calendar without manual browser refresh
       await loadRMAAdminSiteVisitRequests();
     } catch(err){
       window.toast36?.('Confirmation error: ' + err.message, 'error');

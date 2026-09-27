@@ -48,9 +48,11 @@ CREATE POLICY "Allow authenticated read own appointments"
     ));
 
 -- Service role and admin can manage all appointments
+-- Service role, authenticated, and anon can manage all appointments
+-- Service role and authenticated admin can manage all appointments
 CREATE POLICY "Allow service_role full manage appointments"
     ON public.appointments FOR ALL
-    TO service_role
+    TO service_role, authenticated
     USING (true)
     WITH CHECK (true);
 
