@@ -5165,12 +5165,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <!-- RMA Workflow Enhancements Engine: Centralized Notifications, Admin Control, Payments Sync, Calendar, Timeline & Reports -->
 <script id="rma-workflow-enhancements-js">
 (function(){
-  // Configuration defaults for SMS / WhatsApp Providers (can be set on window object or env)
-  window.RMA_SMS_API_URL = window.RMA_SMS_API_URL || null;
-  window.RMA_WHATSAPP_API_URL = window.RMA_WHATSAPP_API_URL || null;
-  window.RMA_WHATSAPP_TOKEN = window.RMA_WHATSAPP_TOKEN || null;
+  const RMA_NOTIFICATION_URL = SUPABASE_URL + "/functions/v1/send-rma-notification";
 
-  // Centralized Notification Engine & Logging System
+  // Centralized Notification Engine & Logging System (Routes through secure Edge Function)
   async function sendRMANotification({
     bookingId = null,
     requestId = '',
@@ -5193,69 +5190,57 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         throw new Error('Recipient email address or mobile number is missing.');
       }
 
-      if(channel === 'EMAIL'){
-        // 1. Client portal in-app notification if client_user_id available
-        if(metadata.client_user_id){
-          try {
-            await supabaseClient.from('client_notifications').insert({
-              user_id: metadata.client_user_id,
-              title: metadata.title || 'RMA Site Visit Update',
-              message: messageBody,
-              booking_id: bookingId,
-              type: 'site_visit'
-            });
-          } catch(e){ console.warn('In-app client notification warning:', e); }
+      if(channel === 'EMAIL' && metadata.client_user_id){
+        try {
+          await supabaseClient.from('client_notifications').insert({
+            user_id: metadata.client_user_id,
+            title: metadata.title || 'RMA Site Visit Update',
+            message: messageBody,
+            booking_id: bookingId,
+            type: 'site_visit'
+          });
+        } catch(e){ console.warn('In-app client notification warning:', e); }
 
-          try {
-            await supabaseClient.from('client_messages').insert({
-              user_id: metadata.client_user_id,
-              client_name: 'RMA Design & Construction',
-              email: recipient,
-              subject: metadata.title || 'RMA Site Visit Notification',
-              message: messageBody,
-              sender_role: 'admin',
-              thread_id: metadata.client_user_id,
-              status: 'sent'
-            });
-          } catch(e){ console.warn('In-app conversation insert warning:', e); }
-        }
-        providerId = 'EMAIL-' + Date.now() + '-' + Math.random().toString(36).substring(2,7);
-      } else if(channel === 'SMS'){
-        if(window.RMA_SMS_API_URL){
-          const r = await fetch(window.RMA_SMS_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recipient, message: messageBody, requestId, notificationType })
+        try {
+          await supabaseClient.from('client_messages').insert({
+            user_id: metadata.client_user_id,
+            client_name: 'RMA Design & Construction',
+            email: recipient,
+            subject: metadata.title || 'RMA Site Visit Notification',
+            message: messageBody,
+            sender_role: 'admin',
+            thread_id: metadata.client_user_id,
+            status: 'sent'
           });
-          const res = await r.json().catch(()=>({}));
-          if(!r.ok) throw new Error(res.error || 'SMS provider error HTTP ' + r.status);
-          providerId = res.message_id || res.id || ('SMS-' + Date.now());
-        } else {
-          // Logged & simulated SMS dispatch when external SMS provider key is pending
-          providerId = 'SMS-SIM-' + Date.now() + '-' + Math.random().toString(36).substring(2,7);
-        }
-      } else if(channel === 'WHATSAPP'){
-        if(window.RMA_WHATSAPP_API_URL && window.RMA_WHATSAPP_TOKEN){
-          const r = await fetch(window.RMA_WHATSAPP_API_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ' + window.RMA_WHATSAPP_TOKEN
-            },
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              to: recipient.replace(/[^0-9]/g, ''),
-              type: 'text',
-              text: { body: messageBody }
-            })
-          });
-          const res = await r.json().catch(()=>({}));
-          if(!r.ok) throw new Error(res.error || res.message || 'WhatsApp provider error HTTP ' + r.status);
-          providerId = res.messages?.[0]?.id || ('WA-' + Date.now());
-        } else {
-          // Logged & simulated WhatsApp dispatch when token/API URL is pending
-          providerId = 'WA-SIM-' + Date.now() + '-' + Math.random().toString(36).substring(2,7);
-        }
+        } catch(e){ console.warn('In-app conversation insert warning:', e); }
+      }
+
+      // Call secure Supabase Edge Function server-side dispatch
+      const session = (await supabaseClient.auth.getSession()).data?.session;
+      const headers = { "Content-Type": "application/json" };
+      if(session?.access_token) headers.Authorization = "Bearer " + session.access_token;
+
+      const response = await fetch(RMA_NOTIFICATION_URL, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          bookingId,
+          requestId,
+          clientName,
+          recipient,
+          channel,
+          notificationType,
+          messageBody,
+          metadata
+        })
+      });
+
+      const resData = await response.json().catch(() => ({}));
+      if(!response.ok || !resData.success){
+        status = 'FAILED';
+        errorMessage = resData.errorMessage || resData.error || ('Server dispatch error HTTP ' + response.status);
+      } else {
+        providerId = resData.providerId || (channel + '-' + Date.now());
       }
     } catch(err){
       status = 'FAILED';
@@ -6178,6 +6163,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   // Admin Manual Payment Association
   async function adminLinkUnmatchedPayment(paymentId){
+    try { await verifyRMAAdminAuth(); } catch(e){ return; }
+
     const input = document.getElementById('linkReqId_' + paymentId);
     const reqId = input?.value.trim();
     if(!reqId){
@@ -6212,8 +6199,25 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     loadRMAAdminSiteVisitRequests();
   }
 
+  // Explicit Admin Session Verification Helper
+  async function verifyRMAAdminAuth(){
+    const user = (await supabaseClient.auth.getUser()).data?.user;
+    const userEmail = (user?.email || '').trim().toLowerCase();
+    const adminEmail = String(window.V36_ADMIN_EMAIL || window.V40_RMA_EMAIL || 'rma.studies07@gmail.com').trim().toLowerCase();
+
+    if(!user || userEmail !== adminEmail){
+      window.toast36?.('Unauthorized access. Only authenticated RMA Admin users can perform this action.', 'error');
+      throw new Error('Unauthorized: Admin session required.');
+    }
+    return user;
+  }
+
   // Admin Action Handlers
   async function adminAcceptBooking(id){
+    try {
+      await verifyRMAAdminAuth();
+    } catch(authErr){ return; }
+
     const d = document.getElementById('adminConfDate_' + id)?.value || '';
     const t = document.getElementById('adminConfTime_' + id)?.value || '';
     const eng = document.getElementById('adminEngineer_' + id)?.value.trim() || '';
@@ -6301,6 +6305,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function adminRejectBookingPrompt(id){
+    try { await verifyRMAAdminAuth(); } catch(e){ return; }
+
     const reason = prompt('Please state the reason for rejecting this site visit request:');
     if(reason === null) return; // User cancelled prompt
 
@@ -6342,6 +6348,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function adminRescheduleBooking(id){
+    try { await verifyRMAAdminAuth(); } catch(e){ return; }
+
     const d = document.getElementById('adminConfDate_' + id)?.value || '';
     const t = document.getElementById('adminConfTime_' + id)?.value || '';
 
@@ -6394,6 +6402,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function adminOpenCompletionModal(id){
+    try { await verifyRMAAdminAuth(); } catch(e){ return; }
+
     const obs = prompt('Enter site inspection observations / findings:');
     if(obs === null) return;
     const eng = prompt('Engineer Name / Representative Name:') || 'RMA Engineer';
@@ -6440,6 +6450,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function adminOpenReportUploadModal(id){
+    try { await verifyRMAAdminAuth(); } catch(e){ return; }
+
     const fileUrl = prompt('Enter Report Document / Storage URL (or Upload Link):');
     if(!fileUrl) return;
     const title = prompt('Report Title:', 'Site Visit Inspection Report') || 'Site Visit Report';

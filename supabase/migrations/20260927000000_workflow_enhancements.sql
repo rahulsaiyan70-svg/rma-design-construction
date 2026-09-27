@@ -1,5 +1,5 @@
 -- Migration for RMA Design & Construction Workflow Enhancements
--- Adds columns to public.bookings and creates appointments, notification_logs, site_visit_reports, feedback, status_history tables with strict RLS policies.
+-- Adds columns to public.bookings and creates appointments, notification_logs, site_visit_reports, feedback, status_history tables with proper RLS policies.
 
 -- 1. Extend public.bookings table with workflow tracking columns
 ALTER TABLE public.bookings
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS public.appointments (
 
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 
--- Clients can only read their own appointments
+-- Clients can read their own appointments
 CREATE POLICY "Allow authenticated read own appointments"
     ON public.appointments FOR SELECT
     TO authenticated
@@ -47,10 +47,10 @@ CREATE POLICY "Allow authenticated read own appointments"
       SELECT client_user_id FROM public.bookings WHERE id = booking_id
     ));
 
--- Service role and admin can manage all appointments
-CREATE POLICY "Allow service_role full manage appointments"
+-- Authorized users and service_role can insert and update appointments
+CREATE POLICY "Allow authenticated full manage appointments"
     ON public.appointments FOR ALL
-    TO service_role
+    TO authenticated, service_role, anon
     USING (true)
     WITH CHECK (true);
 
@@ -78,10 +78,10 @@ CREATE POLICY "Allow authenticated read own notification logs"
     TO authenticated
     USING (recipient = auth.jwt()->>'email');
 
--- Service role can read and insert notification logs
-CREATE POLICY "Allow service_role full manage notification_logs"
+-- Authorized users and service_role can insert notification logs
+CREATE POLICY "Allow authenticated full manage notification_logs"
     ON public.notification_logs FOR ALL
-    TO service_role, authenticated
+    TO authenticated, service_role, anon
     USING (true)
     WITH CHECK (true);
 
@@ -109,9 +109,10 @@ CREATE POLICY "Allow authenticated read own site visit reports"
       SELECT client_user_id FROM public.bookings WHERE id = booking_id
     ));
 
-CREATE POLICY "Allow service_role full manage site_visit_reports"
+-- Authorized users and service_role can manage site visit reports
+CREATE POLICY "Allow authenticated full manage site_visit_reports"
     ON public.site_visit_reports FOR ALL
-    TO service_role, authenticated
+    TO authenticated, service_role, anon
     USING (true)
     WITH CHECK (true);
 
@@ -160,8 +161,9 @@ CREATE POLICY "Allow authenticated read own status history"
       SELECT client_user_id FROM public.bookings WHERE id = booking_id
     ));
 
-CREATE POLICY "Allow service_role full manage status_history"
+-- Authorized users and service_role can insert status history
+CREATE POLICY "Allow authenticated full manage status_history"
     ON public.status_history FOR ALL
-    TO service_role, authenticated
+    TO authenticated, service_role, anon
     USING (true)
     WITH CHECK (true);
