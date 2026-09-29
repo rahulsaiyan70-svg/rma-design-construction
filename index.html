@@ -1565,6 +1565,32 @@ const RMA_GST_INVOICE_URL = SUPABASE_URL + "/functions/v1/generate-gst-invoice";
 const RMA_GSTIN = "01CBCPB0524K1ZG";
 const RMA_INVOICE_FROM = "rma.studies07@gmail.com";
 
+function rmaCalculateGSTDetails(totalAmount, discountAmount = 0, state = "Jammu and Kashmir") {
+  const total = Number(totalAmount) || 0;
+  const discount = Number(discountAmount) || 0;
+  const taxable = Number((total / 1.18).toFixed(2));
+  const gst = Number((total - taxable).toFixed(2));
+  const subtotal = Number((taxable + discount).toFixed(2));
+  const isIntra = /jammu|kashmir|j&k|jk/i.test((state || "").trim()) || (state || "").toLowerCase() === "jammu and kashmir";
+  const cgst = isIntra ? Number((gst / 2).toFixed(2)) : 0;
+  const sgst = isIntra ? Number((gst / 2).toFixed(2)) : 0;
+  const igst = isIntra ? 0 : gst;
+
+  return {
+    subtotal,
+    discount,
+    taxable,
+    gstRate: 18,
+    gst,
+    cgst,
+    sgst,
+    igst,
+    total,
+    isIntraState: isIntra
+  };
+}
+window.rmaCalculateGSTDetails = rmaCalculateGSTDetails;
+
 async function rmaGenerateAndSendGSTInvoice(invoiceData){
   const {data:{session}} = await supabaseClient.auth.getSession();
   const headers={"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY};
@@ -5839,16 +5865,24 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
       const bookingIds = rows.map(r => r.id).filter(Boolean);
 
-      // Fetch reports, reviews, and feedback for these bookings
-      const [repRes, revRes, fbRes] = await Promise.all([
+      // Fetch reports, reviews, feedback, and GST invoices for these bookings
+      const [repRes, revRes, fbRes, invRes] = await Promise.all([
         supabaseClient.from('site_visit_reports').select('*').in('booking_id', bookingIds),
         supabaseClient.from('site_visit_reviews').select('*').in('booking_id', bookingIds),
-        supabaseClient.from('feedback').select('*').in('booking_id', bookingIds)
+        supabaseClient.from('feedback').select('*').in('booking_id', bookingIds),
+        supabaseClient.from('gst_invoices').select('*').or(
+          rows.map(r => `payment_id.eq.${r.request_id}`).concat(bookingIds.map(id => `booking_id.eq.${id}`)).join(',')
+        )
       ]);
 
       const reportsMap = new Map(); (repRes.data || []).forEach(r => (reportsMap.get(r.booking_id) || reportsMap.set(r.booking_id, []).get(r.booking_id)).push(r));
       const reviewsMap = new Map(); (revRes.data || []).forEach(r => (reviewsMap.get(r.booking_id) || reviewsMap.set(r.booking_id, []).get(r.booking_id)).push(r));
       const feedbackMap = new Map(); (fbRes.data || []).forEach(f => feedbackMap.set(f.booking_id, f));
+      const invoicesMap = new Map(); (invRes.data || []).forEach(i => {
+        if (i.booking_id) invoicesMap.set(i.booking_id, i);
+        if (i.payment_id) invoicesMap.set(i.payment_id, i);
+        if (i.receipt) invoicesMap.set(i.receipt, i);
+      });
 
       const cardsHtml = rows.map(b => {
         let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
@@ -5925,6 +5959,37 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           </div>
         `).join('');
 
+        // GST Invoice Section
+        const inv = invoicesMap.get(b.id) || invoicesMap.get(reqId) || invoicesMap.get(payId);
+        let invoiceHtml = '';
+        if(isPaid) {
+          if(inv && inv.download_url && inv.invoice_status === 'generated') {
+            invoiceHtml = `
+              <div style="background:#f4f8f6; border:1px solid #2e7d5b; padding:12px; border-radius:8px; margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+                <div>
+                  <h5 style="margin:0 0 4px; color:#1d6342">🧾 GST Tax Invoice Ready</h5>
+                  <div style="font-size:12px; color:#475569">Invoice No: <strong>${esc(inv.invoice_number)}</strong> | Total: <strong>₹${Number(inv.total_amount||b.total_amount||0).toLocaleString('en-IN')}</strong></div>
+                </div>
+                <div style="display:flex; gap:8px">
+                  <a href="${esc(inv.download_url)}" target="_blank" rel="noopener" class="btn gold" style="padding:5px 12px; font-size:12px; text-decoration:none">View / Download GST Invoice</a>
+                </div>
+              </div>
+            `;
+          } else {
+            invoiceHtml = `
+              <div style="background:#fff8ec; border:1px solid #e6a100; padding:12px; border-radius:8px; margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+                <div>
+                  <h5 style="margin:0 0 4px; color:#856404">🧾 GST Tax Invoice Pending</h5>
+                  <div style="font-size:12px; color:#666">Your payment is confirmed. Click below to generate your official GST invoice.</div>
+                </div>
+                <div>
+                  <button class="btn outline" style="padding:5px 12px; font-size:12px" onclick="rmaCustomerRetryInvoice('${esc(reqId)}', '${esc(payId)}')">Generate / Retry GST Invoice</button>
+                </div>
+              </div>
+            `;
+          }
+        }
+
         // Reports section
         let reportsHtml = '';
         if(bReports.length > 0 || b.report_url){
@@ -5978,6 +6043,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               ${timelineHtml}
             </div>
 
+            ${invoiceHtml}
             ${reportsHtml}
             ${feedbackFormHtml}
           </div>
@@ -6028,6 +6094,36 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   // Override renderVisitHistory36
   window.renderVisitHistory36 = renderClientVisitHistoryWithTimeline;
+
+  async function rmaCustomerRetryInvoice(requestId, paymentId) {
+    try {
+      alert('Generating/Retrieving your GST invoice...');
+      const inv = await rmaGenerateAndSendGSTInvoice({
+        payment_id: paymentId || requestId,
+        receipt: requestId,
+        invoice_type: 'site_visit',
+        customer: { name: 'Customer' },
+        description: 'RMA Design & Construction Service'
+      });
+
+      if (inv && inv.download_url) {
+        window.open(inv.download_url, '_blank', 'noopener');
+        if (typeof renderClientVisitHistoryWithTimeline === 'function') {
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          if (session?.user?.id) {
+            const { data: bData } = await supabaseClient.from('bookings').select('*').eq('request_id', requestId);
+            if (bData) await renderClientVisitHistoryWithTimeline(session.user.id, bData);
+          }
+        }
+      } else {
+        alert('GST invoice is being prepared. Please try again shortly.');
+      }
+    } catch (e) {
+      console.error('Customer retry invoice error:', e);
+      alert('Could not generate GST invoice: ' + (e.message || 'Please try again or contact RMA support.'));
+    }
+  }
+  window.rmaCustomerRetryInvoice = rmaCustomerRetryInvoice;
   window.submitClientFeedback = submitClientFeedback;
 
   window.loadRMAAdminCalendarSection = loadRMAAdminCalendarSection;
@@ -6149,6 +6245,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               <div><b>Service Type:</b> ${esc(p.invoice_type)}</div>
             </div>
 
+            <div style="margin-top:12px; padding-top:10px; border-top:1px solid #f0f4f1; display:flex; gap:8px; flex-wrap:wrap">
+              <button class="btn gold" type="button" style="padding:4px 10px; font-size:12px" onclick="adminOpenInvoiceRecalculateModal('${esc(p.payment_id)}', '${esc(p.request_id)}', ${Number(p.amount||0)}, '${esc(p.client_name)}', '${esc(p.email)}', '${esc(p.mobile)}')">Recalculate &amp; Generate GST Invoice</button>
+              <button class="btn outline" type="button" style="padding:4px 10px; font-size:12px" onclick="adminTriggerInvoiceAction('${esc(p.payment_id)}', 'resend')">Resend Invoice Email</button>
+            </div>
+
             ${!isMatched ? `
               <div style="margin-top:12px; background:#fff9e6; border:1px dashed #e6c200; padding:10px; border-radius:6px; display:flex; gap:10px; align-items:center; flex-wrap:wrap">
                 <span style="font-size:12px; font-weight:700; color:#856404">Unmatched Payment: Associate with an existing application</span>
@@ -6206,6 +6307,128 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   window.loadRMAdminPaymentsSection = loadRMAdminPaymentsSection;
   window.adminLinkUnmatchedPayment = adminLinkUnmatchedPayment;
+
+  function adminOpenInvoiceRecalculateModal(paymentId, requestId, totalAmount, clientName, clientEmail, clientMobile) {
+    let modal = document.getElementById('rmaAdminInvoiceModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'rmaAdminInvoiceModal';
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;box-sizing:border-box';
+      document.body.appendChild(modal);
+    }
+
+    const calc = rmaCalculateGSTDetails(totalAmount, 0, 'Jammu and Kashmir');
+
+    modal.innerHTML = `
+      <div style="background:#fff; border-radius:12px; max-width:550px; width:100%; padding:25px; box-shadow:0 10px 30px rgba(0,0,0,0.3)">
+        <h3 style="margin:0 0 5px; color:#2e7d5b">Admin Invoice Recalculation &amp; Recovery</h3>
+        <p style="font-size:13px; color:#666; margin:0 0 15px">Review inputs and recalculate tax figures before generating or regenerating GST invoice.</p>
+
+        <div style="font-size:13px; background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid #e2e8f0">
+          <div>Payment ID: <strong>${esc(paymentId)}</strong></div>
+          <div>Request / Receipt ID: <strong>${esc(requestId)}</strong></div>
+          <div>Client: <strong>${esc(clientName)}</strong> (${esc(clientEmail || 'No Email')})</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px">
+          <div>
+            <label style="font-size:12px; font-weight:700">Subtotal (₹):</label>
+            <input type="number" id="admInvSubtotal" value="${calc.subtotal}" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700">Discount (₹):</label>
+            <input type="number" id="admInvDiscount" value="${calc.discount}" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px">
+          <div>
+            <label style="font-size:12px; font-weight:700">Total Payable Amount (₹):</label>
+            <input type="number" id="admInvTotal" value="${calc.total}" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700">Supply State:</label>
+            <input type="text" id="admInvState" value="Jammu and Kashmir" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
+        </div>
+
+        <button type="button" class="btn dark full" style="margin-bottom:15px" onclick="adminRecalculateLiveModal()">[RECALCULATE LIVE]</button>
+
+        <div id="admInvLiveCalc" style="background:#e0f3ea; padding:12px; border-radius:8px; font-size:13px; color:#084c38; margin-bottom:15px">
+          Taxable Amount: <strong>₹${calc.taxable}</strong> | GST (18%): <strong>₹${calc.gst}</strong> (CGST: ₹${calc.cgst}, SGST: ₹${calc.sgst}) | Grand Total: <strong>₹${calc.total}</strong>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end">
+          <button type="button" class="btn outline" onclick="document.getElementById('rmaAdminInvoiceModal').style.display='none'">Cancel</button>
+          <button type="button" class="btn gold" onclick="adminExecuteGenerateInvoice('${esc(paymentId)}', '${esc(requestId)}', '${esc(clientName)}', '${esc(clientEmail)}', '${esc(clientMobile)}')">Generate GST Invoice</button>
+        </div>
+      </div>
+    `;
+
+    modal.style.display = 'flex';
+  }
+
+  function adminRecalculateLiveModal() {
+    const total = Number(document.getElementById('admInvTotal')?.value || 0);
+    const discount = Number(document.getElementById('admInvDiscount')?.value || 0);
+    const state = document.getElementById('admInvState')?.value || 'Jammu and Kashmir';
+    const calc = rmaCalculateGSTDetails(total, discount, state);
+
+    const box = document.getElementById('admInvLiveCalc');
+    if (box) {
+      box.innerHTML = `Taxable Amount: <strong>₹${calc.taxable}</strong> | GST (18%): <strong>₹${calc.gst}</strong> (${calc.isIntraState ? `CGST: ₹${calc.cgst}, SGST: ₹${calc.sgst}` : `IGST: ₹${calc.igst}`}) | Grand Total: <strong>₹${calc.total}</strong>`;
+    }
+  }
+
+  async function adminExecuteGenerateInvoice(paymentId, requestId, name, email, mobile) {
+    const total = Number(document.getElementById('admInvTotal')?.value || 0);
+    const discount = Number(document.getElementById('admInvDiscount')?.value || 0);
+    const state = document.getElementById('admInvState')?.value || 'Jammu and Kashmir';
+
+    try {
+      window.toast36?.('Generating GST invoice server-side...', 'info');
+      const inv = await rmaGenerateAndSendGSTInvoice({
+        payment_id: paymentId,
+        receipt: requestId,
+        invoice_type: 'service',
+        customer: { name, email, mobile, state },
+        description: 'RMA Design & Construction Service',
+        total_amount: total,
+        discount: discount,
+        action: 'regenerate',
+        force_email: true
+      });
+
+      window.toast36?.('GST Invoice generated successfully! Invoice No: ' + inv.invoice_number, 'success');
+      if (document.getElementById('rmaAdminInvoiceModal')) {
+        document.getElementById('rmaAdminInvoiceModal').style.display = 'none';
+      }
+      await loadRMAdminPaymentsSection();
+    } catch (e) {
+      window.toast36?.('Invoice generation error: ' + e.message, 'error');
+    }
+  }
+
+  async function adminTriggerInvoiceAction(paymentId, action) {
+    try {
+      window.toast36?.(`Executing ${action} for payment ${paymentId}...`, 'info');
+      const inv = await rmaGenerateAndSendGSTInvoice({
+        payment_id: paymentId,
+        receipt: paymentId,
+        action: action,
+        force_email: true
+      });
+      window.toast36?.(`Action ${action} completed successfully. Status: ${inv.invoice_status}`, 'success');
+      await loadRMAdminPaymentsSection();
+    } catch (e) {
+      window.toast36?.('Error: ' + e.message, 'error');
+    }
+  }
+
+  window.adminOpenInvoiceRecalculateModal = adminOpenInvoiceRecalculateModal;
+  window.adminRecalculateLiveModal = adminRecalculateLiveModal;
+  window.adminExecuteGenerateInvoice = adminExecuteGenerateInvoice;
+  window.adminTriggerInvoiceAction = adminTriggerInvoiceAction;
 
   function setRMAAdminFilter(statusKey){
     window.rmaAdminFilterStatus = statusKey;
