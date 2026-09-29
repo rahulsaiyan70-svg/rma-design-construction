@@ -2940,10 +2940,23 @@ window.RAZORPAY_KEY_ID=RAZORPAY_KEY_ID;
   window.rmaGetSiteVisitGSTBill=async function(){
     var b=document.getElementById('rmaSvBillBtn');
     if(b.dataset.url){window.open(b.dataset.url,'_blank','noopener');return;}
+    if(window.__rmaSiteVisitInvoiceResult?.download_url){
+      window.open(window.__rmaSiteVisitInvoiceResult.download_url,'_blank','noopener');
+      return;
+    }
     var payload=window.__rmaSiteVisitInvoicePayload;if(!payload){alert('GST bill details are not available. Please contact RMA Design & Construction.');return;}
     b.disabled=true;b.textContent='Preparing GST Bill…';
-    try{var inv=await rmaGenerateAndSendGSTInvoice(payload);window.__rmaSiteVisitInvoiceResult=inv;rmaUpdateGSTBillButton(inv);if(inv.download_url)window.open(inv.download_url,'_blank','noopener');}
-    catch(e){b.disabled=false;b.textContent='Get GST Bill';document.getElementById('rmaSvBillStatus').textContent=e?.message||'GST bill could not be prepared right now. Please try again later.';}
+    try{
+      var inv=await rmaGenerateAndSendGSTInvoice(payload);
+      window.__rmaSiteVisitInvoiceResult=inv;
+      rmaUpdateGSTBillButton(inv);
+      if(inv.download_url)window.open(inv.download_url,'_blank','noopener');
+    }catch(e){
+      console.error('GST invoice preparation error:', e);
+      b.disabled=false;
+      b.textContent='Get GST Bill';
+      document.getElementById('rmaSvBillStatus').textContent='Your payment was received successfully. Your GST bill is being prepared. Please try again shortly.';
+    }
   };
   window.rmaCloseSiteVisitSuccess=function(){var root=document.getElementById('rmaSiteVisitSuccess');if(root){root.style.display='none';root.setAttribute('aria-hidden','true');}};
 })();
@@ -3105,7 +3118,6 @@ async function payVisit(){
         const visitCommission = isTarseemVisit ? Number((pricing.baseTotal * 0.10).toFixed(2)) : 0;
         const payload={
           request_id:requestId,
-          application_id:requestId,
           client_name:name,
           mobile,
           email:email||null,
@@ -3204,8 +3216,8 @@ async function payVisit(){
           window.__rmaSiteVisitInvoiceResult=inv;
           rmaUpdateGSTBillButton(inv);
         }catch(invoiceError){
-          console.error('GST invoice generation:',invoiceError);
-          rmaUpdateGSTBillButton(null, invoiceError?.message||'GST bill is not ready yet. Please try again from this page.');
+          console.error('GST invoice generation error:',invoiceError);
+          rmaUpdateGSTBillButton(null, 'Your payment was received successfully. Your GST bill is being prepared. Please try again shortly.');
         }
       }catch(e){
         paymentBusy=false;
@@ -5312,7 +5324,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function notifyClientTemporaryBooking(b){
-    const reqId = b.request_id || b.application_id || b.id;
+    const reqId = b.request_id || b.id;
     const name = b.client_name || 'Customer';
     const msg = `Dear ${name},\n\nYour site visit request (${reqId}) has been received successfully. Your temporary booking/request has been recorded. Our team will review and confirm the date and time after review.\n\nThank you,\nRMA Design & Construction`;
 
@@ -5329,7 +5341,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function notifyClientAppointmentConfirmed(b){
-    const reqId = b.request_id || b.application_id || b.id;
+    const reqId = b.request_id || b.id;
     const name = b.client_name || 'Customer';
     const date = b.confirmed_date || b.scheduled_date || 'scheduled date';
     const time = b.confirmed_time || b.scheduled_time || 'scheduled time';
@@ -5348,7 +5360,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function notifyClientAppointmentRescheduled(b){
-    const reqId = b.request_id || b.application_id || b.id;
+    const reqId = b.request_id || b.id;
     const name = b.client_name || 'Customer';
     const date = b.confirmed_date || b.scheduled_date || 'scheduled date';
     const time = b.confirmed_time || b.scheduled_time || 'scheduled time';
@@ -5367,7 +5379,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function notifyClientRequestRejected(b, reason){
-    const reqId = b.request_id || b.application_id || b.id;
+    const reqId = b.request_id || b.id;
     const name = b.client_name || 'Customer';
     const rText = reason ? `Reason: ${reason}` : 'Our team is unable to accommodate this slot at present.';
     const msg = `Dear ${name},\n\nYour site visit request (${reqId}) could not be accepted at this time.\n${rText}\n\nThank you for reaching out to RMA Design & Construction.`;
@@ -5385,7 +5397,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function notifyClientVisitCompleted(b){
-    const reqId = b.request_id || b.application_id || b.id;
+    const reqId = b.request_id || b.id;
     const name = b.client_name || 'Customer';
     const msg = `Dear ${name},\n\nOur engineer has successfully completed the site visit for your project. Your site visit report will be prepared and shared with you shortly.\n\nThank you for choosing RMA Design & Construction.`;
 
@@ -5402,7 +5414,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function notifyClientReportAvailable(b, reportTitle){
-    const reqId = b.request_id || b.application_id || b.id;
+    const reqId = b.request_id || b.id;
     const name = b.client_name || 'Customer';
     const msg = `Dear ${name},\n\nYour site visit report "${reportTitle || 'Inspection Report'}" is now available in your RMA Client Portal.\n\nPlease log in to view and download your report.\n\nThank you,\nRMA Design & Construction`;
 
@@ -5419,7 +5431,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function notifyClientFeedbackRequest(b){
-    const reqId = b.request_id || b.application_id || b.id;
+    const reqId = b.request_id || b.id;
     const name = b.client_name || 'Customer';
     const msg = `Dear ${name},\n\nThank you for choosing RMA Design & Construction. We would appreciate your feedback regarding your site visit (${reqId}). Please log in to your RMA Client Portal to rate and review your experience.`;
 
@@ -5599,7 +5611,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         badgeColor = '#f8d7da'; textColor = '#721c24'; displayStatus = 'PENDING PAYMENT';
       }
 
-      const reqId = x.request_id || x.application_id || ('RMA-SV-' + x.id.substring(0,8));
+      const reqId = x.request_id || ('RMA-SV-' + x.id.substring(0,8));
       const reqDate = x.preferred_date_from || j.requested_date || j.preferred_date || '—';
       const reqTime = x.preferred_time || j.requested_time || j.preferred_time || '—';
       const confDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || 'Not confirmed yet';
@@ -5756,7 +5768,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
         return list.map(b => {
           let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
-          const reqId = b.request_id || b.application_id || '—';
+          const reqId = b.request_id || '—';
           const date = b.confirmed_date || b.scheduled_date || b.preferred_date_from || j.requested_date || '—';
           const time = b.confirmed_time || b.scheduled_time || b.preferred_time || j.requested_time || '—';
           const eng = b.engineer_name || 'RMA Representative';
@@ -5841,7 +5853,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const cardsHtml = rows.map(b => {
         let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
         const st = String(b.status || 'pending').toLowerCase();
-        const reqId = b.request_id || b.application_id || 'Site Visit Request';
+        const reqId = b.request_id || 'Site Visit Request';
         const submittedAt = b.created_at ? new Date(b.created_at).toLocaleString('en-IN') : '—';
         const payId = j.payment_id || j.razorpay_payment_id || '—';
         const payAmt = b.total_amount ? ('₹' + Number(b.total_amount).toLocaleString('en-IN')) : 'Free';
@@ -6066,7 +6078,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       bookings.forEach(b => {
         let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
         const payId = j.payment_id || j.razorpay_payment_id || null;
-        const reqId = b.request_id || b.application_id || '—';
+        const reqId = b.request_id || '—';
 
         if(payId){
           if(paymentMap.has(payId)){
@@ -6267,7 +6279,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if(up.error) throw up.error;
 
       // Create or update corresponding appointment record
-      const reqIdentifier = b.request_id || b.application_id || ('RMA-SV-' + b.id.substring(0,8));
+      const reqIdentifier = b.request_id || ('RMA-SV-' + b.id.substring(0,8));
       const existingApt = await supabaseClient.from('appointments').select('id').eq('booking_id', id).maybeSingle();
 
       let aptRes;
