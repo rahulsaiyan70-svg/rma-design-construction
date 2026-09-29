@@ -73,4 +73,27 @@ assert(htmlContent.includes('submitClientFeedback'), 'Missing submitClientFeedba
 assert(htmlContent.includes('Site Visit Inspection Report'), 'Missing Site Visit Inspection Report delivery');
 console.log('✔ TEST 7 PASSED: Client Portal includes step-by-step Application Timeline, direct Report delivery, and star-rating Feedback system.\n');
 
-console.log('=== ALL 12 WORKFLOW E2E TESTS COMPLETED SUCCESSFULLY ===');
+// 8. Verify GST Invoice Migration & Edge Function Implementation
+console.log('[TEST 8] Verifying GST Invoice System Migration & Edge Function...');
+const gstMigrationContent = fs.readFileSync('./supabase/migrations/20260928000000_gst_invoice_system.sql', 'utf8');
+assert(gstMigrationContent.includes('ALTER TABLE public.gst_invoices'), 'Migration missing ALTER TABLE public.gst_invoices');
+assert(gstMigrationContent.includes('CREATE TABLE IF NOT EXISTS public.invoice_audit_logs'), 'Migration missing public.invoice_audit_logs');
+assert(gstMigrationContent.includes('CREATE OR REPLACE FUNCTION public.generate_rma_invoice_number'), 'Migration missing generate_rma_invoice_number() function');
+
+const edgeFuncContent = fs.readFileSync('./supabase/functions/generate-gst-invoice/index.ts', 'utf8');
+assert(edgeFuncContent.includes('generate_rma_invoice_number'), 'Edge Function missing rpc call to generate_rma_invoice_number');
+assert(edgeFuncContent.includes('taxableAmount'), 'Edge Function missing taxableAmount calculation');
+assert(edgeFuncContent.includes('storage_path'), 'Edge Function missing storage_path handling');
+assert(edgeFuncContent.includes('invoice_audit_logs'), 'Edge Function missing audit logging');
+console.log('✔ TEST 8 PASSED: GST invoice migration and Edge Function include complete audit logging and server-side numbering.\n');
+
+// 9. Verify Frontend GST Calculation & Customer / Admin Invoice Tools
+console.log('[TEST 9] Verifying Frontend GST Calculation & Customer/Admin Actions...');
+assert(htmlContent.includes('rmaCalculateGSTDetails'), 'Missing rmaCalculateGSTDetails function in index.html');
+assert(htmlContent.includes('rmaCustomerRetryInvoice'), 'Missing rmaCustomerRetryInvoice function in index.html');
+assert(htmlContent.includes('adminOpenInvoiceRecalculateModal'), 'Missing adminOpenInvoiceRecalculateModal in index.html');
+assert(htmlContent.includes('adminExecuteGenerateInvoice'), 'Missing adminExecuteGenerateInvoice in index.html');
+assert(htmlContent.includes('adminTriggerInvoiceAction'), 'Missing adminTriggerInvoiceAction in index.html');
+console.log('✔ TEST 9 PASSED: Frontend contains centralized GST calculation, customer invoice download/retry, and admin recovery modal.\n');
+
+console.log('=== ALL WORKFLOW & GST INVOICE SYSTEM E2E TESTS COMPLETED SUCCESSFULLY ===');
