@@ -2262,10 +2262,19 @@ checkExistingSession();
     if(keys.includes('estimation')){const v=RMA2_SERVICE_RATES.estimationGround+Math.max(0,floors-1)*RMA2_SERVICE_RATES.estimationAdditional;subtotal+=v;lines.push(['Estimation & BOQ',v,'Calculated from selected floors']);}
     if(keys.includes('survey')){const area=Number(document.getElementById('sv_area')?.value||0);const v=area>1?RMA2_SERVICE_RATES.surveyAbove1Kanal:RMA2_SERVICE_RATES.survey1Kanal;subtotal+=v;lines.push(['Survey / Plotting',v,area>1?'> 1 kanal':'Up to 1 kanal']);}
 
+    const sCode=(document.getElementById('s_coupon')?.value||'').trim().toUpperCase();
+    const isGstLess = sCode === 'GST LESS';
+
     discount=subtotal*rma2DiscountRate(subtotal)/100;
     const taxable=Math.max(0,subtotal-discount);
-    gst=taxable*.18;
+    gst=isGstLess ? 0 : taxable*.18;
     total=taxable+gst;
+
+    const advInput = document.getElementById("s_advance_pct");
+    const advValidation = validateAdvancePctInput(advInput, "s_advanceMsg");
+    const advPct = advValidation.value;
+    const advAmount = Number((total * advPct / 100).toFixed(2));
+    const balAmount = Number((total - advAmount).toFixed(2));
 
     const holder=document.getElementById('selectedServiceLines');
     if(holder)holder.innerHTML=lines.length?lines.map(x=>`<div class="line"><span>${x[0]}<br><small style="color:#aebdca">${x[2]}</small></span><strong>${typeof x[1]==='number'?rma2Money(x[1]):x[1]}</strong></div>`).join(''):'<div style="color:#cbd5df">Select a service to see its price.</div>';
@@ -2273,10 +2282,20 @@ checkExistingSession();
     if(baseEl)baseEl.textContent=rma2Money(subtotal);
     if(discEl)discEl.textContent=rma2Money(discount);
     if(subEl)subEl.textContent=rma2Money(taxable);
-    if(gstEl)gstEl.textContent=rma2Money(gst);
+    if(gstEl)gstEl.textContent=isGstLess ? '₹0 (Excluded)' : rma2Money(gst);
     if(totEl)totEl.textContent=rma2Money(total);
+    if(document.getElementById("serviceAdvancePctDisplay")) document.getElementById("serviceAdvancePctDisplay").textContent=advPct+"%";
+    if(document.getElementById("serviceAdvanceAmtDisplay")) document.getElementById("serviceAdvanceAmtDisplay").textContent=rma2Money(advAmount);
+    if(document.getElementById("serviceBalanceAmtDisplay")) document.getElementById("serviceBalanceAmtDisplay").textContent=rma2Money(balAmount);
+
     const note=document.getElementById('serviceDiscountNote');
-    if(note)note.textContent=rma2DiscountRate(subtotal)?rma2DiscountRate(subtotal)+'% service discount applied. GST 18% applies after discount.':'No discount up to ₹3,000. GST 18% applies.';
+    if(note){
+      if(isGstLess){
+        note.textContent = 'GST LESS coupon applied. GST 18% excluded for this transaction.';
+      } else {
+        note.textContent=rma2DiscountRate(subtotal)?rma2DiscountRate(subtotal)+'% service discount applied. GST 18% applies after discount.':'No discount up to ₹3,000. GST 18% applies.';
+      }
+    }
     const auto=document.getElementById('autoDiscountLabel');if(auto)auto.textContent='Slab';
     document.getElementById('discountCode')?.closest('.group')?.classList.add('hidden');
   };
@@ -2686,7 +2705,44 @@ checkExistingSession();
     document.getElementById('rmaCombo1').onclick=()=>set(1);document.getElementById('rmaCombo2').onclick=()=>set(2);
   }
   const oldUpdateServicePrice=window.updateServicePrice;
-  window.updateServicePrice=function(){oldUpdateServicePrice();const combo=window.rmaSelectedCombo;const floors=Number(document.getElementById('s_floors')?.value||1);if(!combo)return;let total=combo===1?18000:(floors===1?27000:floors===2?49990:74990);document.getElementById('serviceBaseSubtotal').textContent=v3Money(total);document.getElementById('serviceDiscount').textContent='₹0';document.getElementById('serviceSubtotal').textContent=v3Money(total/1.18);document.getElementById('serviceGST').textContent=v3Money(total-total/1.18);document.getElementById('serviceTotal').textContent=v3Money(total);const n=document.getElementById('serviceDiscountNote');if(n)n.textContent='Combo package price locked; GST included. Departmental approval charges, where applicable, are extra.';const lines=document.getElementById('selectedServiceLines');if(lines)lines.innerHTML='<div class="line"><span>'+esc(combo===1?'Combo 1: Architectural + Structural + Estimation':'Combo 2: Architectural + Municipality Approval')+'<br><small style="color:#aebdca">GST included</small></span><strong>'+v3Money(total)+'</strong></div>';};
+  window.updateServicePrice=function(){
+    oldUpdateServicePrice();
+    const combo=window.rmaSelectedCombo;
+    const floors=Number(document.getElementById('s_floors')?.value||1);
+    if(!combo)return;
+    const sCode=(document.getElementById('s_coupon')?.value||'').trim().toUpperCase();
+    const isGstLess = sCode === 'GST LESS';
+
+    let total=combo===1?18000:(floors===1?27000:floors===2?49990:74990);
+    const taxable = isGstLess ? total : Number((total/1.18).toFixed(2));
+    const gst = isGstLess ? 0 : Number((total - taxable).toFixed(2));
+
+    const advInput = document.getElementById("s_advance_pct");
+    const advValidation = validateAdvancePctInput(advInput, "s_advanceMsg");
+    const advPct = advValidation.value;
+    const advAmount = Number((total * advPct / 100).toFixed(2));
+    const balAmount = Number((total - advAmount).toFixed(2));
+
+    document.getElementById('serviceBaseSubtotal').textContent=v3Money(total);
+    document.getElementById('serviceDiscount').textContent='₹0';
+    document.getElementById('serviceSubtotal').textContent=v3Money(taxable);
+    document.getElementById('serviceGST').textContent=isGstLess ? '₹0 (Excluded)' : v3Money(gst);
+    document.getElementById('serviceTotal').textContent=v3Money(total);
+    if(document.getElementById("serviceAdvancePctDisplay")) document.getElementById("serviceAdvancePctDisplay").textContent=advPct+"%";
+    if(document.getElementById("serviceAdvanceAmtDisplay")) document.getElementById("serviceAdvanceAmtDisplay").textContent=v3Money(advAmount);
+    if(document.getElementById("serviceBalanceAmtDisplay")) document.getElementById("serviceBalanceAmtDisplay").textContent=v3Money(balAmount);
+
+    const n=document.getElementById('serviceDiscountNote');
+    if(n){
+      if(isGstLess){
+        n.textContent = 'GST LESS coupon applied. GST 18% excluded for this transaction.';
+      } else {
+        n.textContent='Combo package price locked; GST included. Departmental approval charges, where applicable, are extra.';
+      }
+    }
+    const lines=document.getElementById('selectedServiceLines');
+    if(lines)lines.innerHTML='<div class="line"><span>'+esc(combo===1?'Combo 1: Architectural + Structural + Estimation':'Combo 2: Architectural + Municipality Approval')+'<br><small style="color:#aebdca">'+(isGstLess?'GST Excluded':'GST included')+'</small></span><strong>'+v3Money(total)+'</strong></div>';
+  };
 
   /* ---------- 4. Site visit Razorpay ---------- */
   /* ---------- 4. Site visit Razorpay ---------- */
@@ -3180,7 +3236,19 @@ function buildVisit(){
  document.getElementById('r29_pinBtn').onclick=verifyPin;
  document.getElementById('r29_gps').onclick=useGPS;
  document.getElementById('r29_couponBtn').onclick=applySiteVisitCoupon;
- document.getElementById('r29_coupon').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applySiteVisitCoupon();}});
+ const r29CouponInput = document.getElementById('r29_coupon');
+ if (r29CouponInput) {
+   r29CouponInput.addEventListener('input', () => {
+     siteVisitCode = r29CouponInput.value.trim().toUpperCase();
+     if (siteVisitCode === 'GST LESS') {
+       msg('r29_couponMsg', 'GST LESS coupon applied. GST 18% excluded for this transaction.', 'success');
+     } else if (!siteVisitCode) {
+       msg('r29_couponMsg', '', 'info');
+     }
+     if (visitDistance !== null) showFee(visitDistance);
+   });
+   r29CouponInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); applySiteVisitCoupon(); } });
+ }
  const r29AdvInput = document.getElementById('r29_advance_pct');
  if (r29AdvInput) {
    r29AdvInput.addEventListener('input', () => {
@@ -3451,11 +3519,25 @@ function installServicePayment(){
    `;
    form.appendChild(controlsBox);
    document.getElementById('s_couponBtn').onclick=applyServiceCoupon;
+   const couponInput = document.getElementById('s_coupon');
+   if (couponInput) {
+     couponInput.addEventListener('input', () => {
+       const code = couponInput.value.trim().toUpperCase();
+       if (code === 'GST LESS') {
+         msg('s_couponMsg', 'GST LESS coupon applied. GST 18% excluded for this transaction.', 'success');
+       } else if (!code) {
+         msg('s_couponMsg', '', 'info');
+       }
+       updateServicePrice();
+     });
+   }
    const advInput = document.getElementById('s_advance_pct');
-   advInput.addEventListener('input', () => {
-     validateAdvancePctInput(advInput, 's_advanceMsg');
-     updateServicePrice();
-   });
+   if (advInput) {
+     advInput.addEventListener('input', () => {
+       validateAdvancePctInput(advInput, 's_advanceMsg');
+       updateServicePrice();
+     });
+   }
  }
  let old=form.querySelector('#rmaV29ServicePay');if(old)old.remove();
  form.querySelectorAll('button').forEach(b=>{if(/Pay.*Razorpay|Submit Service Request/i.test(b.textContent||''))b.remove();});
@@ -3584,6 +3666,18 @@ function installConstructionPayment(){
    `;
    form.appendChild(controlsBox);
    document.getElementById('c_couponBtn').onclick=applyConstructionCoupon;
+   const cCouponInput = document.getElementById('c_coupon');
+   if (cCouponInput) {
+     cCouponInput.addEventListener('input', () => {
+       const code = cCouponInput.value.trim().toUpperCase();
+       if (code === 'GST LESS') {
+         msg('c_couponMsg', 'GST LESS coupon applied. GST 18% excluded for this transaction.', 'success');
+       } else if (!code) {
+         msg('c_couponMsg', '', 'info');
+       }
+       updateConstructionPrice();
+     });
+   }
    const cAdvInput = document.getElementById('c_advance_pct');
    if (cAdvInput) {
      cAdvInput.addEventListener('input', () => {
