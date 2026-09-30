@@ -93,20 +93,36 @@ serve(async (req) => {
       }
     }
 
-    // 2. Authoritative Tax Calculations
+    // 2. Authoritative Tax Calculations & GST LESS support
+    const isGstLess = Boolean(
+      payload.is_gst_less ||
+      notes.is_gst_less === "true" ||
+      notes.is_gst_less === true ||
+      notes.gst_applicable === "false" ||
+      notes.gst_applicable === false ||
+      (notes.coupon_code && String(notes.coupon_code).trim().toUpperCase() === "GST LESS")
+    );
+
     const finalTotal = Number(total_amount) || Number(notes.final_total) || Number(notes.total_amount) || 0;
     const finalDiscount = Number(discount) || Number(notes.discount) || 0;
-    const taxableAmount = Number((finalTotal / 1.18).toFixed(2));
-    const totalGst = Number((finalTotal - taxableAmount).toFixed(2));
+
+    // Advance & Balance information
+    const advancePct = Number(payload.advance_percentage || notes.advance_percentage || 100);
+    const advanceAmount = Number(payload.advance_amount || notes.advance_amount || finalTotal);
+    const balanceAmount = Number(payload.balance_amount || notes.balance_amount || (finalTotal - advanceAmount));
+
+    const taxableAmount = isGstLess ? finalTotal : Number((finalTotal / 1.18).toFixed(2));
+    const totalGst = isGstLess ? 0 : Number((finalTotal - taxableAmount).toFixed(2));
+    const gstRate = isGstLess ? 0 : 18;
     const subtotal = Number((taxableAmount + finalDiscount).toFixed(2));
 
     const custState = (customer.state || "Jammu and Kashmir").trim();
     const isIntraState =
       /jammu|kashmir|j&k|jk/i.test(custState) || custState.toLowerCase() === "jammu and kashmir";
 
-    const cgst = isIntraState ? Number((totalGst / 2).toFixed(2)) : 0;
-    const sgst = isIntraState ? Number((totalGst / 2).toFixed(2)) : 0;
-    const igst = isIntraState ? 0 : totalGst;
+    const cgst = (!isGstLess && isIntraState) ? Number((totalGst / 2).toFixed(2)) : 0;
+    const sgst = (!isGstLess && isIntraState) ? Number((totalGst / 2).toFixed(2)) : 0;
+    const igst = (!isGstLess && !isIntraState) ? totalGst : 0;
 
     // 3. Generate or retrieve Invoice Number
     let invoiceNumber = existingInvoice?.invoice_number;
@@ -219,10 +235,10 @@ serve(async (req) => {
         <tbody>
           <tr>
             <td>1</td>
-            <td><strong>${description}</strong><br><small style="color:#64748b">Ref / Payment ID: ${effectivePaymentId}</small></td>
+            <td><strong>${description}</strong><br><small style="color:#64748b">Ref / Payment ID: ${effectivePaymentId}${isGstLess ? ' (GST Exempt / Excluded)' : ''}</small></td>
             <td>998331</td>
             <td class="text-right">₹${taxableAmount.toFixed(2)}</td>
-            <td class="text-right">18%</td>
+            <td class="text-right">${gstRate}%</td>
             <td class="text-right"><strong>₹${finalTotal.toFixed(2)}</strong></td>
           </tr>
         </tbody>
@@ -238,15 +254,23 @@ serve(async (req) => {
       }
       <tr><td>Taxable Amount:</td><td class="text-right">₹${taxableAmount.toFixed(2)}</td></tr>
       ${
-        isIntraState
+        isGstLess
+          ? `<tr><td>GST (0% - GST LESS Excluded):</td><td class="text-right">₹0.00</td></tr>`
+          : isIntraState
           ? `<tr><td>CGST (9%):</td><td class="text-right">₹${cgst.toFixed(2)}</td></tr>
              <tr><td>SGST (9%):</td><td class="text-right">₹${sgst.toFixed(2)}</td></tr>`
           : `<tr><td>IGST (18%):</td><td class="text-right">₹${igst.toFixed(2)}</td></tr>`
       }
       <tr class="grand-total">
-        <td>Grand Total:</td>
+        <td>Total Project Amount:</td>
         <td class="text-right">₹${finalTotal.toFixed(2)}</td>
       </tr>
+      ${
+        advancePct < 100
+          ? `<tr><td>Advance Received (${advancePct}%):</td><td class="text-right" style="color:#166534;font-weight:600;">₹${advanceAmount.toFixed(2)}</td></tr>
+             <tr><td>Balance Remaining:</td><td class="text-right" style="color:#991b1b;font-weight:600;">₹${balanceAmount.toFixed(2)}</td></tr>`
+          : ""
+      }
     </table>
 
     <div class="footer-notes">
@@ -301,7 +325,7 @@ serve(async (req) => {
       subtotal,
       discount: finalDiscount,
       taxable_amount: taxableAmount,
-      gst_rate: 18.0,
+      gst_rate: gstRate,
       gst_amount: totalGst,
       cgst,
       sgst,

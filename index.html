@@ -880,12 +880,15 @@ section{padding:78px 0}
 <div class="line"><span>Base Subtotal</span><strong id="serviceBaseSubtotal">₹0</strong></div>
 <div class="line"><span>Discount</span><strong id="serviceDiscount">₹0</strong></div>
 <div class="line"><span>Taxable Subtotal</span><strong id="serviceSubtotal">₹0</strong></div>
-<div class="line"><span>GST 18%</span><strong id="serviceGST">₹0</strong></div>
+<div class="line"><span>GST Amount</span><strong id="serviceGST">₹0</strong></div>
 <div class="group" style="margin-top:12px">
 <label style="color:#fff">Service Discount</label>
 <div class="notice info" id="serviceDiscountNote" style="margin:0">No discount up to ₹3,000. Discount is calculated automatically for higher service amounts.</div>
 </div>
-<div class="line total"><span>Total</span><span id="serviceTotal">₹0</span></div>
+<div class="line total"><span>Total Amount</span><span id="serviceTotal">₹0</span></div>
+<div class="line" style="border-top:1px solid rgba(255,255,255,0.15);padding-top:8px;margin-top:8px"><span>Advance %</span><strong id="serviceAdvancePctDisplay">100%</strong></div>
+<div class="line"><span>Advance Amount</span><strong id="serviceAdvanceAmtDisplay" style="color:#2ecc71">₹0</strong></div>
+<div class="line"><span>Balance Remaining</span><strong id="serviceBalanceAmtDisplay" style="color:#e74c3c">₹0</strong></div>
 </aside>
 </div>
 </div>
@@ -968,8 +971,11 @@ section{padding:78px 0}
 <div class="line"><span>Rate</span><strong id="c_summaryRate">₹0/sq.ft.</strong></div>
 <div class="line"><span>Base Amount</span><strong id="c_summaryBase">₹0</strong></div>
 <div class="line"><span>Discount</span><strong id="c_summaryDiscount">₹0</strong></div>
-<div class="line"><span>GST 18%</span><strong id="c_summaryGST">₹0</strong></div>
-<div class="line total"><span>Total</span><span id="c_summaryTotal">₹0</span></div>
+<div class="line"><span>GST Amount</span><strong id="c_summaryGST">₹0</strong></div>
+<div class="line total"><span>Total Amount</span><span id="c_summaryTotal">₹0</span></div>
+<div class="line" style="border-top:1px solid rgba(255,255,255,0.15);padding-top:8px;margin-top:8px"><span>Advance %</span><strong id="c_summaryAdvancePctDisplay">100%</strong></div>
+<div class="line"><span>Advance Amount</span><strong id="c_summaryAdvanceAmtDisplay" style="color:#2ecc71">₹0</strong></div>
+<div class="line"><span>Balance Remaining</span><strong id="c_summaryBalanceAmtDisplay" style="color:#e74c3c">₹0</strong></div>
 <div id="c_summaryNote" style="font-size:12px;color:#567267;margin-top:10px"></div>
 </aside>
 </div>
@@ -1461,18 +1467,38 @@ function updateServicePrice(){
     if(amount <= 30000) return 8;
     return 10;
   }
+  const code=(document.getElementById('s_coupon')?.value||'').trim().toUpperCase();
+  const isGstLess = code === 'GST LESS';
+
   const discountPct=serviceDiscountRate(subtotal);
   const totalDiscount=subtotal*discountPct/100;
   const discountedSubtotal=Math.max(0,subtotal-totalDiscount);
-  const gst=discountedSubtotal*0.18;
+  const gst=isGstLess ? 0 : discountedSubtotal*0.18;
   const total=discountedSubtotal+gst;
+
+  // Advance Payment % calculation
+  const advValRaw = document.getElementById("s_advance_pct")?.value;
+  let advPct = 100;
+  if (advValRaw !== undefined && advValRaw !== null && advValRaw.trim() !== "") {
+    const parsedAdv = Number(advValRaw.trim());
+    if (!isNaN(parsedAdv) && parsedAdv >= 0 && parsedAdv <= 100) {
+      advPct = parsedAdv;
+    }
+  }
+  const advAmount = Number((total * advPct / 100).toFixed(2));
+  const balAmount = Number((total - advAmount).toFixed(2));
+
   const note=document.getElementById("serviceDiscountNote");
   if(note){
-    note.textContent = discountPct===0
-      ? "No discount up to ₹3,000. GST 18% applies."
-      : discountPct===10
-        ? "10% service discount applied for amounts above ₹30,000. GST 18% applies after discount."
-        : discountPct+"% service discount applied. GST 18% applies after discount.";
+    if(isGstLess) {
+      note.textContent = "GST LESS coupon applied. GST 18% excluded for this transaction.";
+    } else {
+      note.textContent = discountPct===0
+        ? "No discount up to ₹3,000. GST 18% applies."
+        : discountPct===10
+          ? "10% service discount applied for amounts above ₹30,000. GST 18% applies after discount."
+          : discountPct+"% service discount applied. GST 18% applies after discount.";
+    }
   }
   const holder=document.getElementById("selectedServiceLines");
   if(!lines.length){
@@ -1486,8 +1512,11 @@ function updateServicePrice(){
   document.getElementById("serviceBaseSubtotal").textContent=money(subtotal);
   document.getElementById("serviceSubtotal").textContent=money(discountedSubtotal);
   document.getElementById("serviceDiscount").textContent=money(totalDiscount);
-  document.getElementById("serviceGST").textContent=money(gst);
+  document.getElementById("serviceGST").textContent=isGstLess ? "₹0 (Excluded)" : money(gst);
   document.getElementById("serviceTotal").textContent=money(total);
+  if(document.getElementById("serviceAdvancePctDisplay")) document.getElementById("serviceAdvancePctDisplay").textContent=advPct+"%";
+  if(document.getElementById("serviceAdvanceAmtDisplay")) document.getElementById("serviceAdvanceAmtDisplay").textContent=money(advAmount);
+  if(document.getElementById("serviceBalanceAmtDisplay")) document.getElementById("serviceBalanceAmtDisplay").textContent=money(balAmount);
 }
 function money(v){return "₹"+Number(v||0).toLocaleString("en-IN",{maximumFractionDigits:2})}
 
@@ -1528,21 +1557,38 @@ function updateConstructionPrice(){
     if(labour===null){ base=0; note="Commercial labour-only quotation will be confirmed separately."; }
     else { base=labour; rateText=floors===1?"₹300/sq.ft.":"₹300 ground + ₹350/floor above"; note="Residential labour-only calculation: Ground ₹300/sq.ft.; First/Second ₹350/sq.ft."; }
   }
-  // No automatic discount on construction. (Any separately authorised
-  // construction discount must not exceed 2%; it is not offered in this UI.)
-  const d=getConstructionDiscount();
+
+  const code=(document.getElementById('c_coupon')?.value||'').trim().toUpperCase();
+  const isGstLess = code === 'GST LESS';
+
   const discount=0;
   const taxable=Math.max(0,base-discount);
-  const gst=taxable*0.18;
+  const gst=isGstLess ? 0 : taxable*0.18;
   const total=taxable+gst;
+
+  // Advance Payment % calculation
+  const advInput = document.getElementById("c_advance_pct");
+  const advValidation = validateAdvancePctInput(advInput, "c_advanceMsg");
+  const advPct = advValidation.value;
+  const advAmount = Number((total * advPct / 100).toFixed(2));
+  const balAmount = Number((total - advAmount).toFixed(2));
+
   document.getElementById("c_summaryType").textContent=type;
   document.getElementById("c_summaryArea").textContent=totalArea.toLocaleString("en-IN")+" sq.ft.";
   document.getElementById("c_summaryRate").textContent=rateText;
   document.getElementById("c_summaryBase").textContent=money(base);
   document.getElementById("c_summaryDiscount").textContent=money(discount)+" (No construction discount)";
-  document.getElementById("c_summaryGST").textContent=money(gst);
+  document.getElementById("c_summaryGST").textContent=isGstLess ? "₹0 (Excluded)" : money(gst);
   document.getElementById("c_summaryTotal").textContent=money(total);
-  document.getElementById("c_summaryNote").textContent=note+" No construction discount applied. GST 18% applies.";
+  if(document.getElementById("c_summaryAdvancePctDisplay")) document.getElementById("c_summaryAdvancePctDisplay").textContent=advPct+"%";
+  if(document.getElementById("c_summaryAdvanceAmtDisplay")) document.getElementById("c_summaryAdvanceAmtDisplay").textContent=money(advAmount);
+  if(document.getElementById("c_summaryBalanceAmtDisplay")) document.getElementById("c_summaryBalanceAmtDisplay").textContent=money(balAmount);
+
+  if(isGstLess){
+    document.getElementById("c_summaryNote").textContent=note+" GST LESS coupon applied. GST 18% excluded.";
+  } else {
+    document.getElementById("c_summaryNote").textContent=note+" No construction discount applied. GST 18% applies.";
+  }
 }
 document.getElementById("constructionForm")?.addEventListener("submit",function(e){
   e.preventDefault();
@@ -1565,28 +1611,30 @@ const RMA_GST_INVOICE_URL = SUPABASE_URL + "/functions/v1/generate-gst-invoice";
 const RMA_GSTIN = "01CBCPB0524K1ZG";
 const RMA_INVOICE_FROM = "rma.studies07@gmail.com";
 
-function rmaCalculateGSTDetails(totalAmount, discountAmount = 0, state = "Jammu and Kashmir") {
+function rmaCalculateGSTDetails(totalAmount, discountAmount = 0, state = "Jammu and Kashmir", isGstLess = false) {
   const total = Number(totalAmount) || 0;
   const discount = Number(discountAmount) || 0;
-  const taxable = Number((total / 1.18).toFixed(2));
-  const gst = Number((total - taxable).toFixed(2));
+  const gstRate = isGstLess ? 0 : 18;
+  const taxable = isGstLess ? total : Number((total / 1.18).toFixed(2));
+  const gst = isGstLess ? 0 : Number((total - taxable).toFixed(2));
   const subtotal = Number((taxable + discount).toFixed(2));
   const isIntra = /jammu|kashmir|j&k|jk/i.test((state || "").trim()) || (state || "").toLowerCase() === "jammu and kashmir";
-  const cgst = isIntra ? Number((gst / 2).toFixed(2)) : 0;
-  const sgst = isIntra ? Number((gst / 2).toFixed(2)) : 0;
-  const igst = isIntra ? 0 : gst;
+  const cgst = (!isGstLess && isIntra) ? Number((gst / 2).toFixed(2)) : 0;
+  const sgst = (!isGstLess && isIntra) ? Number((gst / 2).toFixed(2)) : 0;
+  const igst = (!isGstLess && !isIntra) ? gst : 0;
 
   return {
     subtotal,
     discount,
     taxable,
-    gstRate: 18,
+    gstRate,
     gst,
     cgst,
     sgst,
     igst,
     total,
-    isIntraState: isIntra
+    isIntraState: isIntra,
+    isGstLess: Boolean(isGstLess)
   };
 }
 window.rmaCalculateGSTDetails = rmaCalculateGSTDetails;
@@ -1710,6 +1758,10 @@ async function rmaExecutePaymentFlow({
   originalAmount,
   isTest = false,
   couponCode = "",
+  advancePercentage = 100,
+  advanceAmount = null,
+  balanceAmount = null,
+  isGstLess = false,
   receipt,
   description,
   customer = {},
@@ -1739,8 +1791,12 @@ async function rmaExecutePaymentFlow({
   setMsg('Creating secure Razorpay order...', 'info');
 
   const normCoupon = (couponCode || '').trim().toUpperCase();
+  const isGstExempt = isGstLess || normCoupon === 'GST LESS';
   const isTarseem = normCoupon === 'TARSEEM@10' || normCoupon === 'TARSEEM@20';
   const origAmt = Number(originalAmount || amount);
+  const advPct = Math.min(100, Math.max(0, Number(advancePercentage) || 100));
+  const advAmt = advanceAmount !== null ? Number(advanceAmount) : Number((amount * advPct / 100).toFixed(2));
+  const balAmt = balanceAmount !== null ? Number(balanceAmount) : Number((amount - advAmt).toFixed(2));
   const agentCommission = isTarseem ? Number((origAmt * 0.10).toFixed(2)) : 0;
 
   const notes = {
@@ -1748,15 +1804,21 @@ async function rmaExecutePaymentFlow({
     payment_type: paymentType,
     is_test: String(isTest),
     coupon_code: normCoupon,
+    is_gst_less: String(isGstExempt),
+    gst_applicable: String(!isGstExempt),
+    advance_percentage: String(advPct),
+    advance_amount: String(advAmt),
+    balance_amount: String(balAmt),
     agent_code: isTarseem ? normCoupon : (scopeDetails.agent_code || ''),
     agent_commission: String(agentCommission),
     original_amount: String(origAmt),
-    final_amount: String(amount),
+    total_amount: String(amount),
+    final_amount: String(advAmt),
     service_type: scopeDetails.service_type || paymentType
   };
 
   try{
-    const order = await rmaCreateRazorpayOrder(amount, receipt, description, notes);
+    const order = await rmaCreateRazorpayOrder(advAmt, receipt, description, notes);
     const options = {
       key: RAZORPAY_KEY_ID,
       order_id: order.order_id,
@@ -1781,8 +1843,9 @@ async function rmaExecutePaymentFlow({
           setMsg('Verifying payment securely...', 'info');
           await rmaVerifyRazorpayPayment(response);
 
-          const taxable = Number((amount / 1.18).toFixed(2));
-          const gst = Number((amount - taxable).toFixed(2));
+          const gstDetails = rmaCalculateGSTDetails(amount, 0, customer.state || "Jammu and Kashmir", isGstExempt);
+          const taxable = gstDetails.taxable;
+          const gst = gstDetails.gst;
           const recordPayload = {
             request_id: receipt,
             client_name: customer.name || "Customer",
@@ -1801,10 +1864,16 @@ async function rmaExecutePaymentFlow({
               razorpay_payment_id: response.razorpay_payment_id,
               is_test: isTest,
               coupon_code: normCoupon,
+              is_gst_less: isGstExempt,
+              gst_applicable: !isGstExempt,
+              advance_percentage: advPct,
+              advance_amount: advAmt,
+              balance_amount: balAmt,
               agent_code: isTarseem ? normCoupon : (scopeDetails.agent_code || ''),
               agent_commission: agentCommission,
               original_amount: origAmt,
-              final_amount: amount
+              total_amount: amount,
+              final_amount: advAmt
             })
           };
 
@@ -1854,8 +1923,12 @@ async function rmaExecutePaymentFlow({
                   state: customer.state || "Jammu and Kashmir"
                 },
                 description,
+                is_gst_less: isGstExempt,
+                advance_percentage: advPct,
+                advance_amount: advAmt,
+                balance_amount: balAmt,
                 taxable_amount: taxable,
-                gst_rate: 18,
+                gst_rate: isGstExempt ? 0 : 18,
                 gst_amount: gst,
                 total_amount: amount,
                 notes: {
@@ -3005,13 +3078,20 @@ const RMA_TEMP_COUPON_AMOUNT=1;
 function rmaIndiaToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
 function rmaCouponIsValidToday(){const today=rmaIndiaToday();return today>='2026-09-25'&&today<='2026-10-02';}
 function siteVisitPricing(distance){
- const baseFee=rate(distance),baseGst=baseFee*.18,baseTotal=baseFee+baseGst;
+ const baseFee=rate(distance);
  const normCode = (siteVisitCode||'').trim().toUpperCase();
+ const isGstLess = normCode === 'GST LESS';
+ const baseGst = isGstLess ? 0 : baseFee * .18;
+ const baseTotal = baseFee + baseGst;
+
  if(siteVisitCouponApplied || normCode===RMA_TEMP_COUPON || normCode==='RMATEST1'){
    const finalTotal=RMA_TEMP_COUPON_AMOUNT;
-   const taxable=Number((finalTotal/1.18).toFixed(2));
-   const gst=Number((finalTotal-taxable).toFixed(2));
-   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:Number((baseTotal-finalTotal).toFixed(2)),coupon:normCode||RMA_TEMP_COUPON};
+   const taxable=isGstLess ? finalTotal : Number((finalTotal/1.18).toFixed(2));
+   const gst=isGstLess ? 0 : Number((finalTotal-taxable).toFixed(2));
+   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:Number((baseTotal-finalTotal).toFixed(2)),coupon:normCode||RMA_TEMP_COUPON,isGstLess};
+ }
+ if(isGstLess){
+   return {baseFee,baseGst:0,baseTotal:baseFee,fee:baseFee,gst:0,total:baseFee,discount:0,coupon:normCode,isGstLess:true};
  }
  let discountAmount = 0;
  if(normCode==='TARSEEM@10' || normCode==='SITE10'){
@@ -3027,10 +3107,11 @@ function siteVisitPricing(distance){
    const finalTotal = Math.max(0, Number((baseTotal - discountAmount).toFixed(2)));
    const taxable = Number((finalTotal / 1.18).toFixed(2));
    const gst = Number((finalTotal - taxable).toFixed(2));
-   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:discountAmount,coupon:normCode};
+   return {baseFee,baseGst,baseTotal,fee:taxable,gst,total:finalTotal,discount:discountAmount,coupon:normCode,isGstLess:false};
  }
- return {baseFee,baseGst,baseTotal,fee:baseFee,gst:Number(baseGst.toFixed(2)),total:Number(baseTotal.toFixed(2)),discount:0,coupon:normCode};
+ return {baseFee,baseGst,baseTotal,fee:baseFee,gst:Number(baseGst.toFixed(2)),total:Number(baseTotal.toFixed(2)),discount:0,coupon:normCode,isGstLess:false};
 }
+
 function applySiteVisitCoupon(){
  const input=document.getElementById('r29_coupon'),code=(input?.value||'').trim().toUpperCase();
  if(!code){
@@ -3040,7 +3121,10 @@ function applySiteVisitCoupon(){
    return;
  }
  siteVisitCode=code;
- if(code==='TARSEEM@10'){
+ if(code==='GST LESS'){
+   siteVisitCouponApplied=false;
+   msg('r29_couponMsg','GST LESS coupon applied. GST 18% excluded for this transaction.','success');
+ } else if(code==='TARSEEM@10'){
    siteVisitCouponApplied=false;
    msg('r29_couponMsg','Referral code applied. ₹100 discount has been applied.','success');
  } else if(code==='TARSEEM@20'){
@@ -3086,8 +3170,8 @@ function buildVisit(){
 <div id="r29_locationMsg" class="notice info" style="margin-top:10px">Enter the project PIN and verify it, or use My Location.</div>
 <input type="hidden" id="r29_lat"><input type="hidden" id="r29_lng">
 </div>
-<div class="v29-price"><div class="v29-line"><span>Road Distance</span><strong id="r29_distance">—</strong></div><div class="v29-line"><span>Site Visit Fee</span><strong id="r29_fee">—</strong></div><div class="v29-line"><span>GST 18%</span><strong id="r29_gst">—</strong></div><div class="v29-line" id="r29_discount_row" style="display:none"><span>Coupon Discount</span><strong id="r29_discount">—</strong></div><div class="v29-line v29-total"><span>Total Payable</span><strong id="r29_total">—</strong></div></div>
-<div class="r29-coupon-box" style="margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8"><label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or referral code?</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="r29_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none"><button type="button" class="btn outline" id="r29_couponBtn">Apply Code</button></div><div id="r29_couponMsg" class="notice hidden" style="margin-top:9px"></div></div>
+<div class="v29-price"><div class="v29-line"><span>Road Distance</span><strong id="r29_distance">—</strong></div><div class="v29-line"><span>Site Visit Fee</span><strong id="r29_fee">—</strong></div><div class="v29-line"><span>GST Amount</span><strong id="r29_gst">—</strong></div><div class="v29-line" id="r29_discount_row" style="display:none"><span>Coupon Discount</span><strong id="r29_discount">—</strong></div><div class="v29-line v29-total"><span>Total Payable</span><strong id="r29_total">—</strong></div><div class="v29-line" style="border-top:1px solid rgba(255,255,255,0.15);padding-top:8px;margin-top:8px"><span>Advance %</span><strong id="r29_advance_pct_display">100%</strong></div><div class="v29-line"><span>Advance Amount</span><strong id="r29_advance_amt_display" style="color:#2ecc71">—</strong></div><div class="v29-line"><span>Balance Remaining</span><strong id="r29_balance_amt_display" style="color:#e74c3c">—</strong></div></div>
+<div class="r29-coupon-box" style="margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8"><div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px"><div><label style="font-weight:800;display:block;margin-bottom:6px">Advance Payment (%)</label><input id="r29_advance_pct" type="number" min="0" max="100" placeholder="100 (Default)" autocomplete="off" style="width:100%"><div id="r29_advanceMsg" class="notice hidden" style="margin-top:6px;font-size:12px"></div></div><div><label style="font-weight:800;display:block;margin-bottom:6px">Coupon Code</label><div style="display:flex;gap:8px"><input id="r29_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;text-transform:none"><button type="button" class="btn outline" id="r29_couponBtn">Apply Code</button></div><div id="r29_couponMsg" class="notice hidden" style="margin-top:6px"></div></div></div></div>
 <div id="r29_message" class="notice hidden" style="margin-top:12px"></div>
 <button type="button" class="btn gold full" id="r29_pay">Pay &amp; Book Site Visit with Razorpay</button>
 </form></div></div>`;
@@ -3097,6 +3181,13 @@ function buildVisit(){
  document.getElementById('r29_gps').onclick=useGPS;
  document.getElementById('r29_couponBtn').onclick=applySiteVisitCoupon;
  document.getElementById('r29_coupon').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applySiteVisitCoupon();}});
+ const r29AdvInput = document.getElementById('r29_advance_pct');
+ if (r29AdvInput) {
+   r29AdvInput.addEventListener('input', () => {
+     validateAdvancePctInput(r29AdvInput, 'r29_advanceMsg');
+     if (visitDistance !== null) showFee(visitDistance);
+   });
+ }
  document.getElementById('r29_pay').onclick=payVisit;
  document.getElementById('r29_pin').addEventListener('change',()=>{if(/^\d{6}$/.test(document.getElementById('r29_pin').value.trim()))verifyPin();});
  document.getElementById('r29_address').addEventListener('input',()=>{visitReady=false;visitDistance=null;clearDistance();});
@@ -3109,7 +3200,28 @@ async function roadDistance(lat,lng){
  const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${BASE_LNG},${BASE_LAT};${lng},${lat}?overview=false`);
  if(!r.ok)throw Error('Road distance could not be calculated.');const d=await r.json();if(!d.routes?.length)throw Error('No road route found.');return d.routes[0].distance/1000;
 }
-function showFee(d){const p=siteVisitPricing(d);document.getElementById('r29_distance').textContent=d.toFixed(2)+' km';document.getElementById('r29_fee').textContent=money(p.fee);document.getElementById('r29_gst').textContent=money(p.gst);document.getElementById('r29_total').textContent=money(p.total);const dr=document.getElementById('r29_discount_row');if(dr){dr.style.display=p.discount>0?'flex':'none';document.getElementById('r29_discount').textContent=p.discount>0?'-'+money(p.discount):'—';}}
+function showFee(d){
+  const p=siteVisitPricing(d);
+  document.getElementById('r29_distance').textContent=d.toFixed(2)+' km';
+  document.getElementById('r29_fee').textContent=money(p.fee);
+  document.getElementById('r29_gst').textContent=p.isGstLess ? '₹0 (Excluded)' : money(p.gst);
+  document.getElementById('r29_total').textContent=money(p.total);
+  const dr=document.getElementById('r29_discount_row');
+  if(dr){
+    dr.style.display=p.discount>0?'flex':'none';
+    document.getElementById('r29_discount').textContent=p.discount>0?'-'+money(p.discount):'—';
+  }
+
+  const advInput = document.getElementById('r29_advance_pct');
+  const advValidation = validateAdvancePctInput(advInput, 'r29_advanceMsg');
+  const advPct = advValidation.value;
+  const advAmount = Number((p.total * advPct / 100).toFixed(2));
+  const balAmount = Number((p.total - advAmount).toFixed(2));
+
+  if(document.getElementById('r29_advance_pct_display')) document.getElementById('r29_advance_pct_display').textContent = advPct + '%';
+  if(document.getElementById('r29_advance_amt_display')) document.getElementById('r29_advance_amt_display').textContent = money(advAmount);
+  if(document.getElementById('r29_balance_amt_display')) document.getElementById('r29_balance_amt_display').textContent = money(balAmount);
+}
 async function setLocation(lat,lng,label){
  document.getElementById('r29_lat').value=lat.toFixed(6);document.getElementById('r29_lng').value=lng.toFixed(6);document.getElementById('r29_coords').value=lat.toFixed(6)+', '+lng.toFixed(6);
  visitDistance=await roadDistance(lat,lng);visitReady=true;showFee(visitDistance);msg('r29_locationMsg',label+' Road distance from RMA base: '+visitDistance.toFixed(2)+' km.','success');
@@ -3129,13 +3241,27 @@ async function payVisit(){
  const form=document.getElementById('rmaV29VisitForm'),btn=document.getElementById('r29_pay');if(!form.reportValidity())return;
  if(!visitReady||visitDistance===null){msg('r29_message','Please verify the Project PIN or use My Location first so the road distance and fee can be calculated.','error');return}
  if(!window.Razorpay){msg('r29_message','Razorpay Checkout could not be loaded. Please refresh the page and try again.','error');return}
+
+ const r29AdvInput = document.getElementById('r29_advance_pct');
+ const advValidation = validateAdvancePctInput(r29AdvInput, 'r29_advanceMsg');
+ if(!advValidation.valid){
+   msg('r29_message', 'Please enter a valid Advance Payment % (0–100).', 'error');
+   return;
+ }
+ const advPct = advValidation.value;
+
  const pricing=siteVisitPricing(visitDistance);
  const fee=pricing.fee,gst=pricing.gst,total=pricing.total,requestId='RMA-V-'+Date.now().toString().slice(-9);
  const name=document.getElementById('r29_name').value.trim(),mobile=document.getElementById('r29_mobile').value.trim(),email=document.getElementById('r29_email').value.trim();
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg('r29_message','Please enter a valid customer Gmail / email address so we can send your GST bill.','error');return;}
+
+ const isTest = pricing.coupon === RMA_TEMP_COUPON || pricing.coupon === 'RMATEST1';
+ const advanceAmt = isTest ? 1.0 : Number((total * advPct / 100).toFixed(2));
+ const balanceAmt = isTest ? 0.0 : Number((total - advanceAmt).toFixed(2));
+
  paymentBusy=true;btn.disabled=false;msg('r29_message','Creating secure Razorpay order...');
  try{
-   const order=await rmaCreateRazorpayOrder(total,requestId,'RMA Site Visit Fee',{request_id:requestId,service_type:'Site Visit',distance_km:String(visitDistance.toFixed(2)),base_pin:BASE_PIN,coupon_code:pricing.coupon,coupon_valid_today:rmaCouponIsValidToday(),original_total:String(pricing.baseTotal.toFixed(2)),discount:String(pricing.discount.toFixed(2)),final_total:String(total.toFixed(2))});
+   const order=await rmaCreateRazorpayOrder(advanceAmt,requestId,'RMA Site Visit Fee',{request_id:requestId,service_type:'Site Visit',distance_km:String(visitDistance.toFixed(2)),base_pin:BASE_PIN,coupon_code:pricing.coupon,is_gst_less:String(pricing.isGstLess),advance_percentage:String(advPct),advance_amount:String(advanceAmt),balance_amount:String(balanceAmt),coupon_valid_today:rmaCouponIsValidToday(),original_total:String(pricing.baseTotal.toFixed(2)),discount:String(pricing.discount.toFixed(2)),final_total:String(advanceAmt.toFixed(2))});
    const rz=new window.Razorpay({key:window.RAZORPAY_KEY_ID,order_id:order.order_id,amount:order.amount,currency:order.currency||'INR',name:'RMA Design & Construction',description:'RMA Site Visit Fee',prefill:{name,email,contact:mobile},theme:{color:'#2e7d5b'},modal:{ondismiss:()=>{paymentBusy=false;msg('r29_message','Payment window closed. No payment was confirmed.','info');}},handler:async response=>{
       try{
         msg('r29_message','Payment received. Verifying securely...');
@@ -3259,13 +3385,31 @@ async function payVisit(){
  }catch(e){paymentBusy=false;btn.disabled=false;msg('r29_message',e.message||'Unable to start Razorpay payment.','error');}
 }
 
+function validateAdvancePctInput(inputEl, msgElId) {
+  const valStr = (inputEl?.value || '').trim();
+  if (!valStr) {
+    if (msgElId) msg(msgElId, '', 'info');
+    return { valid: true, value: 100 };
+  }
+  const val = Number(valStr);
+  if (isNaN(val) || val < 0 || val > 100) {
+    if (msgElId) msg(msgElId, 'Invalid Advance Payment (%). Please enter a number between 0 and 100.', 'error');
+    return { valid: false, value: 100 };
+  }
+  if (msgElId) msg(msgElId, `Advance Payment set to ${val}%.`, 'success');
+  return { valid: true, value: val };
+}
+
 function applyServiceCoupon(){
  const input=document.getElementById('s_coupon'),code=(input?.value||'').trim().toUpperCase();
  if(!code){
    msg('s_couponMsg','Please enter a coupon or referral code.','error');
+   updateServicePrice();
    return;
  }
- if(code==='TARSEEM@10'){
+ if(code==='GST LESS'){
+   msg('s_couponMsg','GST LESS coupon applied. GST 18% excluded for this transaction.','success');
+ } else if(code==='TARSEEM@10'){
    msg('s_couponMsg','Referral code applied. ₹500 discount has been applied.','success');
  } else if(code==='TARSEEM@20'){
    msg('s_couponMsg','Referral code applied. ₹1,000 discount has been applied.','success');
@@ -3278,25 +3422,40 @@ function applyServiceCoupon(){
  } else {
    msg('s_couponMsg','Invalid coupon or referral code for Service.','error');
  }
+ updateServicePrice();
 }
 
 function installServicePayment(){
  const form=document.getElementById('serviceForm');if(!form)return;
- if(!document.getElementById('s_coupon_box')){
-   const couponBox=document.createElement('div');
-   couponBox.id='s_coupon_box';
-   couponBox.className='r29-coupon-box';
-   couponBox.style.cssText='margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
-   couponBox.innerHTML=`
-     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or referral code?</label>
-     <div style="display:flex;gap:8px;flex-wrap:wrap">
-       <input id="s_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
-       <button type="button" class="btn outline" id="s_couponBtn">Apply Code</button>
+ if(!document.getElementById('s_payment_controls')){
+   const controlsBox=document.createElement('div');
+   controlsBox.id='s_payment_controls';
+   controlsBox.className='r29-coupon-box';
+   controlsBox.style.cssText='margin-top:14px;padding:15px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
+   controlsBox.innerHTML=`
+     <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;margin-bottom:10px">
+       <div>
+         <label style="font-weight:800;display:block;margin-bottom:6px">Advance Payment (%)</label>
+         <input id="s_advance_pct" type="number" min="0" max="100" placeholder="100 (Default)" autocomplete="off" style="width:100%">
+         <div id="s_advanceMsg" class="notice hidden" style="margin-top:6px;font-size:12px"></div>
+       </div>
+       <div>
+         <label style="font-weight:800;display:block;margin-bottom:6px">Coupon Code</label>
+         <div style="display:flex;gap:8px">
+           <input id="s_coupon" type="text" placeholder="Enter coupon (e.g. GST LESS)" autocomplete="off" style="flex:1;text-transform:none">
+           <button type="button" class="btn outline" id="s_couponBtn">Apply Code</button>
+         </div>
+         <div id="s_couponMsg" class="notice hidden" style="margin-top:6px"></div>
+       </div>
      </div>
-     <div id="s_couponMsg" class="notice hidden" style="margin-top:9px"></div>
    `;
-   form.appendChild(couponBox);
+   form.appendChild(controlsBox);
    document.getElementById('s_couponBtn').onclick=applyServiceCoupon;
+   const advInput = document.getElementById('s_advance_pct');
+   advInput.addEventListener('input', () => {
+     validateAdvancePctInput(advInput, 's_advanceMsg');
+     updateServicePrice();
+   });
  }
  let old=form.querySelector('#rmaV29ServicePay');if(old)old.remove();
  form.querySelectorAll('button').forEach(b=>{if(/Pay.*Razorpay|Submit Service Request/i.test(b.textContent||''))b.remove();});
@@ -3311,28 +3470,52 @@ async function payService(){
  if(paymentBusy) return;
  const keys=selectedServiceKeys();if(!keys.length){msg('rmaV29ServiceMsg','Please select at least one service.','error');return}
  const mobile=document.getElementById('s_mobile')?.value.trim()||'';if(!/^\d{10}$/.test(mobile)){msg('rmaV29ServiceMsg','Please enter a valid 10-digit mobile number.','error');return}
- updateServicePrice();const amount=Number((document.getElementById('serviceTotal')?.textContent||'').replace(/[^0-9.]/g,''));if(!amount){msg('rmaV29ServiceMsg','Please select a service so the payment amount can be calculated.','error');return}
- const requestId='RMA-S-'+Date.now().toString().slice(-9);const name=document.getElementById('s_name')?.value.trim()||'';const email=document.getElementById('s_email')?.value.trim()||'';
+
+ const advInput = document.getElementById('s_advance_pct');
+ const advValidation = validateAdvancePctInput(advInput, 's_advanceMsg');
+ if(!advValidation.valid){
+   msg('rmaV29ServiceMsg', 'Please enter a valid Advance Payment % (0–100).', 'error');
+   return;
+ }
+ const advPct = advValidation.value;
+
+ updateServicePrice();
+ const totalAmount=Number((document.getElementById('serviceTotal')?.textContent||'').replace(/[^0-9.]/g,''));
+ if(!totalAmount){msg('rmaV29ServiceMsg','Please select a service so the payment amount can be calculated.','error');return}
+
+ const requestId='RMA-S-'+Date.now().toString().slice(-9);
+ const name=document.getElementById('s_name')?.value.trim()||'';
+ const email=document.getElementById('s_email')?.value.trim()||'';
  const address=document.getElementById('s_project_address')?.value.trim()||'Service request';
 
  const code=(document.getElementById('s_coupon')?.value||'').trim().toUpperCase();
- let finalAmount=amount, isTest=false;
+ const isGstLess = code === 'GST LESS';
+ let isTest=false;
+ let calcTotal = totalAmount;
+
  if(code==='RMATEST1'||code==='TEMP@1'){
-   finalAmount=1.0;
+   calcTotal=1.0;
    isTest=true;
  } else if(code==='TARSEEM@10'||code==='GOOD5'){
-   finalAmount=Math.max(0, amount - 500);
+   calcTotal=Math.max(0, totalAmount - 500);
  } else if(code==='TARSEEM@20'||code==='BEST10'){
-   finalAmount=Math.max(0, amount - 1000);
+   calcTotal=Math.max(0, totalAmount - 1000);
  }
+
+ const advanceAmt = isTest ? 1.0 : Number((calcTotal * advPct / 100).toFixed(2));
+ const balanceAmt = isTest ? 0.0 : Number((calcTotal - advanceAmt).toFixed(2));
 
  paymentBusy = true;
  return rmaExecutePaymentFlow({
    paymentType: 'service',
-   amount: finalAmount,
-   originalAmount: amount,
+   amount: calcTotal,
+   originalAmount: totalAmount,
    isTest: isTest,
    couponCode: code,
+   advancePercentage: advPct,
+   advanceAmount: advanceAmt,
+   balanceAmount: balanceAmt,
+   isGstLess: isGstLess,
    receipt: requestId,
    description: 'RMA Professional Service Payment — ' + keys.join(', '),
    customer: { name, email, mobile, address, state: '' },
@@ -3354,9 +3537,12 @@ function applyConstructionCoupon(){
  const input=document.getElementById('c_coupon'),code=(input?.value||'').trim().toUpperCase();
  if(!code){
    msg('c_couponMsg','Please enter a coupon or referral code.','error');
+   updateConstructionPrice();
    return;
  }
- if(code==='TARSEEM@10'){
+ if(code==='GST LESS'){
+   msg('c_couponMsg','GST LESS coupon applied. GST 18% excluded for this transaction.','success');
+ } else if(code==='TARSEEM@10'){
    msg('c_couponMsg','Referral code applied. ₹500 discount has been applied.','success');
  } else if(code==='TARSEEM@20'){
    msg('c_couponMsg','Referral code applied. ₹1,000 discount has been applied.','success');
@@ -3369,25 +3555,42 @@ function applyConstructionCoupon(){
  } else {
    msg('c_couponMsg','Invalid coupon or referral code for Construction.','error');
  }
+ updateConstructionPrice();
 }
 
 function installConstructionPayment(){
  const form=document.getElementById('constructionForm');if(!form)return;
- if(!document.getElementById('c_coupon_box')){
-   const couponBox=document.createElement('div');
-   couponBox.id='c_coupon_box';
-   couponBox.className='r29-coupon-box';
-   couponBox.style.cssText='margin-top:14px;padding:13px 14px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
-   couponBox.innerHTML=`
-     <label style="font-weight:800;display:block;margin-bottom:7px">Have a coupon or referral code?</label>
-     <div style="display:flex;gap:8px;flex-wrap:wrap">
-       <input id="c_coupon" type="text" placeholder="Enter coupon or referral code" autocomplete="off" style="flex:1;min-width:180px;text-transform:none">
-       <button type="button" class="btn outline" id="c_couponBtn">Apply Code</button>
+ if(!document.getElementById('c_payment_controls')){
+   const controlsBox=document.createElement('div');
+   controlsBox.id='c_payment_controls';
+   controlsBox.className='r29-coupon-box';
+   controlsBox.style.cssText='margin-top:14px;padding:15px;border:1px dashed #b9cdbf;border-radius:10px;background:#f7fbf8';
+   controlsBox.innerHTML=`
+     <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;margin-bottom:10px">
+       <div>
+         <label style="font-weight:800;display:block;margin-bottom:6px">Advance Payment (%)</label>
+         <input id="c_advance_pct" type="number" min="0" max="100" placeholder="100 (Default)" autocomplete="off" style="width:100%">
+         <div id="c_advanceMsg" class="notice hidden" style="margin-top:6px;font-size:12px"></div>
+       </div>
+       <div>
+         <label style="font-weight:800;display:block;margin-bottom:6px">Coupon Code</label>
+         <div style="display:flex;gap:8px">
+           <input id="c_coupon" type="text" placeholder="Enter coupon (e.g. GST LESS)" autocomplete="off" style="flex:1;text-transform:none">
+           <button type="button" class="btn outline" id="c_couponBtn">Apply Code</button>
+         </div>
+         <div id="c_couponMsg" class="notice hidden" style="margin-top:6px"></div>
+       </div>
      </div>
-     <div id="c_couponMsg" class="notice hidden" style="margin-top:9px"></div>
    `;
-   form.appendChild(couponBox);
+   form.appendChild(controlsBox);
    document.getElementById('c_couponBtn').onclick=applyConstructionCoupon;
+   const cAdvInput = document.getElementById('c_advance_pct');
+   if (cAdvInput) {
+     cAdvInput.addEventListener('input', () => {
+       validateAdvancePctInput(cAdvInput, 'c_advanceMsg');
+       updateConstructionPrice();
+     });
+   }
  }
  let old=form.querySelector('#rmaV29ConstructionPay');if(!old){
    const btn=document.createElement('button');btn.id='rmaV29ConstructionPay';btn.type='button';btn.className='btn gold full';btn.textContent='Pay & Submit Construction Request with Razorpay';btn.style.marginTop='12px';
@@ -3408,10 +3611,20 @@ async function payConstructionWithRazorpay(){
  const email=document.getElementById('c_email2')?.value.trim()||'';
  if(!/^\d{10}$/.test(mobile)){msg('rmaV29ConstructionMsg','Please enter a valid 10-digit mobile number.','error');return}
  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg('rmaV29ConstructionMsg','Please enter a valid email address so we can send your GST bill.','error');return}
+
+ const cAdvInput = document.getElementById('c_advance_pct');
+ const advValidation = validateAdvancePctInput(cAdvInput, 'c_advanceMsg');
+ if(!advValidation.valid){
+   msg('rmaV29ConstructionMsg', 'Please enter a valid Advance Payment % (0–100).', 'error');
+   return;
+ }
+ const advPct = advValidation.value;
+
  updateConstructionPrice();
  const amountText=document.getElementById('c_summaryTotal')?.textContent||'₹0';
  const amount=Number(amountText.replace(/[^0-9.]/g,''));
  if(!amount||amount<=0){msg('rmaV29ConstructionMsg','Please enter built-up area and construction details so the total payment amount can be calculated.','error');return}
+
  const requestId='RMA-C-'+Date.now().toString().slice(-9);
  const buildingType=document.getElementById('c_building2')?.value||'Residential';
  const floors=document.getElementById('c_floors2')?.value||'1';
@@ -3422,23 +3635,33 @@ async function payConstructionWithRazorpay(){
  const other=document.getElementById('c_other2')?.value.trim()||'';
 
  const code=(document.getElementById('c_coupon')?.value||'').trim().toUpperCase();
- let finalAmount=amount, isTest=false;
+ const isGstLess = code === 'GST LESS';
+ let isTest=false;
+ let calcTotal = amount;
+
  if(code==='RMATEST1'||code==='TEMP@1'){
-   finalAmount=1.0;
+   calcTotal=1.0;
    isTest=true;
  } else if(code==='TARSEEM@10'||code==='GOOD5'){
-   finalAmount=Math.max(0, amount - 500);
+   calcTotal=Math.max(0, amount - 500);
  } else if(code==='TARSEEM@20'||code==='BEST10'){
-   finalAmount=Math.max(0, amount - 1000);
+   calcTotal=Math.max(0, amount - 1000);
  }
+
+ const advanceAmt = isTest ? 1.0 : Number((calcTotal * advPct / 100).toFixed(2));
+ const balanceAmt = isTest ? 0.0 : Number((calcTotal - advanceAmt).toFixed(2));
 
  paymentBusy = true;
  return rmaExecutePaymentFlow({
    paymentType: 'construction',
-   amount: finalAmount,
+   amount: calcTotal,
    originalAmount: amount,
    isTest: isTest,
    couponCode: code,
+   advancePercentage: advPct,
+   advanceAmount: advanceAmt,
+   balanceAmount: balanceAmt,
+   isGstLess: isGstLess,
    receipt: requestId,
    description: 'RMA Construction Service — ' + buildingType + ' (' + floors + ' Floor(s), ' + area + ' sq.ft./floor)',
    customer: { name, email, mobile, address, state: 'Jammu and Kashmir' },
