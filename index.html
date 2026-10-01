@@ -1782,15 +1782,9 @@ async function rmaExecutePaymentFlow({
     setMsg('Please complete required details so the payment amount can be calculated.', 'error');
     return;
   }
-  if(!window.Razorpay){
-    setMsg('Razorpay Checkout could not be loaded. Please refresh the page and try again.', 'error');
-    return;
-  }
-
-  if(btnEl) btnEl.disabled = true;
-  setMsg('Creating secure Razorpay order...', 'info');
 
   const normCoupon = (couponCode || '').trim().toUpperCase();
+  const isCash = normCoupon === 'CASH';
   const isGstExempt = isGstLess || normCoupon === 'GST LESS';
   const isTarseem = normCoupon === 'TARSEEM@10' || normCoupon === 'TARSEEM@20';
   const origAmt = Number(originalAmount || amount);
@@ -1798,6 +1792,126 @@ async function rmaExecutePaymentFlow({
   const advAmt = advanceAmount !== null ? Number(advanceAmount) : Number((amount * advPct / 100).toFixed(2));
   const balAmt = balanceAmount !== null ? Number(balanceAmount) : Number((amount - advAmt).toFixed(2));
   const agentCommission = isTarseem ? Number((origAmt * 0.10).toFixed(2)) : 0;
+
+  if(!isCash && !window.Razorpay){
+    setMsg('Razorpay Checkout could not be loaded. Please refresh the page and try again.', 'error');
+    return;
+  }
+
+  if(isCash){
+    if(btnEl) btnEl.disabled = true;
+    setMsg('Submitting cash booking request...', 'info');
+
+    const gstDetails = rmaCalculateGSTDetails(amount, 0, customer.state || "Jammu and Kashmir", isGstExempt);
+    const taxable = gstDetails.taxable;
+    const gst = gstDetails.gst;
+    const recordPayload = {
+      request_id: receipt,
+      client_name: customer.name || "Customer",
+      mobile: customer.mobile || customer.contact || "",
+      email: customer.email || null,
+      service_type: paymentType + ' — ' + (scopeDetails.service_type || description),
+      project_address: customer.address || 'Project site',
+      visit_fee: taxable,
+      gst_amount: gst,
+      total_amount: amount,
+      status: 'pending_cash_verification',
+      visit_scope: JSON.stringify({
+        ...scopeDetails,
+        payment_type: paymentType,
+        payment_method: 'cash',
+        payment_status: 'pending_cash_verification',
+        coupon_code: 'CASH',
+        is_gst_less: isGstExempt,
+        gst_applicable: !isGstExempt,
+        advance_percentage: advPct,
+        advance_amount: advAmt,
+        balance_amount: balAmt,
+        agent_code: isTarseem ? normCoupon : (scopeDetails.agent_code || ''),
+        agent_commission: agentCommission,
+        original_amount: origAmt,
+        total_amount: amount,
+        final_amount: advAmt
+      })
+    };
+
+    try {
+      if(typeof insertBooking === 'function') {
+        await insertBooking(recordPayload);
+      } else if(typeof supabaseClient !== 'undefined') {
+        const ins = await supabaseClient.from('bookings').insert(recordPayload);
+        if(ins.error) throw ins.error;
+      }
+    } catch(dbErr) {
+      console.error('Cash booking insertion error:', dbErr);
+      if(btnEl) btnEl.disabled = false;
+      setMsg(dbErr.message || "Failed to submit cash booking request. Please try again.", 'error');
+      return;
+    }
+
+    try {
+      const inserted = (await supabaseClient.from('bookings').select('id,client_user_id').eq('request_id', receipt).maybeSingle()).data;
+      if(inserted?.id){
+        await supabaseClient.from('status_history').insert({
+          booking_id: inserted.id,
+          request_id: receipt,
+          previous_status: 'none',
+          new_status: 'pending_cash_verification',
+          changed_by: 'Customer (Cash Option Selected)',
+          remarks: 'Cash payment selected — Pending Cash Verification'
+        });
+      }
+    } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+    try {
+      if(typeof window.notifyRMAAdminForNewBooking === 'function') {
+        window.notifyRMAAdminForNewBooking({
+          type: (paymentType === 'construction' ? 'Construction Request' : paymentType === 'site_visit' ? 'Site Visit Booking' : 'Service Request') + ' (CASH)',
+          customerName: customer.name || 'Customer',
+          mobile: customer.mobile || customer.contact || '',
+          email: customer.email || '',
+          location: customer.address || '',
+          paymentAmount: amount,
+          bookingId: receipt,
+          referralCode: 'CASH',
+          details: `Payment Method: Cash\nPayment Status: Cash Pending Verification\nDescription: ${scopeDetails.service_type || description}`
+        });
+      }
+    } catch(notifyErr) {
+      console.warn('Notification error:', notifyErr);
+    }
+
+    try {
+      if(typeof window.notifyClientTemporaryBooking === 'function'){
+        await window.notifyClientTemporaryBooking({
+          request_id: receipt,
+          client_name: customer.name || 'Customer',
+          email: customer.email || '',
+          mobile: customer.mobile || customer.contact || ''
+        });
+      }
+    } catch(tErr){
+      console.warn('Client notification warning:', tErr);
+    }
+
+    if(btnEl) {
+      btnEl.textContent = 'Cash Request Submitted';
+      btnEl.disabled = true;
+    }
+    if(box){
+      box.className = "notice success";
+      box.classList.remove("hidden");
+      box.innerHTML = "<b>✓ CASH BOOKING SUBMITTED</b><br>Request ID: <b>" + receipt + "</b><br>Payment Method: <b>Cash</b><br>Payment Status: <b>Cash Pending Verification</b><br><small>Online payment is not required. Our team will verify your cash payment upon receipt.</small>";
+    }
+
+    if(typeof onSuccess === 'function') {
+      onSuccess({ payment_method: 'cash', payment_status: 'pending_cash_verification', amount, receipt });
+    }
+    return;
+  }
+
+  if(btnEl) btnEl.disabled = true;
+  setMsg('Creating secure Razorpay order...', 'info');
 
   const notes = {
     request_id: receipt,
@@ -3093,6 +3207,9 @@ function siteVisitPricing(distance){
  if(isGstLess){
    return {baseFee,baseGst:0,baseTotal:baseFee,fee:baseFee,gst:0,total:baseFee,discount:0,coupon:normCode,isGstLess:true};
  }
+ if(normCode==='CASH'){
+   return {baseFee,baseGst,baseTotal,fee:baseFee,gst:Number(baseGst.toFixed(2)),total:Number(baseTotal.toFixed(2)),discount:0,coupon:normCode,isGstLess:false};
+ }
  let discountAmount = 0;
  if(normCode==='TARSEEM@10' || normCode==='SITE10'){
    discountAmount = 100;
@@ -3114,37 +3231,51 @@ function siteVisitPricing(distance){
 
 function applySiteVisitCoupon(){
  const input=document.getElementById('r29_coupon'),code=(input?.value||'').trim().toUpperCase();
+ const btn=document.getElementById('r29_pay');
  if(!code){
    siteVisitCouponApplied=false; siteVisitCode='';
+   if(btn) btn.textContent='Pay & Book Site Visit with Razorpay';
    msg('r29_couponMsg','Please enter a coupon or referral code.','error');
    if(visitDistance!==null)showFee(visitDistance);
    return;
  }
  siteVisitCode=code;
- if(code==='GST LESS'){
+ if(code==='CASH'){
    siteVisitCouponApplied=false;
+   if(btn) btn.textContent='Confirm Cash Booking';
+   msg('r29_couponMsg','✓ CASH PAYMENT SELECTED — Payment Method: Cash | Payment Status: Cash Pending Verification. Online payment is not required.','success');
+ } else if(code==='GST LESS'){
+   siteVisitCouponApplied=false;
+   if(btn) btn.textContent='Pay & Book Site Visit with Razorpay';
    msg('r29_couponMsg','GST LESS coupon applied. GST 18% excluded for this transaction.','success');
  } else if(code==='TARSEEM@10'){
    siteVisitCouponApplied=false;
+   if(btn) btn.textContent='Pay & Book Site Visit with Razorpay';
    msg('r29_couponMsg','Referral code applied. ₹100 discount has been applied.','success');
  } else if(code==='TARSEEM@20'){
    siteVisitCouponApplied=false;
+   if(btn) btn.textContent='Pay & Book Site Visit with Razorpay';
    msg('r29_couponMsg','Referral code applied. ₹250 discount has been applied.','success');
  } else if(code==='SITE10'){
    siteVisitCouponApplied=false;
+   if(btn) btn.textContent='Pay & Book Site Visit with Razorpay';
    msg('r29_couponMsg','Coupon code applied. ₹100 discount has been applied.','success');
  } else if(code==='SITE20'){
    siteVisitCouponApplied=false;
+   if(btn) btn.textContent='Pay & Book Site Visit with Razorpay';
    msg('r29_couponMsg','Coupon code applied. ₹200 discount has been applied.','success');
  } else if(code==='SITE30'){
    siteVisitCouponApplied=false;
+   if(btn) btn.textContent='Pay & Book Site Visit with Razorpay';
    msg('r29_couponMsg','Coupon code applied. ₹300 discount has been applied.','success');
  } else if(code===RMA_TEMP_COUPON || code==='RMATEST1'){
    siteVisitCouponApplied=true;
+   if(btn) btn.textContent='Pay & Book Site Visit with Razorpay';
    msg('r29_couponMsg','Test Coupon applied. Amount reduced to ₹1.00 for payment verification.','success');
  } else {
    siteVisitCouponApplied=false; siteVisitCode='';
-   msg('r29_couponMsg','Invalid coupon or referral code for Site Visit.','error');
+   if(btn) btn.textContent='Pay & Book Site Visit with Razorpay';
+   msg('r29_couponMsg','Invalid payment code.','error');
  }
  if(visitDistance!==null)showFee(visitDistance);
 }
@@ -3240,7 +3371,6 @@ async function payVisit(){
  if(paymentBusy)return;
  const form=document.getElementById('rmaV29VisitForm'),btn=document.getElementById('r29_pay');if(!form.reportValidity())return;
  if(!visitReady||visitDistance===null){msg('r29_message','Please verify the Project PIN or use My Location first so the road distance and fee can be calculated.','error');return}
- if(!window.Razorpay){msg('r29_message','Razorpay Checkout could not be loaded. Please refresh the page and try again.','error');return}
 
  const r29AdvInput = document.getElementById('r29_advance_pct');
  const advValidation = validateAdvancePctInput(r29AdvInput, 'r29_advanceMsg');
@@ -3256,8 +3386,118 @@ async function payVisit(){
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg('r29_message','Please enter a valid customer Gmail / email address so we can send your GST bill.','error');return;}
 
  const isTest = pricing.coupon === RMA_TEMP_COUPON || pricing.coupon === 'RMATEST1';
+ const isCash = pricing.coupon === 'CASH';
  const advanceAmt = isTest ? 1.0 : Number((total * advPct / 100).toFixed(2));
  const balanceAmt = isTest ? 0.0 : Number((total - advanceAmt).toFixed(2));
+
+ if(!isCash && !window.Razorpay){msg('r29_message','Razorpay Checkout could not be loaded. Please refresh the page and try again.','error');return}
+
+ if(isCash){
+   paymentBusy = true; if(btn) btn.disabled = true;
+   msg('r29_message', 'Submitting cash site visit booking...', 'info');
+   try {
+     const payload = {
+       request_id: requestId,
+       client_name: name,
+       mobile,
+       email: email || null,
+       service_type: 'Site Visit',
+       project_address: document.getElementById('r29_address').value.trim(),
+       latitude: Number(document.getElementById('r29_lat').value),
+       longitude: Number(document.getElementById('r29_lng').value),
+       distance_km: Number(visitDistance.toFixed(2)),
+       visit_fee: fee,
+       gst_amount: Number(gst.toFixed(2)),
+       total_amount: Number(total.toFixed(2)),
+       status: 'pending_cash_verification',
+       visit_scope: JSON.stringify({
+         building_type: document.getElementById('r29_building').value,
+         requirement: document.getElementById('r29_requirement').value.trim(),
+         requested_date: document.getElementById('r29_date').value,
+         requested_time: document.getElementById('r29_time').value,
+         payment_method: 'cash',
+         payment_status: 'pending_cash_verification',
+         coupon_code: 'CASH',
+         advance_percentage: advPct,
+         advance_amount: advanceAmt,
+         balance_amount: balanceAmt,
+         base_pin: BASE_PIN,
+         base_lat: BASE_LAT,
+         base_lng: BASE_LNG,
+         original_total: pricing.baseTotal,
+         discount: pricing.discount,
+         final_total: total
+       })
+     };
+     await insertBooking(payload);
+
+     try {
+       const inserted = (await supabaseClient.from('bookings').select('id,client_user_id').eq('request_id',requestId).maybeSingle()).data;
+       if(inserted?.id){
+         payload.id = inserted.id;
+         payload.client_user_id = inserted.client_user_id || null;
+         await supabaseClient.from('status_history').insert({
+           booking_id: inserted.id,
+           request_id: requestId,
+           previous_status: 'none',
+           new_status: 'pending_cash_verification',
+           changed_by: 'Customer (Cash Option Selected)',
+           remarks: 'Cash payment selected — Pending Cash Verification'
+         });
+       }
+     } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+     try {
+       if(typeof window.notifyRMAAdminForNewBooking === 'function') {
+         window.notifyRMAAdminForNewBooking({
+           type: 'Site Visit Booking (CASH)',
+           customerName: name,
+           mobile: mobile,
+           email: email || '',
+           location: document.getElementById('r29_address').value.trim(),
+           paymentAmount: total,
+           bookingId: requestId,
+           requestedDate: document.getElementById('r29_date').value,
+           requestedTime: document.getElementById('r29_time').value,
+           referralCode: 'CASH',
+           details: `Payment Method: Cash\nPayment Status: Cash Pending Verification\nBuilding Type: ${document.getElementById('r29_building').value}\nRequirement: ${document.getElementById('r29_requirement').value.trim()}`
+         });
+       }
+     } catch(notifyErr) {
+       console.warn('Site visit notification error:', notifyErr);
+     }
+
+     try {
+       if(typeof window.notifyClientTemporaryBooking === 'function'){
+         await window.notifyClientTemporaryBooking({
+           id: payload.id || null,
+           request_id: requestId,
+           client_name: name,
+           email: email,
+           mobile: mobile,
+           client_user_id: payload.client_user_id || null
+         });
+       }
+     } catch(tErr){
+       console.warn('Temporary booking notification warning:', tErr);
+     }
+
+     paymentBusy = false;
+     if(btn){ btn.textContent = 'Cash Site Visit Booked'; btn.disabled = true; }
+     const box = document.getElementById('r29_message');
+     if(box){
+       box.className = "notice success";
+       box.classList.remove("hidden");
+       box.innerHTML = "<b>✓ CASH SITE VISIT BOOKING CREATED</b><br>Request ID: <b>" + requestId + "</b><br>Payment Method: <b>Cash</b><br>Payment Status: <b>Cash Pending Verification</b><br><small>Online payment is not required. Our team will verify your cash payment upon receipt.</small>";
+     }
+     return;
+   } catch(e) {
+     paymentBusy = false;
+     if(btn) btn.disabled = false;
+     msg('r29_message', e.message || 'Failed to submit cash site visit booking. Please try again.', 'error');
+     return;
+   }
+ }
 
  paymentBusy=true;btn.disabled=false;msg('r29_message','Creating secure Razorpay order...');
  try{
@@ -3402,25 +3642,37 @@ function validateAdvancePctInput(inputEl, msgElId) {
 
 function applyServiceCoupon(){
  const input=document.getElementById('s_coupon'),code=(input?.value||'').trim().toUpperCase();
+ const btn=document.getElementById('rmaV29ServicePay');
  if(!code){
+   if(btn) btn.textContent='Pay & Submit Service Request with Razorpay';
    msg('s_couponMsg','Please enter a coupon or referral code.','error');
    updateServicePrice();
    return;
  }
- if(code==='GST LESS'){
+ if(code==='CASH'){
+   if(btn) btn.textContent='Submit Cash Service Request';
+   msg('s_couponMsg','✓ CASH PAYMENT SELECTED — Payment Method: Cash | Payment Status: Cash Pending Verification. Online payment is not required.','success');
+ } else if(code==='GST LESS'){
+   if(btn) btn.textContent='Pay & Submit Service Request with Razorpay';
    msg('s_couponMsg','GST LESS coupon applied. GST 18% excluded for this transaction.','success');
  } else if(code==='TARSEEM@10'){
+   if(btn) btn.textContent='Pay & Submit Service Request with Razorpay';
    msg('s_couponMsg','Referral code applied. ₹500 discount has been applied.','success');
  } else if(code==='TARSEEM@20'){
+   if(btn) btn.textContent='Pay & Submit Service Request with Razorpay';
    msg('s_couponMsg','Referral code applied. ₹1,000 discount has been applied.','success');
  } else if(code==='GOOD5'){
+   if(btn) btn.textContent='Pay & Submit Service Request with Razorpay';
    msg('s_couponMsg','Coupon code applied. ₹500 discount has been applied.','success');
  } else if(code==='BEST10'){
+   if(btn) btn.textContent='Pay & Submit Service Request with Razorpay';
    msg('s_couponMsg','Coupon code applied. ₹1,000 discount has been applied.','success');
  } else if(code==='RMATEST1'||code==='TEMP@1'){
+   if(btn) btn.textContent='Pay & Submit Service Request with Razorpay';
    msg('s_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
  } else {
-   msg('s_couponMsg','Invalid coupon or referral code for Service.','error');
+   if(btn) btn.textContent='Pay & Submit Service Request with Razorpay';
+   msg('s_couponMsg','Invalid payment code.','error');
  }
  updateServicePrice();
 }
@@ -3535,25 +3787,37 @@ async function payService(){
 
 function applyConstructionCoupon(){
  const input=document.getElementById('c_coupon'),code=(input?.value||'').trim().toUpperCase();
+ const btn=document.getElementById('rmaV29ConstructionPay');
  if(!code){
+   if(btn) btn.textContent='Pay & Submit Construction Request with Razorpay';
    msg('c_couponMsg','Please enter a coupon or referral code.','error');
    updateConstructionPrice();
    return;
  }
- if(code==='GST LESS'){
+ if(code==='CASH'){
+   if(btn) btn.textContent='Submit Cash Construction Request';
+   msg('c_couponMsg','✓ CASH PAYMENT SELECTED — Payment Method: Cash | Payment Status: Cash Pending Verification. Online payment is not required.','success');
+ } else if(code==='GST LESS'){
+   if(btn) btn.textContent='Pay & Submit Construction Request with Razorpay';
    msg('c_couponMsg','GST LESS coupon applied. GST 18% excluded for this transaction.','success');
  } else if(code==='TARSEEM@10'){
+   if(btn) btn.textContent='Pay & Submit Construction Request with Razorpay';
    msg('c_couponMsg','Referral code applied. ₹500 discount has been applied.','success');
  } else if(code==='TARSEEM@20'){
+   if(btn) btn.textContent='Pay & Submit Construction Request with Razorpay';
    msg('c_couponMsg','Referral code applied. ₹1,000 discount has been applied.','success');
  } else if(code==='GOOD5'){
+   if(btn) btn.textContent='Pay & Submit Construction Request with Razorpay';
    msg('c_couponMsg','Coupon code applied. ₹500 discount has been applied.','success');
  } else if(code==='BEST10'){
+   if(btn) btn.textContent='Pay & Submit Construction Request with Razorpay';
    msg('c_couponMsg','Coupon code applied. ₹1,000 discount has been applied.','success');
  } else if(code==='RMATEST1'||code==='TEMP@1'){
+   if(btn) btn.textContent='Pay & Submit Construction Request with Razorpay';
    msg('c_couponMsg','Test Coupon applied! Amount reduced to ₹1.00 for payment verification.','success');
  } else {
-   msg('c_couponMsg','Invalid coupon or referral code for Construction.','error');
+   if(btn) btn.textContent='Pay & Submit Construction Request with Razorpay';
+   msg('c_couponMsg','Invalid payment code.','error');
  }
  updateConstructionPrice();
 }
@@ -5760,6 +6024,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       CONFIRMED_APPOINTMENTS: 0,
       TODAYS_VISITS: 0,
       COMPLETED_VISITS: 0,
+      CASH_PENDING: 0,
       REJECTED_CANCELLED: 0
     };
 
@@ -5768,7 +6033,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
       const cDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || '';
 
-      if (['confirmed', 'approved', 'accepted'].includes(st)) {
+      if (st === 'pending_cash_verification' || st === 'cash_pending' || j.payment_status === 'pending_cash_verification') {
+        stats.CASH_PENDING++;
+      } else if (['confirmed', 'approved', 'accepted'].includes(st)) {
         stats.CONFIRMED_APPOINTMENTS++;
         if (cDate === nowStr) stats.TODAYS_VISITS++;
       } else if (st === 'completed') {
@@ -5795,6 +6062,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='NEW_PENDING_REQUESTS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('NEW_PENDING_REQUESTS')">
             <small>NEW / PENDING REQUESTS</small>
             <strong>${stats.NEW_PENDING_REQUESTS}</strong>
+          </div>
+          <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='CASH_PENDING'?'border:2px solid #d4af37;background:#fefce8':''}" onclick="setRMAAdminFilter('CASH_PENDING')">
+            <small>CASH PENDING VERIFICATION</small>
+            <strong style="color:#856404">${stats.CASH_PENDING}</strong>
           </div>
           <div class="ps-v40-stat" style="cursor:pointer; ${window.rmaAdminFilterStatus==='CONFIRMED_APPOINTMENTS'?'border:2px solid #2e7d5b;background:#e2f2e9':''}" onclick="setRMAAdminFilter('CONFIRMED_APPOINTMENTS')">
             <small>CONFIRMED APPOINTMENTS</small>
@@ -5825,8 +6096,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         let j = {}; try { j = JSON.parse(x.visit_scope || '{}'); } catch(e){}
         const cDate = x.confirmed_date || x.scheduled_date || j.confirmed_date || '';
 
+        if(window.rmaAdminFilterStatus === 'CASH_PENDING') {
+          return st === 'pending_cash_verification' || st === 'cash_pending' || j.payment_status === 'pending_cash_verification' || j.coupon_code === 'CASH';
+        }
         if(window.rmaAdminFilterStatus === 'NEW_PENDING_REQUESTS' || window.rmaAdminFilterStatus === 'NEW_REQUESTS') {
-          return !['confirmed', 'approved', 'accepted', 'completed', 'rejected', 'cancelled'].includes(st);
+          return !['confirmed', 'approved', 'accepted', 'completed', 'rejected', 'cancelled', 'pending_cash_verification'].includes(st);
         }
         if(window.rmaAdminFilterStatus === 'CONFIRMED_APPOINTMENTS') return ['confirmed', 'approved', 'accepted'].includes(st);
         if(window.rmaAdminFilterStatus === 'TODAYS_VISITS') return cDate === nowStr && ['confirmed', 'approved', 'accepted'].includes(st);
@@ -5848,6 +6122,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
       if(st === 'confirmed' || st === 'approved' || st === 'accepted'){
         badgeColor = '#2e7d5b'; textColor = '#ffffff'; displayStatus = 'CONFIRMED';
+      } else if(st === 'pending_cash_verification' || st === 'cash_pending' || j.payment_status === 'pending_cash_verification'){
+        badgeColor = '#fff3cd'; textColor = '#856404'; displayStatus = 'PAYMENT METHOD: CASH (PENDING VERIFICATION)';
+      } else if(st === 'cash_received'){
+        badgeColor = '#2e7d5b'; textColor = '#ffffff'; displayStatus = 'CASH RECEIVED & VERIFIED';
       } else if(st === 'payment_received' || st === 'booked' || st === 'paid'){
         badgeColor = '#d9f0e6'; textColor = '#0d5c3a'; displayStatus = 'PAYMENT RECEIVED (TEMPORARY)';
       } else if(st === 'rejected' || st === 'cancelled'){
@@ -5925,6 +6203,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             </div>
 
             <div style="display:flex; gap:8px; flex-wrap:wrap">
+              ${(st === 'pending_cash_verification' || st === 'cash_pending' || j.payment_status === 'pending_cash_verification') ? `<button class="btn gold" type="button" style="background:#d4af37; color:#111; font-weight:800" onclick="adminVerifyCashPayment('${esc(x.id)}')">💵 Verify Cash Received</button>` : ''}
               <button class="btn dark" type="button" onclick="adminAcceptBooking('${esc(x.id)}')">✓ Confirm Appointment</button>
               <button class="btn outline" type="button" onclick="adminRejectBookingPrompt('${esc(x.id)}')">✕ Reject Request</button>
               <button class="btn outline" type="button" onclick="adminRescheduleBooking('${esc(x.id)}')">🕒 Reschedule</button>
@@ -6427,6 +6706,27 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               is_matched: true
             });
           }
+        } else if(j.payment_method === 'cash' || b.status === 'pending_cash_verification' || b.status === 'cash_received' || j.coupon_code === 'CASH'){
+          const cashKey = 'CASH-' + b.id;
+          paymentMap.set(cashKey, {
+            payment_id: cashKey,
+            order_id: 'OFFLINE_CASH',
+            invoice_number: '—',
+            client_name: b.client_name || 'Customer',
+            mobile: b.mobile || '—',
+            email: b.email || '—',
+            amount: b.total_amount || b.visit_fee || 0,
+            currency: 'INR',
+            payment_date: b.created_at,
+            gateway: 'Cash (Offline)',
+            status: b.status === 'cash_received' ? 'CASH RECEIVED' : 'PENDING CASH VERIFICATION',
+            invoice_type: b.service_type || 'site_visit',
+            booking_id: b.id,
+            request_id: reqId,
+            is_matched: true,
+            is_cash: true,
+            cash_status: b.status === 'cash_received' ? 'cash_received' : 'pending_cash_verification'
+          });
         }
       });
 
@@ -6440,9 +6740,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const rowsHtml = paymentList.map(p => {
         const isTest = Number(p.amount) === 1 || p.amount === '1';
         const isMatched = p.is_matched || p.booking_id;
-        const statusBadge = isMatched ?
-          '<span class="role-badge" style="background:#e0f3ea;color:#084c38;font-weight:800">MATCHED &amp; VERIFIED</span>' :
-          '<span class="role-badge" style="background:#fff3cd;color:#856404;font-weight:800">UNMATCHED PAYMENT</span>';
+        const statusBadge = p.is_cash ?
+          (p.cash_status === 'cash_received' ?
+            '<span class="role-badge" style="background:#2e7d5b;color:#ffffff;font-weight:800">CASH RECEIVED &amp; VERIFIED</span>' :
+            '<span class="role-badge" style="background:#fff3cd;color:#856404;font-weight:800">PENDING CASH VERIFICATION</span>') :
+          (isMatched ?
+            '<span class="role-badge" style="background:#e0f3ea;color:#084c38;font-weight:800">MATCHED &amp; VERIFIED</span>' :
+            '<span class="role-badge" style="background:#fff3cd;color:#856404;font-weight:800">UNMATCHED PAYMENT</span>');
 
         return `
           <div style="background:#ffffff; border:1px solid #d8e3dc; border-radius:10px; padding:14px; margin-bottom:12px">
@@ -6469,6 +6773,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             </div>
 
             <div style="margin-top:12px; padding-top:10px; border-top:1px solid #f0f4f1; display:flex; gap:8px; flex-wrap:wrap">
+              ${(p.is_cash && p.cash_status === 'pending_cash_verification') ? `<button class="btn gold" type="button" style="padding:4px 10px; font-size:12px; background:#d4af37; color:#111; font-weight:800" onclick="adminVerifyCashPayment('${esc(p.booking_id)}')">💵 Verify Cash Received</button>` : ''}
               <button class="btn gold" type="button" style="padding:4px 10px; font-size:12px" onclick="adminOpenInvoiceRecalculateModal('${esc(p.payment_id)}', '${esc(p.request_id)}', ${Number(p.amount||0)}, '${esc(p.client_name)}', '${esc(p.email)}', '${esc(p.mobile)}')">Recalculate &amp; Generate GST Invoice</button>
               <button class="btn outline" type="button" style="padding:4px 10px; font-size:12px" onclick="adminTriggerInvoiceAction('${esc(p.payment_id)}', 'resend')">Resend Invoice Email</button>
             </div>
@@ -7005,9 +7310,53 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }
   }
 
+  async function adminVerifyCashPayment(id){
+    if(!id) return;
+    if(!confirm('Confirm that cash payment has been received and verified for this request?')) return;
+
+    try {
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
+      const b = bRes.data;
+      let j = {}; try { j = JSON.parse(b.visit_scope || '{}'); } catch(e){}
+
+      const updatedScope = JSON.stringify({
+        ...j,
+        payment_method: 'cash',
+        payment_status: 'cash_received'
+      });
+
+      const updatePayload = {
+        status: 'cash_received',
+        visit_scope: updatedScope,
+        approved_by: 'RMA Admin'
+      };
+
+      const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
+      if(up.error) throw up.error;
+
+      try {
+        await supabaseClient.from('status_history').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          previous_status: b.status,
+          new_status: 'cash_received',
+          changed_by: 'RMA Admin',
+          remarks: 'Cash payment verified and received by RMA Admin.'
+        });
+      } catch(shErr){ console.warn('status_history warning:', shErr); }
+
+      window.toast36?.('Cash payment verified successfully. Status set to Cash Received.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Cash verification error: ' + err.message, 'error');
+    }
+  }
+
   // Hook into loadStaff36
   window.loadStaff36 = loadRMAAdminSiteVisitRequests;
   window.setRMAAdminFilter = setRMAAdminFilter;
+  window.adminVerifyCashPayment = adminVerifyCashPayment;
   window.adminAcceptBooking = adminAcceptBooking;
   window.adminRejectBookingPrompt = adminRejectBookingPrompt;
   window.adminRescheduleBooking = adminRescheduleBooking;
