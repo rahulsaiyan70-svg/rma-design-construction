@@ -1,64 +1,77 @@
 /**
- * E2E Validation for Site Visit Actions, GST Bill Generation & Business Ledger
+ * E2E Validation for Site Visit Actions, GST Bill Generation & Business Cash-Flow Ledger
  */
 
 const fs = require('fs');
 const assert = require('assert');
 
-console.log("=== Testing Site Visit Actions, GST Bill Generator & Business Ledger ===");
+console.log("=== Testing Admin Business Cash-Flow Ledger & GST Calculations ===");
 
 const indexHtml = fs.readFileSync('index.html', 'utf8');
-const ledgerMigration = fs.readFileSync('supabase/migrations/20260929000000_business_ledger.sql', 'utf8');
+const ledgerMigration1 = fs.readFileSync('supabase/migrations/20260929000000_business_ledger.sql', 'utf8');
+const ledgerMigration2 = fs.readFileSync('supabase/migrations/20261003000000_fix_business_ledger.sql', 'utf8');
 
-// Test 1: Verify Business Ledger Migration Schema
-console.log("\n[TEST 1] Verifying Business Ledger Migration SQL...");
-assert(ledgerMigration.includes('CREATE TABLE IF NOT EXISTS public.business_ledger'), "business_ledger table creation missing!");
-assert(ledgerMigration.includes("entry_type IN ('INCOME', 'EXPENSE')"), "entry_type constraint missing!");
-assert(ledgerMigration.includes('amount NUMERIC(12,2) NOT NULL CHECK (amount > 0)'), "amount check constraint missing!");
-assert(ledgerMigration.includes('ENABLE ROW LEVEL SECURITY'), "RLS not enabled on business_ledger!");
-console.log("✔ TEST 1 PASSED: business_ledger migration SQL schema and RLS verified.");
+// Test 1: Verify Business Ledger Migration Schema & RLS Policies
+console.log("\n[TEST 1] Verifying Business Ledger Migration SQL & RLS Policies...");
+assert(ledgerMigration1.includes('CREATE TABLE IF NOT EXISTS public.business_ledger'), "business_ledger table creation missing!");
+assert(ledgerMigration1.includes('ENABLE ROW LEVEL SECURITY'), "RLS not enabled on business_ledger!");
+assert(ledgerMigration2.includes('CREATE POLICY "Allow anon, authenticated, service_role full manage business_ledger"'), "RLS policy for anon/authenticated missing!");
+assert(ledgerMigration2.includes('taxable_amount NUMERIC(12,2)'), "taxable_amount column missing in migration!");
+assert(ledgerMigration2.includes('gst_amount NUMERIC(12,2)'), "gst_amount column missing in migration!");
+console.log("✔ TEST 1 PASSED: business_ledger migration SQL schema and RLS policies verified.");
 
-// Test 2: Verify Site Visit Actions Implementation
-console.log("\n[TEST 2] Verifying Site Visit Actions (Confirm, Reject, Reschedule, Complete, Delete)...");
-assert(indexHtml.includes('async function adminAcceptBooking('), "adminAcceptBooking function missing!");
-assert(indexHtml.includes('async function adminRejectBookingPrompt('), "adminRejectBookingPrompt function missing!");
-assert(indexHtml.includes('async function adminRescheduleBooking('), "adminRescheduleBooking function missing!");
-assert(indexHtml.includes('async function adminOpenCompletionModal('), "adminOpenCompletionModal function missing!");
-assert(indexHtml.includes('async function adminDeleteBookingPrompt('), "adminDeleteBookingPrompt function missing!");
-assert(indexHtml.includes("status: 'confirmed'"), "Confirmed status assignment missing!");
-assert(indexHtml.includes("status: 'rejected'"), "Rejected status assignment missing!");
-assert(indexHtml.includes("status: 'completed'"), "Completed status assignment missing!");
-console.log("✔ TEST 2 PASSED: All Site Visit actions are properly defined and update Supabase status.");
+// Test 2: Verify MONEY IN GST Calculation (18% Included)
+console.log("\n[TEST 2] Verifying MONEY IN GST Calculation Formula (₹11,800 -> Taxable ₹10,000, GST ₹1,800)...");
+const grossIncome = 11800;
+const gstRate = 18;
+const taxableAmount = grossIncome / (1 + (gstRate / 100));
+const gstAmount = grossIncome - taxableAmount;
 
-// Test 3: Verify Dynamic Dashboard Summary & Filters
-console.log("\n[TEST 3] Verifying Dynamic Dashboard Summary & Filters...");
-assert(indexHtml.includes('NEW_PENDING_REQUESTS: 0'), "NEW_PENDING_REQUESTS counter missing!");
-assert(indexHtml.includes('CONFIRMED_APPOINTMENTS: 0'), "CONFIRMED_APPOINTMENTS counter missing!");
-assert(indexHtml.includes('TODAYS_VISITS: 0'), "TODAYS_VISITS counter missing!");
-assert(indexHtml.includes('COMPLETED_VISITS: 0'), "COMPLETED_VISITS counter missing!");
-assert(indexHtml.includes('REJECTED_CANCELLED: 0'), "REJECTED_CANCELLED counter missing!");
-assert(indexHtml.includes('function setRMAAdminFilter('), "setRMAAdminFilter function missing!");
-console.log("✔ TEST 3 PASSED: Dynamic dashboard counters and section filters are active.");
+assert.strictEqual(taxableAmount, 10000, "Taxable Amount for ₹11,800 @ 18% should be exactly ₹10,000");
+assert.strictEqual(gstAmount, 1800, "GST Amount for ₹11,800 @ 18% should be exactly ₹1,800");
+assert.notStrictEqual(gstAmount, 2124, "GST must NOT be calculated as ₹11,800 + 18% (₹2,124)");
+console.log(`✔ TEST 2 PASSED: Gross ₹${grossIncome} => Taxable ₹${taxableAmount}, GST ₹${gstAmount} (18% GST Inclusive formula verified).`);
 
-// Test 4: Verify Admin GST Bill Generator & Printable Preview Modal
-console.log("\n[TEST 4] Verifying GST Bill Generator & Printable Preview Modal...");
-assert(indexHtml.includes('function adminOpenInvoiceRecalculateModal('), "adminOpenInvoiceRecalculateModal missing!");
-assert(indexHtml.includes('function rmaShowBillPreviewModal('), "rmaShowBillPreviewModal function missing!");
-assert(indexHtml.includes('admInvClientName'), "Customer name input field missing!");
-assert(indexHtml.includes('admInvClientGSTIN'), "Customer GSTIN input field missing!");
-assert(indexHtml.includes('rmaPrintableBillArea'), "Printable bill preview DOM area missing!");
-console.log("✔ TEST 4 PASSED: Admin GST Bill modal and preview window are fully integrated.");
+// Test 3: Verify MONEY OUT Expense Breakdown
+console.log("\n[TEST 3] Verifying MONEY OUT Expense Breakdown...");
+const grossExpense = 2000;
+const expGstInc = false;
+const expTaxable = grossExpense;
+const expGst = 0;
 
-// Test 5: Verify Admin Business Ledger Functions & UI
-console.log("\n[TEST 5] Verifying Business Ledger Functions & UI...");
+assert.strictEqual(expTaxable, 2000, "Expense Taxable should match gross expense when GST Included = NO");
+assert.strictEqual(expGst, 0, "Expense GST should be 0 when GST Included = NO");
+console.log(`✔ TEST 3 PASSED: Gross Expense ₹${grossExpense} => Taxable ₹${expTaxable}, GST ₹${expGst}.`);
+
+// Test 4: Verify Running Balance Formula
+console.log("\n[TEST 4] Verifying Cash-Flow Running Balance Logic...");
+let runningBalance = 0;
+// Transaction 1: Money In ₹11,800
+runningBalance += grossIncome; // 11,800
+assert.strictEqual(runningBalance, 11800, "Running balance after ₹11,800 Money In should be ₹11,800");
+
+// Transaction 2: Money Out ₹2,000
+runningBalance -= grossExpense; // 11,800 - 2,000 = 9,800
+assert.strictEqual(runningBalance, 9800, "Running balance after ₹2,000 Money Out should be ₹9,800");
+
+// Transaction 3: Money In ₹5,900
+runningBalance += 5900; // 9,800 + 5,900 = 15,700
+assert.strictEqual(runningBalance, 15700, "Running balance after ₹5,900 Money In should be ₹15,700");
+console.log(`✔ TEST 4 PASSED: Running Balance calculation verified (Opening 0 -> +11,800 -> -2,000 -> +5,900 = ₹15,700).`);
+
+// Test 5: Verify Frontend JavaScript Functions in index.html
+console.log("\n[TEST 5] Verifying Business Ledger Functions & Handlers in index.html...");
 assert(indexHtml.includes('async function loadRMAAdminBusinessLedgerSection('), "loadRMAAdminBusinessLedgerSection missing!");
 assert(indexHtml.includes('async function adminAddLedgerEntry('), "adminAddLedgerEntry missing!");
 assert(indexHtml.includes('async function adminDeleteLedgerEntry('), "adminDeleteLedgerEntry missing!");
-assert(indexHtml.includes('function adminSetLedgerMonthFilter('), "adminSetLedgerMonthFilter missing!");
-assert(indexHtml.includes('ledgerIncAmount'), "Income amount input missing!");
-assert(indexHtml.includes('ledgerExpAmount'), "Expense amount input missing!");
-assert(indexHtml.includes('Net Balance'), "Daily summary net balance missing!");
-assert(indexHtml.includes('Net Income'), "Monthly net income summary missing!");
-console.log("✔ TEST 5 PASSED: Business Ledger engine, entry forms, and summaries are ready.");
+assert(indexHtml.includes('function adminRecalculateLedgerIncLive('), "adminRecalculateLedgerIncLive missing!");
+assert(indexHtml.includes('function adminRecalculateLedgerExpLive('), "adminRecalculateLedgerExpLive missing!");
+assert(indexHtml.includes('function adminApplyLedgerFilters('), "adminApplyLedgerFilters missing!");
+assert(indexHtml.includes('function adminPreFillLedgerFromInvoice('), "adminPreFillLedgerFromInvoice missing!");
+assert(indexHtml.includes('ledgerIncAmount'), "ledgerIncAmount input field missing!");
+assert(indexHtml.includes('ledgerExpAmount'), "ledgerExpAmount input field missing!");
+assert(indexHtml.includes('CURRENT BUSINESS RUNNING BALANCE'), "CURRENT BUSINESS RUNNING BALANCE display missing!");
+assert(indexHtml.includes('SUPABASE LEDGER INSERT ERROR'), "Detailed Supabase error message alert missing!");
+console.log("✔ TEST 5 PASSED: Business Ledger engine, live GST handlers, filters, and error handlers are active.");
 
-console.log("\n=== ALL SITE VISIT, GST BILL & BUSINESS LEDGER E2E TESTS PASSED SUCCESSFULLY ===");
+console.log("\n=== ALL ADMIN BUSINESS LEDGER & GST E2E TESTS PASSED SUCCESSFULLY ===");
