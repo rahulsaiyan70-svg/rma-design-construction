@@ -4326,7 +4326,7 @@ window.rmaV36Init=v36Init;
             <div class="ps-v40-stat"><small>Client messages</small><strong id="v40Messages">—</strong></div>
             <div class="ps-v40-stat"><small>Documents</small><strong id="v40Docs">—</strong></div>
           </div>
-          <div class="ps-v40-actions"><button class="btn dark" type="button" onclick="document.getElementById('staffSiteVisitRequests')?.scrollIntoView({behavior:'smooth'})">Manage Site Visits</button><button class="btn outline" type="button" onclick="document.getElementById('rmaV36AdminMessages')?.scrollIntoView({behavior:'smooth'})">Client Conversations</button><button class="btn outline" type="button" onclick="document.getElementById('rmaV40ClientProject')?.scrollIntoView({behavior:'smooth'})">Client / Project</button></div>
+          <div class="ps-v40-actions"><button class="btn dark" type="button" onclick="document.getElementById('staffSiteVisitRequests')?.scrollIntoView({behavior:'smooth'})">Manage Site Visits</button><button class="btn outline" type="button" onclick="document.getElementById('rmaAdminBusinessLedgerSection')?.scrollIntoView({behavior:'smooth'})">Business Ledger</button><button class="btn outline" type="button" onclick="adminOpenInvoiceRecalculateModal('','',0,'','','')">Generate GST Bill</button><button class="btn outline" type="button" onclick="document.getElementById('rmaV36AdminMessages')?.scrollIntoView({behavior:'smooth'})">Client Conversations</button><button class="btn outline" type="button" onclick="document.getElementById('rmaV40ClientProject')?.scrollIntoView({behavior:'smooth'})">Client / Project</button></div>
         </div>
         <div class="ps-v40-card" id="rmaV40ClientProject"><span class="ps-v40-kicker">PROJECT PROFILE</span><h3 style="margin-top:7px">${e(V40_CLIENT_NAME)}</h3><p class="muted">Architect &amp; Engineering Consultant — consultation basis only.</p><div class="ps-v40-profile-grid"><div class="ps-v40-field"><small>Client ID</small><b>${V40_CLIENT_ID}</b></div><div class="ps-v40-field"><small>Monthly complimentary site visits</small><b>2</b></div><div class="ps-v40-field"><small>Client phone</small><b>${V40_CLIENT_PHONE}</b></div><div class="ps-v40-field"><small>Client email</small><b>${V40_CLIENT_EMAIL}</b></div><div class="ps-v40-field" style="grid-column:1/-1"><small>Scope</small><b>Architectural consultation, engineering consultation, site consultation and client coordination.</b></div><div class="ps-v40-field" style="grid-column:1/-1"><small>Project address</small><b>${e(V40_ADDRESS)}</b></div></div></div>`;
     }
@@ -6028,8 +6028,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       return;
     }
 
-    // Compute Live Summary Counts
-    const nowStr = new Date().toISOString().split('T')[0];
+    // Compute Live Summary Counts using local date
+    const todayObj = new Date();
+    const nowStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
     const stats = {
       NEW_PENDING_REQUESTS: 0,
       CONFIRMED_APPOINTMENTS: 0,
@@ -6223,6 +6224,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               <button class="btn outline" type="button" onclick="adminRescheduleBooking('${esc(x.id)}')">🕒 Reschedule</button>
               <button class="btn outline" type="button" onclick="adminOpenCompletionModal('${esc(x.id)}')">📋 Mark Completed</button>
               <button class="btn outline" type="button" onclick="adminOpenReportUploadModal('${esc(x.id)}')">📄 Upload Report</button>
+              <button class="btn outline" type="button" style="border-color:#2e7d5b; color:#2e7d5b; font-weight:700" onclick="adminOpenInvoiceRecalculateModal('${esc(payId)}', '${esc(reqId)}', ${x.total_amount || 0}, '${esc(x.client_name||'')}', '${esc(x.email||'')}', '${esc(x.mobile||'')}', '${esc(x.project_address||'')}')">📜 Generate GST Bill</button>
               <button class="btn outline" type="button" onclick="adminToggleNotificationLogs('${esc(x.id)}')">🔔 Notification History</button>
               <button class="btn outline" type="button" style="border-color:#e74c3c; color:#c0392b; font-weight:700" onclick="adminDeleteBookingPrompt('${esc(x.id)}')">🗑️ Delete Request</button>
             </div>
@@ -6259,9 +6261,20 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       container.parentElement.appendChild(calWrap);
     }
 
-    // Load Payments & Calendar Sections
+    // Create or locate Business Ledger Container
+    let ledgerWrap = document.getElementById('rmaAdminBusinessLedgerSection');
+    if(!ledgerWrap){
+      ledgerWrap = document.createElement('div');
+      ledgerWrap.id = 'rmaAdminBusinessLedgerSection';
+      ledgerWrap.className = 'ps-v40-card';
+      ledgerWrap.style.marginTop = '24px';
+      container.parentElement.appendChild(ledgerWrap);
+    }
+
+    // Load Payments, Calendar, and Business Ledger Sections
     await loadRMAdminPaymentsSection();
     await loadRMAAdminCalendarSection();
+    await loadRMAAdminBusinessLedgerSection();
   }
 
   // Admin Appointment Calendar Engine
@@ -6851,59 +6864,88 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   window.loadRMAdminPaymentsSection = loadRMAdminPaymentsSection;
   window.adminLinkUnmatchedPayment = adminLinkUnmatchedPayment;
 
-  function adminOpenInvoiceRecalculateModal(paymentId, requestId, totalAmount, clientName, clientEmail, clientMobile) {
+  function adminOpenInvoiceRecalculateModal(paymentId, requestId, totalAmount, clientName, clientEmail, clientMobile, clientAddress = '') {
     let modal = document.getElementById('rmaAdminInvoiceModal');
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'rmaAdminInvoiceModal';
-      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;box-sizing:border-box';
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;box-sizing:border-box;overflow-y:auto';
       document.body.appendChild(modal);
     }
 
-    const calc = rmaCalculateGSTDetails(totalAmount, 0, 'Jammu and Kashmir');
+    const calc = rmaCalculateGSTDetails(totalAmount || 0, 0, 'Jammu and Kashmir');
 
     modal.innerHTML = `
-      <div style="background:#fff; border-radius:12px; max-width:550px; width:100%; padding:25px; box-shadow:0 10px 30px rgba(0,0,0,0.3)">
-        <h3 style="margin:0 0 5px; color:#2e7d5b">Admin Invoice Recalculation &amp; Recovery</h3>
-        <p style="font-size:13px; color:#666; margin:0 0 15px">Review inputs and recalculate tax figures before generating or regenerating GST invoice.</p>
+      <div style="background:#fff; border-radius:12px; max-width:620px; width:100%; padding:25px; box-shadow:0 10px 30px rgba(0,0,0,0.3); max-height:90vh; overflow-y:auto">
+        <h3 style="margin:0 0 5px; color:#2e7d5b">Admin GST Bill Generator</h3>
+        <p style="font-size:13px; color:#666; margin:0 0 15px">Review or update customer details, tax rates, and subtotal to generate a GST Tax Invoice.</p>
 
-        <div style="font-size:13px; background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid #e2e8f0">
-          <div>Payment ID: <strong>${esc(paymentId)}</strong></div>
-          <div>Request / Receipt ID: <strong>${esc(requestId)}</strong></div>
-          <div>Client: <strong>${esc(clientName)}</strong> (${esc(clientEmail || 'No Email')})</div>
+        <div style="font-size:12px; background:#f8fafc; padding:10px 14px; border-radius:8px; margin-bottom:15px; border:1px solid #e2e8f0; display:flex; justify-content:space-between">
+          <div>Payment Ref: <strong>${esc(paymentId || 'DIRECT-BILL')}</strong></div>
+          <div>Request Ref: <strong>${esc(requestId || 'RMA-BILL')}</strong></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px">
+          <div>
+            <label style="font-size:11px; font-weight:700">Client Name *</label>
+            <input type="text" id="admInvClientName" value="${esc(clientName || '')}" placeholder="Client Full Name" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700">Client Mobile</label>
+            <input type="text" id="admInvClientMobile" value="${esc(clientMobile || '')}" placeholder="Mobile Number" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px">
+          <div>
+            <label style="font-size:11px; font-weight:700">Client Email</label>
+            <input type="email" id="admInvClientEmail" value="${esc(clientEmail || '')}" placeholder="Client Email" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700">Client GSTIN (Optional)</label>
+            <input type="text" id="admInvClientGSTIN" placeholder="e.g. 01AAAAA0000A1Z5" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label style="font-size:11px; font-weight:700">Client / Site Address</label>
+          <input type="text" id="admInvClientAddress" value="${esc(clientAddress || '')}" placeholder="Project or Client Address" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label style="font-size:11px; font-weight:700">Description of Service</label>
+          <input type="text" id="admInvDescription" value="RMA Design & Construction Service" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px">
+          <div>
+            <label style="font-size:11px; font-weight:700">Subtotal (₹)</label>
+            <input type="number" id="admInvSubtotal" value="${calc.subtotal}" oninput="adminRecalculateLiveModal()" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700">Discount (₹)</label>
+            <input type="number" id="admInvDiscount" value="${calc.discount}" oninput="adminRecalculateLiveModal()" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+          </div>
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px">
           <div>
-            <label style="font-size:12px; font-weight:700">Subtotal (₹):</label>
-            <input type="number" id="admInvSubtotal" value="${calc.subtotal}" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+            <label style="font-size:11px; font-weight:700">Total Amount Received / Payable (₹)</label>
+            <input type="number" id="admInvTotal" value="${calc.total}" oninput="adminRecalculateLiveModal()" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
           </div>
           <div>
-            <label style="font-size:12px; font-weight:700">Discount (₹):</label>
-            <input type="number" id="admInvDiscount" value="${calc.discount}" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
+            <label style="font-size:11px; font-weight:700">Supply State</label>
+            <input type="text" id="admInvState" value="Jammu and Kashmir" oninput="adminRecalculateLiveModal()" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
           </div>
         </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px">
-          <div>
-            <label style="font-size:12px; font-weight:700">Total Payable Amount (₹):</label>
-            <input type="number" id="admInvTotal" value="${calc.total}" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:700">Supply State:</label>
-            <input type="text" id="admInvState" value="Jammu and Kashmir" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px">
-          </div>
-        </div>
-
-        <button type="button" class="btn dark full" style="margin-bottom:15px" onclick="adminRecalculateLiveModal()">[RECALCULATE LIVE]</button>
 
         <div id="admInvLiveCalc" style="background:#e0f3ea; padding:12px; border-radius:8px; font-size:13px; color:#084c38; margin-bottom:15px">
-          Taxable Amount: <strong>₹${calc.taxable}</strong> | GST (18%): <strong>₹${calc.gst}</strong> (CGST: ₹${calc.cgst}, SGST: ₹${calc.sgst}) | Grand Total: <strong>₹${calc.total}</strong>
+          Taxable Amount: <strong>₹${calc.taxable}</strong> | GST (18%): <strong>₹${calc.gst}</strong> (${calc.isIntraState ? `CGST: ₹${calc.cgst}, SGST: ₹${calc.sgst}` : `IGST: ₹${calc.igst}`}) | Grand Total: <strong>₹${calc.total}</strong>
         </div>
 
         <div style="display:flex; gap:10px; justify-content:flex-end">
           <button type="button" class="btn outline" onclick="document.getElementById('rmaAdminInvoiceModal').style.display='none'">Cancel</button>
-          <button type="button" class="btn gold" onclick="adminExecuteGenerateInvoice('${esc(paymentId)}', '${esc(requestId)}', '${esc(clientName)}', '${esc(clientEmail)}', '${esc(clientMobile)}')">Generate GST Invoice</button>
+          <button type="button" class="btn gold" style="background:#2e7d5b; color:#fff" onclick="adminExecuteGenerateInvoice('${esc(paymentId)}', '${esc(requestId)}')">Generate GST Bill</button>
         </div>
       </div>
     `;
@@ -6923,19 +6965,28 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }
   }
 
-  async function adminExecuteGenerateInvoice(paymentId, requestId, name, email, mobile) {
+  async function adminExecuteGenerateInvoice(paymentId, requestId) {
+    const name = document.getElementById('admInvClientName')?.value.trim() || 'Customer';
+    const email = document.getElementById('admInvClientEmail')?.value.trim() || '';
+    const mobile = document.getElementById('admInvClientMobile')?.value.trim() || '';
+    const address = document.getElementById('admInvClientAddress')?.value.trim() || '';
+    const gstin = document.getElementById('admInvClientGSTIN')?.value.trim() || '';
+    const description = document.getElementById('admInvDescription')?.value.trim() || 'RMA Design & Construction Service';
     const total = Number(document.getElementById('admInvTotal')?.value || 0);
     const discount = Number(document.getElementById('admInvDiscount')?.value || 0);
     const state = document.getElementById('admInvState')?.value || 'Jammu and Kashmir';
 
+    const effPaymentId = paymentId || ('PAY-' + Date.now());
+    const effRequestId = requestId || ('REQ-' + Date.now());
+
     try {
       window.toast36?.('Generating GST invoice server-side...', 'info');
       const inv = await rmaGenerateAndSendGSTInvoice({
-        payment_id: paymentId,
-        receipt: requestId,
+        payment_id: effPaymentId,
+        receipt: effRequestId,
         invoice_type: 'service',
-        customer: { name, email, mobile, state },
-        description: 'RMA Design & Construction Service',
+        customer: { name, email, mobile, address, gstin, state },
+        description: description,
         total_amount: total,
         discount: discount,
         action: 'regenerate',
@@ -6946,11 +6997,74 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if (document.getElementById('rmaAdminInvoiceModal')) {
         document.getElementById('rmaAdminInvoiceModal').style.display = 'none';
       }
+
+      // Render Bill Preview Modal
+      rmaShowBillPreviewModal(inv, { name, email, mobile, address, description, total, state });
       await loadRMAdminPaymentsSection();
     } catch (e) {
       window.toast36?.('Invoice generation error: ' + e.message, 'error');
     }
   }
+
+  function rmaShowBillPreviewModal(inv, custInfo = {}) {
+    let pModal = document.getElementById('rmaAdminBillPreviewModal');
+    if (!pModal) {
+      pModal = document.createElement('div');
+      pModal.id = 'rmaAdminBillPreviewModal';
+      pModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:999999;padding:20px;box-sizing:border-box;overflow-y:auto';
+      document.body.appendChild(pModal);
+    }
+
+    const invNum = inv.invoice_number || 'RMA/GST/DRAFT';
+    const dUrl = inv.download_url || '#';
+    const data = inv.data || {};
+    const taxable = data.taxable_amount ?? (custInfo.total ? (custInfo.total / 1.18).toFixed(2) : '0');
+    const totalGst = data.total_gst ?? (custInfo.total ? (custInfo.total - taxable).toFixed(2) : '0');
+
+    pModal.innerHTML = `
+      <div style="background:#fff; border-radius:12px; max-width:650px; width:100%; padding:25px; box-shadow:0 10px 30px rgba(0,0,0,0.4); max-height:90vh; overflow-y:auto" id="rmaPrintableBillArea">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #2e7d5b; padding-bottom:15px; margin-bottom:15px">
+          <div>
+            <h2 style="margin:0; color:#2e7d5b; font-size:22px">RMA Design &amp; Construction</h2>
+            <div style="font-size:12px; color:#555">1st Floor, Bldg No. 21, Ambika Vihar, Jammu, J&amp;K - 180011</div>
+            <div style="font-size:12px; color:#555"><b>GSTIN:</b> 01CBCPB0524K1ZG | 📞 +91 96221 21692</div>
+          </div>
+          <div style="text-align:right">
+            <span style="background:#2e7d5b; color:#fff; padding:4px 10px; border-radius:4px; font-weight:800; font-size:12px">TAX INVOICE</span>
+            <div style="font-size:14px; font-weight:700; margin-top:6px; color:#111">${esc(invNum)}</div>
+            <div style="font-size:12px; color:#666">Date: ${new Date().toLocaleDateString('en-IN')}</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; margin-bottom:15px">
+          <div>
+            <b style="color:#2e7d5b; display:block; margin-bottom:4px">Billed To (Customer):</b>
+            <div><b>Name:</b> ${esc(custInfo.name || data.customer_name || 'Customer')}</div>
+            <div><b>Mobile:</b> ${esc(custInfo.mobile || data.customer_mobile || '—')}</div>
+            <div><b>Email:</b> ${esc(custInfo.email || data.customer_email || '—')}</div>
+            <div><b>Address:</b> ${esc(custInfo.address || data.customer_address || '—')}</div>
+          </div>
+          <div>
+            <b style="color:#2e7d5b; display:block; margin-bottom:4px">Invoice Summary:</b>
+            <div><b>Service:</b> ${esc(custInfo.description || 'Design & Construction')}</div>
+            <div><b>Taxable Amount:</b> ₹${esc(taxable)}</div>
+            <div><b>Total GST (18%):</b> ₹${esc(totalGst)}</div>
+            <div><b>Grand Total:</b> <b style="color:#0d5c3a; font-size:14px">₹${esc(data.total_amount || custInfo.total || 0)}</b></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; border-top:1px solid #eee; padding-top:15px">
+          ${dUrl !== '#' ? `<a href="${esc(dUrl)}" target="_blank" download class="btn gold" style="background:#2e7d5b; color:#fff; text-decoration:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:13px">📥 Download Bill</a>` : ''}
+          <button type="button" class="btn dark" onclick="window.print()" style="padding:8px 16px; font-weight:700; font-size:13px">🖨️ Print Bill</button>
+          <button type="button" class="btn outline" onclick="document.getElementById('rmaAdminBillPreviewModal').style.display='none'" style="padding:8px 16px; font-weight:700; font-size:13px">Close</button>
+        </div>
+      </div>
+    `;
+
+    pModal.style.display = 'flex';
+  }
+
+  window.rmaShowBillPreviewModal = rmaShowBillPreviewModal;
 
   async function adminTriggerInvoiceAction(paymentId, action) {
     try {
@@ -6972,6 +7086,352 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   window.adminRecalculateLiveModal = adminRecalculateLiveModal;
   window.adminExecuteGenerateInvoice = adminExecuteGenerateInvoice;
   window.adminTriggerInvoiceAction = adminTriggerInvoiceAction;
+
+  // Business Ledger Engine
+  async function loadRMAAdminBusinessLedgerSection() {
+    const wrap = document.getElementById('rmaAdminBusinessLedgerSection');
+    if (!wrap) return;
+
+    const now = new Date();
+    const curMonth = window.rmaLedgerSelectedMonth ?? (now.getMonth() + 1);
+    const curYear = window.rmaLedgerSelectedYear ?? now.getFullYear();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    let entries = [];
+    try {
+      const q = await supabaseClient.from('business_ledger').select('*').order('entry_date', { ascending: false }).order('created_at', { ascending: false }).limit(500);
+      if (!q.error && q.data) entries = q.data;
+    } catch (e) {
+      console.warn('Ledger error:', e);
+    }
+
+    // Daily Summary for todayStr
+    let todayIncome = 0;
+    let todayExpense = 0;
+    entries.forEach(x => {
+      if (x.entry_date === todayStr) {
+        if (x.entry_type === 'INCOME') todayIncome += Number(x.amount || 0);
+        else if (x.entry_type === 'EXPENSE') todayExpense += Number(x.amount || 0);
+      }
+    });
+    const todayNet = todayIncome - todayExpense;
+
+    // Monthly Summary
+    let monthlyIncome = 0;
+    let monthlyExpense = 0;
+    let incomeCount = 0;
+    let expenseCount = 0;
+
+    const monthFilteredEntries = entries.filter(x => {
+      if (!x.entry_date) return false;
+      const parts = x.entry_date.split('-');
+      if (parts.length < 2) return false;
+      const yr = parseInt(parts[0], 10);
+      const mo = parseInt(parts[1], 10);
+      return yr === Number(curYear) && mo === Number(curMonth);
+    });
+
+    monthFilteredEntries.forEach(x => {
+      if (x.entry_type === 'INCOME') {
+        monthlyIncome += Number(x.amount || 0);
+        incomeCount++;
+      } else if (x.entry_type === 'EXPENSE') {
+        monthlyExpense += Number(x.amount || 0);
+        expenseCount++;
+      }
+    });
+    const monthlyNet = monthlyIncome - monthlyExpense;
+
+    const monthsArr = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const monthOpts = monthsArr.map((mName, idx) => {
+      const mNum = idx + 1;
+      return `<option value="${mNum}" ${mNum === Number(curMonth) ? 'selected' : ''}>${mName}</option>`;
+    }).join('');
+
+    const yearOpts = [2024, 2025, 2026, 2027].map(y => {
+      return `<option value="${y}" ${y === Number(curYear) ? 'selected' : ''}>${y}</option>`;
+    }).join('');
+
+    const rowsHtml = monthFilteredEntries.length > 0 ? monthFilteredEntries.map(x => {
+      const isInc = x.entry_type === 'INCOME';
+      const badgeBg = isInc ? '#e2f2e9' : '#fbeae8';
+      const badgeColor = isInc ? '#1d6342' : '#a82315';
+      const amtPrefix = isInc ? '+₹' : '-₹';
+      const amtColor = isInc ? '#0d5c3a' : '#a82315';
+
+      return `
+        <tr style="border-bottom:1px solid #eef4f0">
+          <td style="padding:10px 12px"><b>${esc(x.entry_date)}</b></td>
+          <td style="padding:10px 12px"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:4px; font-weight:800; font-size:11px">${esc(x.entry_type)}</span></td>
+          <td style="padding:10px 12px"><b>${esc(x.category || '—')}</b></td>
+          <td style="padding:10px 12px">${esc(x.description || '—')} ${x.invoice_number ? `<br><small style="color:#666">Inv #: ${esc(x.invoice_number)}</small>` : ''}</td>
+          <td style="padding:10px 12px">${esc(x.client_vendor_name || '—')}</td>
+          <td style="padding:10px 12px">${esc(x.payment_method || 'CASH')}</td>
+          <td style="padding:10px 12px; font-weight:800; color:${amtColor}">${amtPrefix}${Number(x.amount || 0).toLocaleString('en-IN')}</td>
+          <td style="padding:10px 12px; text-align:right">
+            <button class="btn outline" type="button" style="border-color:#e74c3c; color:#c0392b; font-size:11px; padding:3px 8px" onclick="adminDeleteLedgerEntry('${esc(x.id)}')">🗑️</button>
+          </td>
+        </tr>
+      `;
+    }).join('') : `<tr><td colspan="8" style="padding:20px; text-align:center; color:#666">No ledger entries recorded for ${monthsArr[curMonth-1]} ${curYear}.</td></tr>`;
+
+    wrap.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:16px; border-bottom:1px solid #eef4f0; padding-bottom:12px">
+        <div>
+          <span class="ps-v40-kicker" style="color:#1d6342">BUSINESS ACCOUNTS</span>
+          <h3 style="margin:4px 0 0">RMA Income &amp; Expense Business Ledger</h3>
+        </div>
+        <button class="btn outline" type="button" onclick="loadRMAAdminBusinessLedgerSection()">Refresh Ledger</button>
+      </div>
+
+      <!-- Live Daily & Monthly Summaries -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:15px; margin-bottom:20px">
+        <!-- Daily Summary Card -->
+        <div style="background:#f4f8f6; padding:16px; border-radius:10px; border:1px solid #c2ded0">
+          <small style="color:#1d6342; font-weight:800; text-transform:uppercase; letter-spacing:0.5px">Today's Summary (${esc(todayStr)})</small>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:10px; text-align:center">
+            <div style="background:#fff; padding:8px; border-radius:6px; border:1px solid #d4e2d9">
+              <small style="display:block; color:#555; font-size:11px">Income</small>
+              <strong style="color:#0d5c3a; font-size:14px">₹${todayIncome.toLocaleString('en-IN')}</strong>
+            </div>
+            <div style="background:#fff; padding:8px; border-radius:6px; border:1px solid #d4e2d9">
+              <small style="display:block; color:#555; font-size:11px">Expenses</small>
+              <strong style="color:#a82315; font-size:14px">₹${todayExpense.toLocaleString('en-IN')}</strong>
+            </div>
+            <div style="background:#fff; padding:8px; border-radius:6px; border:1px solid #d4e2d9">
+              <small style="display:block; color:#555; font-size:11px">Net Balance</small>
+              <strong style="color:${todayNet >= 0 ? '#0d5c3a' : '#a82315'}; font-size:14px">₹${todayNet.toLocaleString('en-IN')}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Summary Card with Selector -->
+        <div style="background:#f4f8f6; padding:16px; border-radius:10px; border:1px solid #c2ded0">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px">
+            <small style="color:#1d6342; font-weight:800; text-transform:uppercase; letter-spacing:0.5px">Monthly Summary</small>
+            <div style="display:flex; gap:6px">
+              <select id="ledgerFilterMonth" onchange="adminSetLedgerMonthFilter()" style="padding:4px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px">${monthOpts}</select>
+              <select id="ledgerFilterYear" onchange="adminSetLedgerMonthFilter()" style="padding:4px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px">${yearOpts}</select>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:10px; text-align:center">
+            <div style="background:#fff; padding:8px; border-radius:6px; border:1px solid #d4e2d9">
+              <small style="display:block; color:#555; font-size:11px">Income (${incomeCount})</small>
+              <strong style="color:#0d5c3a; font-size:14px">₹${monthlyIncome.toLocaleString('en-IN')}</strong>
+            </div>
+            <div style="background:#fff; padding:8px; border-radius:6px; border:1px solid #d4e2d9">
+              <small style="display:block; color:#555; font-size:11px">Expenses (${expenseCount})</small>
+              <strong style="color:#a82315; font-size:14px">₹${monthlyExpense.toLocaleString('en-IN')}</strong>
+            </div>
+            <div style="background:#fff; padding:8px; border-radius:6px; border:1px solid #d4e2d9">
+              <small style="display:block; color:#555; font-size:11px">Net Income</small>
+              <strong style="color:${monthlyNet >= 0 ? '#0d5c3a' : '#a82315'}; font-size:14px">₹${monthlyNet.toLocaleString('en-IN')}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ledger Entry Forms Grid -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:15px; margin-bottom:20px">
+        <!-- Add Income Form Card -->
+        <div style="background:#ffffff; padding:16px; border-radius:10px; border:1px solid #2e7d5b">
+          <h4 style="margin:0 0 12px; color:#1d6342; font-size:15px">➕ Add Income Entry</h4>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
+            <div>
+              <label style="font-size:11px; font-weight:700">Date</label>
+              <input type="date" id="ledgerIncDate" value="${esc(todayStr)}" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700">Client Name</label>
+              <input type="text" id="ledgerIncClient" placeholder="Client Name" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
+            <div>
+              <label style="font-size:11px; font-weight:700">Category</label>
+              <select id="ledgerIncCategory" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+                <option value="Site Visit Fee">Site Visit Fee</option>
+                <option value="Architectural Design Fee">Architectural Design Fee</option>
+                <option value="Structural Design Fee">Structural Design Fee</option>
+                <option value="Construction Payment">Construction Payment</option>
+                <option value="Advance Payment">Advance Payment</option>
+                <option value="Other Service Income">Other Service Income</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700">Payment Method</label>
+              <select id="ledgerIncMethod" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+                <option value="CASH">Cash</option>
+                <option value="Razorpay">Razorpay</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="UPI">UPI</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
+            <div>
+              <label style="font-size:11px; font-weight:700">Amount Received (₹) *</label>
+              <input type="number" id="ledgerIncAmount" placeholder="Amount" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700">Invoice Number</label>
+              <input type="text" id="ledgerIncInvoice" placeholder="Invoice # (Optional)" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px; font-weight:700">Description / Notes</label>
+            <input type="text" id="ledgerIncDesc" placeholder="Description of receipt" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <button class="btn dark full" type="button" style="padding:7px; font-size:13px" onclick="adminAddLedgerEntry('INCOME')">➕ Record Income</button>
+        </div>
+
+        <!-- Add Expense Form Card -->
+        <div style="background:#ffffff; padding:16px; border-radius:10px; border:1px solid #c0392b">
+          <h4 style="margin:0 0 12px; color:#a82315; font-size:15px">➖ Add Expense Entry</h4>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
+            <div>
+              <label style="font-size:11px; font-weight:700">Date</label>
+              <input type="date" id="ledgerExpDate" value="${esc(todayStr)}" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700">Paid To / Vendor</label>
+              <input type="text" id="ledgerExpVendor" placeholder="Vendor or Person" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
+            <div>
+              <label style="font-size:11px; font-weight:700">Category</label>
+              <select id="ledgerExpCategory" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+                <option value="Fuel">Fuel</option>
+                <option value="Office Expense">Office Expense</option>
+                <option value="Printing">Printing</option>
+                <option value="Labour">Labour</option>
+                <option value="Material">Material</option>
+                <option value="Travel">Travel</option>
+                <option value="Software">Software</option>
+                <option value="Advertisement">Advertisement</option>
+                <option value="Other Business Expense">Other Business Expense</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700">Payment Method</label>
+              <select id="ledgerExpMethod" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+                <option value="CASH">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="UPI">UPI</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label style="font-size:11px; font-weight:700">Amount Spent (₹) *</label>
+            <input type="number" id="ledgerExpAmount" placeholder="Amount" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px; font-weight:700">Description / Notes</label>
+            <input type="text" id="ledgerExpDesc" placeholder="Description of expense" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <button class="btn outline full" type="button" style="padding:7px; font-size:13px; border-color:#c0392b; color:#c0392b; font-weight:700" onclick="adminAddLedgerEntry('EXPENSE')">➖ Record Expense</button>
+        </div>
+      </div>
+
+      <!-- Transaction List Table -->
+      <div style="overflow-x:auto; background:#fff; border-radius:8px; border:1px solid #e2e8f0">
+        <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left">
+          <thead>
+            <tr style="background:#2e7d5b; color:#fff">
+              <th style="padding:10px 12px">Date</th>
+              <th style="padding:10px 12px">Type</th>
+              <th style="padding:10px 12px">Category</th>
+              <th style="padding:10px 12px">Description</th>
+              <th style="padding:10px 12px">Client / Vendor</th>
+              <th style="padding:10px 12px">Method</th>
+              <th style="padding:10px 12px">Amount</th>
+              <th style="padding:10px 12px; text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  async function adminAddLedgerEntry(entryType) {
+    const isInc = entryType === 'INCOME';
+    const prefix = isInc ? 'ledgerInc' : 'ledgerExp';
+
+    const dateVal = document.getElementById(prefix + 'Date')?.value || new Date().toISOString().split('T')[0];
+    const nameVal = document.getElementById(prefix + (isInc ? 'Client' : 'Vendor'))?.value.trim() || '';
+    const categoryVal = document.getElementById(prefix + 'Category')?.value || 'General';
+    const descVal = document.getElementById(prefix + 'Desc')?.value.trim() || '';
+    const invoiceVal = isInc ? (document.getElementById('ledgerIncInvoice')?.value.trim() || null) : null;
+    const methodVal = document.getElementById(prefix + 'Method')?.value || 'CASH';
+    const amountVal = Number(document.getElementById(prefix + 'Amount')?.value || 0);
+
+    if (!amountVal || amountVal <= 0) {
+      window.toast36?.('Please enter a valid amount greater than zero.', 'error');
+      return;
+    }
+
+    try {
+      const payload = {
+        entry_type: entryType,
+        entry_date: dateVal,
+        client_vendor_name: nameVal,
+        category: categoryVal,
+        description: descVal,
+        invoice_number: invoiceVal,
+        payment_method: methodVal,
+        amount: amountVal,
+        created_by: 'RMA Admin'
+      };
+
+      const ins = await supabaseClient.from('business_ledger').insert(payload);
+      if (ins.error) throw ins.error;
+
+      window.toast36?.(`${entryType === 'INCOME' ? 'Income' : 'Expense'} entry of ₹${amountVal.toLocaleString('en-IN')} added successfully.`, 'success');
+
+      if (document.getElementById(prefix + 'Amount')) document.getElementById(prefix + 'Amount').value = '';
+      if (document.getElementById(prefix + 'Desc')) document.getElementById(prefix + 'Desc').value = '';
+      if (document.getElementById(prefix + (isInc ? 'Client' : 'Vendor'))) document.getElementById(prefix + (isInc ? 'Client' : 'Vendor')).value = '';
+
+      await loadRMAAdminBusinessLedgerSection();
+    } catch (err) {
+      window.toast36?.('Failed to save ledger entry: ' + err.message, 'error');
+    }
+  }
+
+  async function adminDeleteLedgerEntry(id) {
+    if (!confirm('Are you sure you want to delete this ledger transaction?')) return;
+    try {
+      const del = await supabaseClient.from('business_ledger').delete().eq('id', id);
+      if (del.error) throw del.error;
+      window.toast36?.('Ledger entry deleted successfully.', 'success');
+      await loadRMAAdminBusinessLedgerSection();
+    } catch(e) {
+      window.toast36?.('Delete error: ' + e.message, 'error');
+    }
+  }
+
+  function adminSetLedgerMonthFilter() {
+    const m = document.getElementById('ledgerFilterMonth')?.value;
+    const y = document.getElementById('ledgerFilterYear')?.value;
+    if (m) window.rmaLedgerSelectedMonth = Number(m);
+    if (y) window.rmaLedgerSelectedYear = Number(y);
+    loadRMAAdminBusinessLedgerSection();
+  }
+
+  window.loadRMAAdminBusinessLedgerSection = loadRMAAdminBusinessLedgerSection;
+  window.adminAddLedgerEntry = adminAddLedgerEntry;
+  window.adminDeleteLedgerEntry = adminDeleteLedgerEntry;
+  window.adminSetLedgerMonthFilter = adminSetLedgerMonthFilter;
 
   function setRMAAdminFilter(statusKey){
     window.rmaAdminFilterStatus = statusKey;
@@ -7111,6 +7571,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   async function adminRejectBookingPrompt(id){
     const reason = prompt('Please state the reason for rejecting this site visit request:');
     if(reason === null) return; // User cancelled prompt
+    const finalReason = reason.trim() || 'Slot unavailable / Request rejected by Admin';
 
     try {
       const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
@@ -7119,7 +7580,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
       const updatePayload = {
         status: 'rejected',
-        rejection_reason: reason || 'Slot unavailable',
+        rejection_reason: finalReason,
         rejection_date: new Date().toISOString(),
         approved_by: 'RMA Admin'
       };
@@ -7127,20 +7588,27 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
       if(up.error) throw up.error;
 
+      // Update matching appointment status if present
+      await supabaseClient.from('appointments').update({
+        status: 'REJECTED',
+        updated_at: new Date().toISOString()
+      }).eq('booking_id', id);
+
       // Insert status history
+      const reqIdentifier = b.request_id || ('RMA-SV-' + b.id.substring(0,8));
       try {
         await supabaseClient.from('status_history').insert({
           booking_id: id,
-          request_id: b.request_id,
+          request_id: reqIdentifier,
           previous_status: b.status,
           new_status: 'rejected',
           changed_by: 'RMA Admin',
-          remarks: `Request rejected. Reason: ${reason}`
+          remarks: `Request rejected. Reason: ${finalReason}`
         });
       } catch(shErr){ console.warn('status_history warning:', shErr); }
 
       // Notify Client
-      await window.notifyClientRequestRejected?.(b, reason);
+      await window.notifyClientRequestRejected?.(b, finalReason);
 
       window.toast36?.('Site visit request rejected and client notified.','success');
       await loadRMAAdminSiteVisitRequests();
@@ -7152,6 +7620,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   async function adminRescheduleBooking(id){
     const d = document.getElementById('adminConfDate_' + id)?.value || '';
     const t = document.getElementById('adminConfTime_' + id)?.value || '';
+    const eng = document.getElementById('adminEngineer_' + id)?.value.trim() || '';
+    const notes = document.getElementById('adminNotes_' + id)?.value.trim() || '';
 
     if(!d || !t){
       window.toast36?.('Please specify the new date and time slot first.','error');
@@ -7164,26 +7634,55 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const b = bRes.data;
 
       const updatePayload = {
-        status: 'reschedule_requested',
+        status: 'confirmed',
         confirmed_date: d,
         confirmed_time: t,
         scheduled_date: d,
         scheduled_time: t,
+        engineer_name: eng || b.engineer_name || null,
+        admin_remarks: notes || b.admin_remarks || null,
         approved_by: 'RMA Admin'
       };
 
       const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
       if(up.error) throw up.error;
 
+      // Update matching appointment if exists or insert
+      const reqIdentifier = b.request_id || ('RMA-SV-' + b.id.substring(0,8));
+      const existingApt = await supabaseClient.from('appointments').select('id').eq('booking_id', id).maybeSingle();
+      if (existingApt.data?.id) {
+        await supabaseClient.from('appointments').update({
+          confirmed_date: d,
+          confirmed_time: t,
+          engineer_name: eng || b.engineer_name || null,
+          notes: notes || null,
+          status: 'CONFIRMED',
+          updated_at: new Date().toISOString()
+        }).eq('id', existingApt.data.id);
+      } else {
+        await supabaseClient.from('appointments').insert({
+          booking_id: id,
+          request_id: reqIdentifier,
+          client_name: b.client_name || 'Customer',
+          client_email: b.email,
+          client_mobile: b.mobile,
+          confirmed_date: d,
+          confirmed_time: t,
+          engineer_name: eng || null,
+          notes: notes || null,
+          status: 'CONFIRMED'
+        });
+      }
+
       // Log status history
       try {
         await supabaseClient.from('status_history').insert({
           booking_id: id,
-          request_id: b.request_id,
+          request_id: reqIdentifier,
           previous_status: b.status,
-          new_status: 'reschedule_requested',
+          new_status: 'confirmed',
           changed_by: 'RMA Admin',
-          remarks: `Appointment rescheduled to ${d} at ${t}.`
+          remarks: `Appointment rescheduled to ${d} at ${t}. ${notes}`.trim()
         });
       } catch(shErr){ console.warn('status_history warning:', shErr); }
 
@@ -7191,7 +7690,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       await window.notifyClientAppointmentRescheduled?.({
         ...b,
         confirmed_date: d,
-        confirmed_time: t
+        confirmed_time: t,
+        engineer_name: eng || b.engineer_name
       });
 
       window.toast36?.('Reschedule recorded and updated notification sent to client.','success');
@@ -7222,11 +7722,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const up = await supabaseClient.from('bookings').update(updatePayload).eq('id', id);
       if(up.error) throw up.error;
 
+      // Update matching appointment status to COMPLETED if present
+      await supabaseClient.from('appointments').update({
+        status: 'COMPLETED',
+        updated_at: new Date().toISOString()
+      }).eq('booking_id', id);
+
       // Status history
+      const reqIdentifier = b.request_id || ('RMA-SV-' + b.id.substring(0,8));
       try {
         await supabaseClient.from('status_history').insert({
           booking_id: id,
-          request_id: b.request_id,
+          request_id: reqIdentifier,
           previous_status: b.status,
           new_status: 'completed',
           changed_by: 'RMA Admin',
