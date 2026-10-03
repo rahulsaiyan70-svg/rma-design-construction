@@ -368,6 +368,17 @@ section{padding:78px 0}
 .ps-v41-doc-summary{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
 @media(max-width:600px){.ps-v41-doc-card{padding:12px}.ps-v41-doc-card iframe{height:380px!important}}
 </style>
+<style id="rma-mobile-coupon-ui-fix">
+.rma-coupon-flex, #rmaV29Visit .rma-coupon-flex{display:flex!important;gap:8px!important;align-items:center!important;width:100%!important;box-sizing:border-box!important}
+.rma-coupon-flex input, #rmaV29Visit .rma-coupon-flex input, #rmaV29Visit input#r29_coupon{flex:1 1 auto!important;min-width:0!important;width:0!important;box-sizing:border-box!important}
+.rma-coupon-flex button.rma-coupon-btn, #rmaV29Visit .rma-coupon-flex button.rma-coupon-btn, #rmaV29Visit button#r29_couponBtn{flex:0 0 auto!important;width:auto!important;padding:10px 14px!important;font-size:13px!important;white-space:nowrap!important;box-sizing:border-box!important}
+@media(max-width:600px){
+  .r29-coupon-box > div{grid-template-columns:1fr!important}
+  .rma-coupon-flex, #rmaV29Visit .rma-coupon-flex{gap:6px!important}
+  .rma-coupon-flex input, #rmaV29Visit .rma-coupon-flex input, #rmaV29Visit input#r29_coupon{padding:9px 10px!important;font-size:13px!important}
+  .rma-coupon-flex button.rma-coupon-btn, #rmaV29Visit .rma-coupon-flex button.rma-coupon-btn, #rmaV29Visit button#r29_couponBtn{padding:9px 12px!important;font-size:12px!important}
+}
+</style>
 
 <style id="rma-v44-documents">
 /* V44 — compact project-document rows + accepted/rejected grouping */
@@ -6202,6 +6213,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               <input type="text" id="adminNotes_${esc(x.id)}" placeholder="Internal notes or message for client" value="${esc(x.admin_remarks||'')}" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:6px">
             </div>
 
+            <!-- Hidden File Input for Report Upload -->
+            <input type="file" id="adminReportFileInput_${esc(x.id)}" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" style="display:none" onchange="adminUploadReportFile('${esc(x.id)}', this.files[0])">
+
             <div style="display:flex; gap:8px; flex-wrap:wrap">
               ${(st === 'pending_cash_verification' || st === 'cash_pending' || j.payment_status === 'pending_cash_verification') ? `<button class="btn gold" type="button" style="background:#d4af37; color:#111; font-weight:800" onclick="adminVerifyCashPayment('${esc(x.id)}')">💵 Verify Cash Received</button>` : ''}
               <button class="btn dark" type="button" onclick="adminAcceptBooking('${esc(x.id)}')">✓ Confirm Appointment</button>
@@ -6210,6 +6224,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               <button class="btn outline" type="button" onclick="adminOpenCompletionModal('${esc(x.id)}')">📋 Mark Completed</button>
               <button class="btn outline" type="button" onclick="adminOpenReportUploadModal('${esc(x.id)}')">📄 Upload Report</button>
               <button class="btn outline" type="button" onclick="adminToggleNotificationLogs('${esc(x.id)}')">🔔 Notification History</button>
+              <button class="btn outline" type="button" style="border-color:#e74c3c; color:#c0392b; font-weight:700" onclick="adminDeleteBookingPrompt('${esc(x.id)}')">🗑️ Delete Request</button>
             </div>
           </div>
 
@@ -7233,10 +7248,54 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function adminOpenReportUploadModal(id){
-    const fileUrl = prompt('Enter Report Document / Storage URL (or Upload Link):');
-    if(!fileUrl) return;
-    const title = prompt('Report Title:', 'Site Visit Inspection Report') || 'Site Visit Report';
+    const fileInput = document.getElementById('adminReportFileInput_' + id);
+    if(fileInput){
+      fileInput.click();
+    } else {
+      const fileUrl = prompt('Enter Report Document / Storage URL (or Upload Link):');
+      if(!fileUrl) return;
+      const title = prompt('Report Title:', 'Site Visit Inspection Report') || 'Site Visit Report';
+      await adminSaveReportRecord(id, fileUrl, '', title);
+    }
+  }
 
+  async function adminUploadReportFile(id, file){
+    if(!file) return;
+    window.toast36?.('Uploading report document to storage...', 'info');
+
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const storagePath = `reports/${id}/${Date.now()}_${safeName}`;
+
+      // Upload to project-documents or site-visit-photos bucket
+      let uploadBucket = 'project-documents';
+      let upRes = await supabaseClient.storage.from(uploadBucket).upload(storagePath, file, { upsert: true, contentType: file.type });
+      if(upRes.error){
+        uploadBucket = 'site-visit-photos';
+        upRes = await supabaseClient.storage.from(uploadBucket).upload(storagePath, file, { upsert: true, contentType: file.type });
+        if(upRes.error) throw upRes.error;
+      }
+
+      // Get public URL or signed URL
+      let publicUrl = '';
+      try {
+        const pub = supabaseClient.storage.from(uploadBucket).getPublicUrl(storagePath);
+        publicUrl = pub.data?.publicUrl || '';
+      } catch(e){}
+
+      if(!publicUrl){
+        const signed = await supabaseClient.storage.from(uploadBucket).createSignedUrl(storagePath, 315360000); // 10 yrs
+        publicUrl = signed.data?.signedUrl || storagePath;
+      }
+
+      const title = file.name || 'Site Visit Inspection Report';
+      await adminSaveReportRecord(id, publicUrl, storagePath, title);
+    } catch(err){
+      window.toast36?.('Report upload failed: ' + err.message, 'error');
+    }
+  }
+
+  async function adminSaveReportRecord(id, fileUrl, filePath, title){
     try {
       const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
       if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
@@ -7247,24 +7306,38 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         booking_id: id,
         request_id: b.request_id,
         client_user_id: b.client_user_id || null,
-        title: title,
+        title: title || 'Site Visit Inspection Report',
         engineer_name: b.engineer_name || 'RMA Engineer',
         observations: b.site_observations || '',
+        file_path: filePath || null,
         file_url: fileUrl
       });
 
       // Update booking
       await supabaseClient.from('bookings').update({
-        report_url: fileUrl
+        report_url: fileUrl,
+        report_path: filePath || null
       }).eq('id', id);
+
+      // Log status history
+      try {
+        await supabaseClient.from('status_history').insert({
+          booking_id: id,
+          request_id: b.request_id,
+          previous_status: b.status,
+          new_status: b.status,
+          changed_by: 'RMA Admin',
+          remarks: `Report document uploaded: ${title}`
+        });
+      } catch(shErr){ console.warn('status_history warning:', shErr); }
 
       // Notify client that report is available
       await window.notifyClientReportAvailable?.(b, title);
 
-      window.toast36?.('Report associated with booking and client notified.','success');
+      window.toast36?.('Report document uploaded successfully and associated with booking. Client notified.','success');
       await loadRMAAdminSiteVisitRequests();
     } catch(err){
-      window.toast36?.('Report upload error: ' + err.message, 'error');
+      window.toast36?.('Report save error: ' + err.message, 'error');
     }
   }
 
@@ -7279,34 +7352,59 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }
 
     container.style.display = 'block';
-    list.innerHTML = 'Fetching logs...';
+    list.innerHTML = 'Fetching logs & timeline...';
 
     try {
-      const q = await supabaseClient.from('notification_logs').select('*').eq('booking_id', id).order('created_at', { ascending: false });
-      if(q.error) throw q.error;
-      const logs = q.data || [];
+      const [notifRes, historyRes] = await Promise.all([
+        supabaseClient.from('notification_logs').select('*').eq('booking_id', id).order('created_at', { ascending: false }),
+        supabaseClient.from('status_history').select('*').eq('booking_id', id).order('created_at', { ascending: false })
+      ]);
 
-      if(!logs.length){
-        list.innerHTML = '<div class="muted">No notification logs recorded for this request yet.</div>';
+      const logs = notifRes.data || [];
+      const history = historyRes.data || [];
+
+      if(!logs.length && !history.length){
+        list.innerHTML = '<div class="muted">No activity or notification logs recorded for this request yet.</div>';
         return;
       }
 
-      list.innerHTML = logs.map(l => `
-        <div style="background:#ffffff; padding:8px 10px; border-radius:6px; margin-bottom:6px; border:1px solid #e1e8e4">
-          <div style="display:flex; justify-content:space-between">
-            <b>${esc(l.channel)} — ${esc(l.notification_type)}</b>
-            <span style="font-weight:800; color:${l.status==='SENT'?'#0d5c3a':'#a82315'}">${esc(l.status)}</span>
+      let html = '';
+
+      if(history.length){
+        html += '<div style="margin-bottom:10px"><b>Status & Activity Timeline:</b></div>';
+        html += history.map(h => `
+          <div style="background:#ffffff; padding:8px 10px; border-radius:6px; margin-bottom:6px; border:1px solid #d4e3db">
+            <div style="display:flex; justify-content:space-between">
+              <b>Status Changed to: ${esc(h.new_status).toUpperCase()}</b>
+              <span style="font-size:11px; color:#555">${new Date(h.created_at).toLocaleString('en-IN')}</span>
+            </div>
+            <div style="color:#444; font-size:12px; margin-top:2px">${esc(h.remarks || 'No details provided')}</div>
+            <div style="font-size:10px; color:#777; margin-top:2px">Changed By: ${esc(h.changed_by || 'RMA System')}</div>
           </div>
-          <div>Recipient: ${esc(l.recipient)}</div>
-          <div style="color:#666">${esc(l.message_body?.substring(0, 100))}...</div>
-          <div style="font-size:10px; color:#888; margin-top:4px">
-            Time: ${new Date(l.created_at).toLocaleString('en-IN')} ${l.error_message ? `| Error: ${esc(l.error_message)}` : ''}
+        `).join('');
+      }
+
+      if(logs.length){
+        html += '<div style="margin:12px 0 6px"><b>Dispatched Notifications:</b></div>';
+        html += logs.map(l => `
+          <div style="background:#ffffff; padding:8px 10px; border-radius:6px; margin-bottom:6px; border:1px solid #e1e8e4">
+            <div style="display:flex; justify-content:space-between">
+              <b>${esc(l.channel)} — ${esc(l.notification_type)}</b>
+              <span style="font-weight:800; color:${l.status==='SENT'?'#0d5c3a':'#a82315'}">${esc(l.status)}</span>
+            </div>
+            <div>Recipient: ${esc(l.recipient)}</div>
+            <div style="color:#666">${esc(l.message_body?.substring(0, 100))}...</div>
+            <div style="font-size:10px; color:#888; margin-top:4px">
+              Time: ${new Date(l.created_at).toLocaleString('en-IN')} ${l.error_message ? `| Error: ${esc(l.error_message)}` : ''}
+            </div>
+            ${l.status === 'FAILED' ? `<button class="btn outline" style="padding:2px 8px; font-size:10px; margin-top:4px" onclick="retryRMANotification('${esc(l.id)}')">Retry Dispatch</button>` : ''}
           </div>
-          ${l.status === 'FAILED' ? `<button class="btn outline" style="padding:2px 8px; font-size:10px; margin-top:4px" onclick="retryRMANotification('${esc(l.id)}')">Retry Dispatch</button>` : ''}
-        </div>
-      `).join('');
+        `).join('');
+      }
+
+      list.innerHTML = html;
     } catch(err){
-      list.innerHTML = '<div class="notice error">Failed to load notification logs.</div>';
+      list.innerHTML = '<div class="notice error">Failed to load notification history logs.</div>';
     }
   }
 
@@ -7326,8 +7424,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         payment_status: 'cash_received'
       });
 
+      // Preserve status if already confirmed/completed, otherwise set to cash_received
+      const currentSt = String(b.status || '').toLowerCase();
+      const nextSt = ['confirmed', 'approved', 'accepted', 'completed'].includes(currentSt) ? b.status : 'cash_received';
+
       const updatePayload = {
-        status: 'cash_received',
+        status: nextSt,
         visit_scope: updatedScope,
         approved_by: 'RMA Admin'
       };
@@ -7340,16 +7442,53 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           booking_id: id,
           request_id: b.request_id,
           previous_status: b.status,
-          new_status: 'cash_received',
+          new_status: nextSt,
           changed_by: 'RMA Admin',
           remarks: 'Cash payment verified and received by RMA Admin.'
         });
       } catch(shErr){ console.warn('status_history warning:', shErr); }
 
-      window.toast36?.('Cash payment verified successfully. Status set to Cash Received.','success');
+      window.toast36?.('Cash payment verified successfully. Status updated.','success');
       await loadRMAAdminSiteVisitRequests();
     } catch(err){
       window.toast36?.('Cash verification error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminDeleteBookingPrompt(id){
+    if(!id) return;
+    if(!confirm('Are you sure you want to permanently delete this site-visit request?')) return;
+
+    try {
+      window.toast36?.('Deleting site visit request and associated data...', 'info');
+
+      // 1. Fetch booking record to get files and IDs
+      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
+      const b = bRes.data;
+
+      // 2. Delete related records in child tables
+      try { await supabaseClient.from('appointments').delete().eq('booking_id', id); } catch(e){}
+      try { await supabaseClient.from('status_history').delete().eq('booking_id', id); } catch(e){}
+      try { await supabaseClient.from('notification_logs').delete().eq('booking_id', id); } catch(e){}
+      try { await supabaseClient.from('site_visit_reports').delete().eq('booking_id', id); } catch(e){}
+      try { await supabaseClient.from('feedback').delete().eq('booking_id', id); } catch(e){}
+      try { await supabaseClient.from('client_notifications').delete().eq('booking_id', id); } catch(e){}
+      try { await supabaseClient.from('site_visit_reviews').delete().eq('booking_id', id); } catch(e){}
+
+      // 3. Clean up storage files if report_path exists
+      if(b?.report_path){
+        try { await supabaseClient.storage.from('project-documents').remove([b.report_path]); } catch(e){}
+        try { await supabaseClient.storage.from('site-visit-photos').remove([b.report_path]); } catch(e){}
+      }
+
+      // 4. Delete main booking record from Supabase
+      const r = await supabaseClient.from('bookings').delete().eq('id', id);
+      if(r.error) throw r.error;
+
+      window.toast36?.('Site visit request permanently deleted from Supabase.','success');
+      await loadRMAAdminSiteVisitRequests();
+    } catch(err){
+      window.toast36?.('Deletion error: ' + (err.message || 'Check database permissions/RLS.'), 'error');
     }
   }
 
@@ -7362,7 +7501,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   window.adminRescheduleBooking = adminRescheduleBooking;
   window.adminOpenCompletionModal = adminOpenCompletionModal;
   window.adminOpenReportUploadModal = adminOpenReportUploadModal;
+  window.adminUploadReportFile = adminUploadReportFile;
   window.adminToggleNotificationLogs = adminToggleNotificationLogs;
+  window.adminDeleteBookingPrompt = adminDeleteBookingPrompt;
 
   // Export notification module globally
   window.sendRMANotification = sendRMANotification;
