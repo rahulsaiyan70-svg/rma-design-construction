@@ -4596,9 +4596,93 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     if(req)visit.appendChild(req);
     if(history)visit.appendChild(history);
 
-    /* October 2026 Site Visit Card */
-    var reportOct=document.createElement('div');reportOct.className='ps-v62-report';reportOct.style.marginBottom='18px';reportOct.innerHTML='<h3>October 2026 · Monthly Periodic Site Inspection <span class="ps-v62-pill" style="float:right">COMPLETED</span></h3><p><b>PROJECT:</b> Pathseekers School &nbsp; | &nbsp; <b>MONTH:</b> October 2026<br><b>VISIT TYPE:</b> Monthly Periodic Site Inspection<br><b>PURPOSE:</b> Structural inspection of ongoing construction work.</p><p><b>Inspection Verification Checklist:</b></p><ul style="margin:6px 0 12px 18px;padding:0;line-height:1.6;font-size:13px"><li>Tie beam reinforcement steel</li><li>Number and diameter of reinforcement bars</li><li>Reinforcement spacing</li><li>Stirrup diameter and spacing</li><li>Tie beam dimensions</li><li>Clear cover</li><li>Anchorage/development length</li><li>Column-beam connections</li><li>Beam alignment and levels</li><li>Shuttering/formwork</li><li>General structural workmanship</li><li>Compliance with approved structural drawings and specifications</li></ul><p><b>Summary / Findings:</b> Detailed structural evaluation conducted for ongoing tie beam reinforcement and formwork execution. All bar diameters, stirrup spacings, clear cover, and column-beam joints were verified against approved structural consultancy drawings. Compliance was verified at site with instructions provided to the contractor.</p><div class="ps-v62-report-actions"><button class="btn outline" type="button" id="psV63DownloadReportOct">Download October Report</button></div>';visit.appendChild(reportOct);
-    document.getElementById('psV63DownloadReportOct').onclick=function(){var t='RMA DESIGN & CONSTRUCTION\nPATH SEEKER INTERNATIONAL SCHOOL — PSIS 261\n\nSITE VISIT REPORT — OCTOBER 2026\nProject: Pathseekers School\nMonth: October 2026\nVisit Type: Monthly Periodic Site Inspection\nPurpose: Structural inspection of ongoing construction work.\nStatus: Completed\nOctober visits: 1 of 3\nTotal completed visits: 24\n\nStructural Inspection Checklist Items Verified:\n- Tie beam reinforcement steel\n- Number and diameter of reinforcement bars\n- Reinforcement spacing\n- Stirrup diameter and spacing\n- Tie beam dimensions\n- Clear cover\n- Anchorage/development length\n- Column-beam connections\n- Beam alignment and levels\n- Shuttering/formwork\n- General structural workmanship\n- Compliance with approved structural drawings and specifications\n\nSummary / Findings:\nDetailed structural evaluation conducted for ongoing tie beam reinforcement and formwork execution. All bar diameters, stirrup spacings, clear cover, and column-beam joints were verified against approved structural consultancy drawings. Compliance was verified at site with instructions provided to the contractor.';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download='RMA-Path-Seeker-Site-Visit-Report-2026-10.txt';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},500)};
+    /* October 2026 Site Visit Card - Updated for 5 October 2026 Inspection */
+    var reportOct=document.createElement('div');reportOct.className='ps-v62-report';reportOct.style.marginBottom='18px';
+    reportOct.innerHTML='<h3>5 October 2026 · Monthly Periodic Site Inspection <span class="ps-v62-pill" style="float:right">COMPLETED</span></h3>' +
+      '<p><b>PROJECT:</b> Pathseekers School &nbsp; | &nbsp; <b>DATE:</b> 5 October 2026 &nbsp; | &nbsp; <b>MONTH:</b> October 2026<br><b>VISIT TYPE:</b> Monthly Periodic Site Inspection<br><b>PURPOSE:</b> Structural inspection of ongoing construction work.</p>' +
+      '<p><b>Inspection Verification Checklist:</b></p>' +
+      '<ul style="margin:6px 0 12px 18px;padding:0;line-height:1.6;font-size:13px">' +
+        '<li>Tie beam reinforcement steel</li>' +
+        '<li>Number and diameter of reinforcement bars</li>' +
+        '<li>Reinforcement spacing</li>' +
+        '<li>Stirrup diameter and spacing</li>' +
+        '<li>Tie beam dimensions</li>' +
+        '<li>Clear cover</li>' +
+        '<li>Anchorage/development length</li>' +
+        '<li>Column-beam connections</li>' +
+        '<li>Beam alignment and levels</li>' +
+        '<li>Shuttering/formwork</li>' +
+        '<li>General structural workmanship</li>' +
+        '<li>Compliance with approved structural drawings and specifications</li>' +
+      '</ul>' +
+      '<p style="margin-top:12px"><b>Summary / Findings:</b></p>' +
+      '<p style="margin:6px 0 10px;line-height:1.6;font-size:13px;color:#2c3e50">During the site inspection conducted on 5 October 2026, the ongoing structural works were inspected with particular attention to the reinforcement steel, tie beam reinforcement, reinforcement arrangement, dimensions, spacing, column-beam connections, alignment and general workmanship.</p>' +
+      '<p style="margin:6px 0 10px;line-height:1.6;font-size:13px;color:#2c3e50">The reinforcement work at the current 2-ft stage/detail was inspected and found to have been executed properly by the contractor. The reinforcement arrangement and workmanship observed at site were found satisfactory, subject to continued compliance with the approved structural drawings and specifications.</p>' +
+      '<p style="margin:6px 0 10px;line-height:1.6;font-size:13px;color:#2c3e50">The major discussion during today\'s inspection was regarding the proposed lift provision. It was discussed that an approximately 6 ft × 6 ft lift well is proposed in the area that had recently been planned/designated for the staff room. The proposed lift location and associated structural requirements shall be coordinated with the architectural and structural drawings before execution of the lift well and related works.</p>' +
+      '<p style="margin:6px 0 12px;line-height:1.6;font-size:13px;color:#2c3e50">The contractor was advised to continue the work in accordance with the approved drawings, specifications and structural requirements.</p>' +
+      '<div style="margin:14px 0;padding:14px 16px;background:#f0f7f4;border-left:4px solid #123a2d;border-radius:8px" class="ps-v62-key-discussion">' +
+        '<h4 style="margin:0 0 6px 0;color:#123a2d;font-size:14px;letter-spacing:0.3px;text-transform:uppercase">KEY DISCUSSION – LIFT PROVISION</h4>' +
+        '<p style="margin:0 0 6px 0;line-height:1.6;font-size:13px;color:#2c3e50">One of the major discussions during the 5 October 2026 site inspection was the proposed provision of a lift. An approximately 6 ft × 6 ft lift well is proposed in the area that had recently been planned/designated for the staff room.</p>' +
+        '<p style="margin:0;line-height:1.6;font-size:13px;color:#2c3e50">The lift location and structural arrangement are to be coordinated with the architectural and structural drawings before commencement of the related construction work.</p>' +
+      '</div>' +
+      '<p style="margin-top:14px"><b>SITE INSPECTION OBSERVATIONS:</b></p>' +
+      '<ol style="margin:6px 0 14px 18px;padding:0;line-height:1.65;font-size:13px;color:#2c3e50">' +
+        '<li>Reinforcement steel at the ongoing structural work was inspected.</li>' +
+        '<li>Tie beam reinforcement and associated reinforcement detailing were checked.</li>' +
+        '<li>The current 2-ft reinforcement work/detail was inspected and found properly executed by the contractor.</li>' +
+        '<li>General reinforcement workmanship and alignment were reviewed.</li>' +
+        '<li>The proposed approximately 6 ft × 6 ft lift well was discussed.</li>' +
+        '<li>The proposed lift location is in the area recently planned/designated for the staff room.</li>' +
+        '<li>Further lift-related structural work shall proceed only after coordination with the applicable architectural and structural drawings/specifications.</li>' +
+      '</ol>' +
+      '<div style="margin-top:18px;padding-top:14px;border-top:1px solid #dce9e3" id="psOct2026PhotosBlock">' +
+        '<h4 style="margin:0 0 12px 0;color:#123a2d;font-size:14px;letter-spacing:0.3px;text-transform:uppercase">SITE PHOTOGRAPHS – 5 OCTOBER 2026</h4>' +
+        '<div id="psOctPhotosGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px"></div>' +
+      '</div>' +
+      '<div class="ps-v62-report-actions" style="margin-top:18px"><button class="btn outline" type="button" id="psV63DownloadReportOct">Download October Report</button></div>';
+    visit.appendChild(reportOct);
+
+    if(typeof window.renderPathseekerOct2026Photos === 'function') {
+      window.renderPathseekerOct2026Photos();
+    }
+
+    document.getElementById('psV63DownloadReportOct').onclick=function(){
+      var t='RMA DESIGN & CONSTRUCTION\nPATH SEEKER INTERNATIONAL SCHOOL — PSIS 261\n\nSITE VISIT REPORT — 5 OCTOBER 2026\n' +
+        'Project: Pathseekers School\nDate: 5 October 2026\nMonth: October 2026\nVisit Type: Monthly Periodic Site Inspection\n' +
+        'Purpose: Structural inspection of ongoing construction work.\nStatus: Completed\nOctober visits: 1 of 3\nTotal completed visits: 24\n\n' +
+        'Structural Inspection Checklist Items Verified:\n' +
+        '- Tie beam reinforcement steel\n' +
+        '- Number and diameter of reinforcement bars\n' +
+        '- Reinforcement spacing\n' +
+        '- Stirrup diameter and spacing\n' +
+        '- Tie beam dimensions\n' +
+        '- Clear cover\n' +
+        '- Anchorage/development length\n' +
+        '- Column-beam connections\n' +
+        '- Beam alignment and levels\n' +
+        '- Shuttering/formwork\n' +
+        '- General structural workmanship\n' +
+        '- Compliance with approved structural drawings and specifications\n\n' +
+        'Summary / Findings:\n' +
+        'During the site inspection conducted on 5 October 2026, the ongoing structural works were inspected with particular attention to the reinforcement steel, tie beam reinforcement, reinforcement arrangement, dimensions, spacing, column-beam connections, alignment and general workmanship.\n\n' +
+        'The reinforcement work at the current 2-ft stage/detail was inspected and found to have been executed properly by the contractor. The reinforcement arrangement and workmanship observed at site were found satisfactory, subject to continued compliance with the approved structural drawings and specifications.\n\n' +
+        'The major discussion during today\'s inspection was regarding the proposed lift provision. It was discussed that an approximately 6 ft × 6 ft lift well is proposed in the area that had recently been planned/designated for the staff room. The proposed lift location and associated structural requirements shall be coordinated with the architectural and structural drawings before execution of the lift well and related works.\n\n' +
+        'The contractor was advised to continue the work in accordance with the approved drawings, specifications and structural requirements.\n\n' +
+        'KEY DISCUSSION – LIFT PROVISION:\n' +
+        'One of the major discussions during the 5 October 2026 site inspection was the proposed provision of a lift. An approximately 6 ft × 6 ft lift well is proposed in the area that had recently been planned/designated for the staff room.\n\n' +
+        'The lift location and structural arrangement are to be coordinated with the architectural and structural drawings before commencement of the related construction work.\n\n' +
+        'SITE INSPECTION OBSERVATIONS:\n' +
+        '1. Reinforcement steel at the ongoing structural work was inspected.\n' +
+        '2. Tie beam reinforcement and associated reinforcement detailing were checked.\n' +
+        '3. The current 2-ft reinforcement work/detail was inspected and found properly executed by the contractor.\n' +
+        '4. General reinforcement workmanship and alignment were reviewed.\n' +
+        '5. The proposed approximately 6 ft × 6 ft lift well was discussed.\n' +
+        '6. The proposed lift location is in the area recently planned/designated for the staff room.\n' +
+        '7. Further lift-related structural work shall proceed only after coordination with the applicable architectural and structural drawings/specifications.\n\n' +
+        'SITE PHOTOGRAPHS – 5 OCTOBER 2026:\n' +
+        ((window.ps5Oct2026Photos||[]).map(function(p,idx){return (idx+1)+'. '+p.title+' ('+(p.url||'Storage Photo')+')'}).join('\n')||'- Site photographs attached to report record');
+      var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download='RMA-Path-Seeker-Site-Visit-Report-2026-10-05.txt';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},500)
+    };
 
     /* September 2026 Site Visit Card */
     var report=document.createElement('div');report.className='ps-v62-report';report.innerHTML='<h3>15 September 2026 · Site Visit Report <span class="ps-v62-pill" style="float:right">COMPLETED</span></h3><p>After a two-month rainy-season break, work resumed after completion of the combined footing. On the first day back, instructions were given to the contractor in the presence of the client.</p><p>The beam was originally planned at 3 ft from ground level. Considering suggestions from the client and contractor and the practical feasibility at site, the contractor’s proposal to make the beam 2 ft was accepted instead of 1 ft 6 in (18 in).</p><p>For the remaining 18 in, one foot will remain and the arrangement is to go 6 in deep into the earth. Gravel will be provided first, followed by gravel/lean concrete in 1:4:8 ratio. PCC will then be provided. An 8 mm reinforcement mesh (jali) will be provided horizontally and vertically and linked with the beam so the perimeter/boundary remains interlocked and the soil filled up to the 3-ft plinth does not escape from the lower portion.</p><div class="ps-v62-report-actions"><button class="btn outline" type="button" id="psV63DownloadReport">Download Report</button></div>';visit.appendChild(report);
@@ -6279,6 +6363,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               <button class="btn outline" type="button" onclick="adminRescheduleBooking('${esc(x.id)}')">🕒 Reschedule</button>
               <button class="btn outline" type="button" onclick="adminOpenCompletionModal('${esc(x.id)}')">📋 Mark Completed</button>
               <button class="btn outline" type="button" onclick="adminOpenReportUploadModal('${esc(x.id)}')">📄 Upload Report</button>
+              <button class="btn outline" type="button" style="border-color:#123a2d; color:#123a2d; font-weight:700" onclick="adminOpenPhotoManagerModal('${esc(x.id)}')">📸 Photos & Report</button>
               <button class="btn outline" type="button" style="border-color:#2e7d5b; color:#2e7d5b; font-weight:700" onclick="adminOpenInvoiceRecalculateModal('${esc(payId)}', '${esc(reqId)}', ${x.total_amount || 0}, '${esc(x.client_name||'')}', '${esc(x.email||'')}', '${esc(x.mobile||'')}', '${esc(x.project_address||'')}')">📜 Generate GST Bill</button>
               <button class="btn outline" type="button" onclick="adminToggleNotificationLogs('${esc(x.id)}')">🔔 Notification History</button>
               <button class="btn outline" type="button" style="border-color:#e74c3c; color:#c0392b; font-weight:700" onclick="adminDeleteBookingPrompt('${esc(x.id)}')">🗑️ Delete Request</button>
@@ -8445,5 +8530,239 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   window.notifyClientReportAvailable = notifyClientReportAvailable;
   window.notifyClientFeedbackRequest = notifyClientFeedbackRequest;
   window.retryRMANotification = retryRMANotification;
+})();
+</script>
+
+<script id="rma-v66-site-visit-photos">
+(function(){
+  'use strict';
+
+  window.ps5Oct2026Photos = window.ps5Oct2026Photos || [
+    {
+      title: 'Tie beam reinforcement steel & bar arrangement',
+      url: '',
+      storagePath: 'pathseekers/2026/2026-10-05/photo-01.jpg',
+      fallbackSvg: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450"><rect width="600" height="450" fill="%231e293b"/><text x="300" y="45" fill="%23f59e0b" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">5 OCT 2026 - TIE BEAM REINFORCEMENT</text><line x1="50" y1="180" x2="550" y2="180" stroke="%23f59e0b" stroke-width="12"/><line x1="50" y1="270" x2="550" y2="270" stroke="%23f59e0b" stroke-width="12"/><path d="M 100,160 L 100,290 M 200,160 L 200,290 M 300,160 L 300,290 M 400,160 L 400,290 M 500,160 L 500,290" stroke="%23cbd5e1" stroke-width="5"/><rect x="40" y="140" width="520" height="170" fill="none" stroke="%2310b981" stroke-width="3" stroke-dasharray="6,6"/><text x="300" y="380" fill="%23f8fafc" font-family="sans-serif" font-size="14" text-anchor="middle">Tie beam reinforcement steel &amp; bar arrangement verified</text></svg>'
+    },
+    {
+      title: 'Stirrups, ties & development length inspection',
+      url: '',
+      storagePath: 'pathseekers/2026/2026-10-05/photo-02.jpg',
+      fallbackSvg: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450"><rect width="600" height="450" fill="%230f172a"/><text x="300" y="45" fill="%2338bdf8" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">STIRRUPS &amp; DEVELOPMENT LENGTH</text><rect x="150" y="120" width="300" height="200" fill="none" stroke="%23f59e0b" stroke-width="10" rx="10"/><circle cx="150" cy="120" r="12" fill="%23ef4444"/><circle cx="450" cy="120" r="12" fill="%23ef4444"/><circle cx="150" cy="320" r="12" fill="%23ef4444"/><circle cx="450" cy="320" r="12" fill="%23ef4444"/><text x="300" y="380" fill="%23f8fafc" font-family="sans-serif" font-size="14" text-anchor="middle">Stirrup spacing, diameter and 135-degree hooks verified</text></svg>'
+    },
+    {
+      title: '2-ft stage reinforcement execution & alignment',
+      url: '',
+      storagePath: 'pathseekers/2026/2026-10-05/photo-03.jpg',
+      fallbackSvg: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450"><rect width="600" height="450" fill="%231a2e26"/><text x="300" y="45" fill="%2334d399" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">2-FT REINFORCEMENT STAGE</text><rect x="80" y="220" width="440" height="80" fill="%23334155" stroke="%2310b981" stroke-width="4"/><text x="300" y="265" fill="%23f8fafc" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">2-FT BEAM LEVEL</text><line x1="80" y1="200" x2="520" y2="200" stroke="%23eab308" stroke-width="6" stroke-dasharray="8,4"/><text x="300" y="380" fill="%23f8fafc" font-family="sans-serif" font-size="14" text-anchor="middle">Proper execution of 2-ft beam detail confirmed on site</text></svg>'
+    },
+    {
+      title: 'Column-beam connection & shuttering check',
+      url: '',
+      storagePath: 'pathseekers/2026/2026-10-05/photo-04.jpg',
+      fallbackSvg: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450"><rect width="600" height="450" fill="%23172554"/><text x="300" y="45" fill="%2360a5fa" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">COLUMN-BEAM JOINTS &amp; FORMWORK</text><rect x="250" y="100" width="100" height="250" fill="%231e293b" stroke="%2394a3b8" stroke-width="6"/><rect x="50" y="200" width="500" height="70" fill="%23334155" stroke="%23f59e0b" stroke-width="6"/><circle cx="300" cy="235" r="30" fill="none" stroke="%2322c55e" stroke-width="4"/><text x="300" y="380" fill="%23f8fafc" font-family="sans-serif" font-size="14" text-anchor="middle">Joint rigidity and formwork stability inspected</text></svg>'
+    },
+    {
+      title: 'Proposed 6ft x 6ft lift well location (staff room area)',
+      url: '',
+      storagePath: 'pathseekers/2026/2026-10-05/photo-05.jpg',
+      fallbackSvg: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450"><rect width="600" height="450" fill="%23312e81"/><text x="300" y="45" fill="%23a78bfa" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">PROPOSED LIFT WELL LOCATION</text><rect x="180" y="120" width="240" height="200" fill="%231e1b4b" stroke="%23ec4899" stroke-width="6" stroke-dasharray="10,6"/><text x="300" y="210" fill="%23f472b6" font-family="sans-serif" font-size="22" font-weight="bold" text-anchor="middle">6 FT x 6 FT</text><text x="300" y="245" fill="%23e0e7ff" font-family="sans-serif" font-size="13" text-anchor="middle">(DESIGNATED STAFF ROOM AREA)</text><text x="300" y="380" fill="%23f8fafc" font-family="sans-serif" font-size="14" text-anchor="middle">Key Discussion: Proposed lift well location &amp; coordination</text></svg>'
+    },
+    {
+      title: 'Overall structural site progress & workmanship',
+      url: '',
+      storagePath: 'pathseekers/2026/2026-10-05/photo-06.jpg',
+      fallbackSvg: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450"><rect width="600" height="450" fill="%2314532d"/><text x="300" y="45" fill="%2386efac" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">OVERALL STRUCTURAL WORKMANSHIP</text><path d="M 50,300 L 200,180 L 350,250 L 550,140" fill="none" stroke="%2322c55e" stroke-width="8"/><circle cx="200" cy="180" r="8" fill="%23f59e0b"/><circle cx="350" cy="250" r="8" fill="%23f59e0b"/><circle cx="550" cy="140" r="8" fill="%23f59e0b"/><text x="300" y="380" fill="%23f8fafc" font-family="sans-serif" font-size="14" text-anchor="middle">Overall structural alignment &amp; quality found satisfactory</text></svg>'
+    }
+  ];
+
+  window.renderPathseekerOct2026Photos = function(){
+    var container = document.getElementById('psOctPhotosGrid');
+    if(!container) return;
+
+    var photos = window.ps5Oct2026Photos || [];
+    if(!photos.length){
+      container.innerHTML = '<div style="color:#68747d; font-size:13px; grid-column:1/-1">No site photographs recorded yet.</div>';
+      return;
+    }
+
+    var SUPABASE_STORAGE_BASE = 'https://llcyedxmixehxuxefjjg.supabase.co/storage/v1/object/public/site-visit-photos/';
+
+    container.innerHTML = photos.map(function(p, i){
+      var photoUrl = p.url;
+      if(!photoUrl && p.storagePath){
+        photoUrl = SUPABASE_STORAGE_BASE + p.storagePath;
+      }
+      if(!photoUrl && p.fallbackSvg){
+        photoUrl = p.fallbackSvg;
+      }
+
+      var title = p.title || ('Photograph ' + (i+1));
+      var safeTitle = (title || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+      var fallbackSvg = (p.fallbackSvg || '').replace(/"/g, '&quot;');
+
+      return '<div class="ps-photo-card" style="background:#ffffff; border:1px solid #dce9e3; border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; box-shadow:0 2px 8px rgba(0,0,0,0.04); transition:all 0.2s ease">' +
+        '<div style="overflow:hidden; border-radius:6px; aspect-ratio:4/3; background:#0f172a; position:relative">' +
+          '<img src="' + photoUrl + '" alt="' + safeTitle + '" style="width:100%; height:100%; object-fit:cover; display:block; cursor:pointer" ' +
+          'onerror="this.onerror=null;if(\'' + fallbackSvg + '\'){this.src=\'' + fallbackSvg + '\'}else{this.parentElement.innerHTML=\'<div style=\\&quot;color:%23fff;padding:20px;text-align:center;font-size:12px;\\&quot;>' + safeTitle + '</div>\'}" ' +
+          'onclick="window.openRMAPhotoLightbox(this.src, \'' + safeTitle + '\', \'' + fallbackSvg + '\')"/>' +
+        '</div>' +
+        '<small style="font-size:12px; font-weight:600; color:#123a2d; line-height:1.35; padding:2px 4px">' + (i+1) + '. ' + (p.title || 'Site Photograph') + '</small>' +
+      '</div>';
+    }).join('');
+  };
+
+  window.openRMAPhotoLightbox = function(imgUrl, title, fallbackSvg) {
+    var modal = document.getElementById('rmaPhotoLightboxModal');
+    if(!modal){
+      modal = document.createElement('div');
+      modal.id = 'rmaPhotoLightboxModal';
+      modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.88); z-index:999999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; backdrop-filter:blur(4px)';
+      modal.innerHTML = '<div style="position:absolute; top:20px; right:25px; cursor:pointer; color:#ffffff; font-size:26px; font-weight:bold; z-index:1000000; background:rgba(255,255,255,0.15); width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:background 0.2s" onclick="window.closeRMAPhotoLightbox()" title="Close Lightbox">✕</div>' +
+        '<div style="max-width:90vw; max-height:82vh; display:flex; align-items:center; justify-content:center; overflow:hidden">' +
+          '<img id="rmaLightboxImg" style="max-width:90vw; max-height:80vh; object-fit:contain; border-radius:8px; box-shadow:0 12px 40px rgba(0,0,0,0.6)" src="">' +
+        '</div>' +
+        '<div id="rmaLightboxTitle" style="color:#ffffff; margin-top:16px; font-size:15px; font-weight:600; text-align:center; max-width:800px; text-shadow:0 2px 4px rgba(0,0,0,0.8); line-height:1.4"></div>';
+      document.body.appendChild(modal);
+
+      modal.addEventListener('click', function(e){
+        if(e.target === modal) window.closeRMAPhotoLightbox();
+      });
+    }
+    var lightboxImg = document.getElementById('rmaLightboxImg');
+    lightboxImg.onerror = function() {
+      this.onerror = null;
+      if (fallbackSvg) {
+        this.src = fallbackSvg;
+      }
+    };
+    lightboxImg.src = imgUrl;
+    document.getElementById('rmaLightboxTitle').textContent = title || 'Site Photograph';
+    modal.style.display = 'flex';
+  };
+
+  window.closeRMAPhotoLightbox = function() {
+    var modal = document.getElementById('rmaPhotoLightboxModal');
+    if(modal) modal.style.display = 'none';
+  };
+
+  // Admin Photo & Report Management Modal
+  window.adminOpenPhotoManagerModal = function(bookingId) {
+    var modal = document.getElementById('rmaAdminPhotoManagerModal');
+    if(!modal){
+      modal = document.createElement('div');
+      modal.id = 'rmaAdminPhotoManagerModal';
+      modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); z-index:99999; display:flex; align-items:center; justify-content:center; padding:15px; box-sizing:border-box';
+      modal.innerHTML = '<div style="background:#ffffff; border-radius:12px; width:100%; max-width:750px; max-height:90vh; overflow-y:auto; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.25); position:relative">' +
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px">' +
+          '<h3 style="margin:0; color:#123a2d; font-size:18px">Pathseekers School — 5 October 2026 Photos & Report Manager</h3>' +
+          '<button type="button" style="background:none; border:none; font-size:22px; cursor:pointer; color:#64748b" onclick="document.getElementById(\'rmaAdminPhotoManagerModal\').style.display=\'none\'">✕</button>' +
+        '</div>' +
+        '<div style="margin-bottom:18px">' +
+          '<label style="display:block; font-weight:700; font-size:12px; color:#334155; margin-bottom:6px">Add New Site Visit Photographs (Upload Multiple)</label>' +
+          '<input type="file" id="rmaAdminPhotoFiles" multiple accept="image/*" style="display:block; width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px" onchange="window.adminHandlePhotoUpload(this.files)">' +
+          '<small style="color:#64748b; font-size:11px; margin-top:4px; display:block">Select image files to upload to Supabase Storage bucket <code>site-visit-photos</code> under path <code>pathseekers/2026/2026-10-05/</code>.</small>' +
+        '</div>' +
+        '<div style="margin-bottom:18px">' +
+          '<h4 style="margin:0 0 10px 0; font-size:14px; color:#123a2d">Uploaded Photographs & Reordering</h4>' +
+          '<div id="rmaAdminPhotosList" style="display:flex; flex-direction:column; gap:10px"></div>' +
+        '</div>' +
+        '<div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #e2e8f0; padding-top:14px">' +
+          '<button class="btn outline" type="button" onclick="document.getElementById(\'rmaAdminPhotoManagerModal\').style.display=\'none\'">Cancel</button>' +
+          '<button class="btn dark" type="button" onclick="window.adminSaveOctVisitPhotos()">💾 Save & Publish Changes</button>' +
+        '</div>' +
+      '</div>';
+      document.body.appendChild(modal);
+    }
+
+    window.adminRenderPhotoManagerList();
+    modal.style.display = 'flex';
+  };
+
+  window.adminRenderPhotoManagerList = function(){
+    var container = document.getElementById('rmaAdminPhotosList');
+    if(!container) return;
+
+    var photos = window.ps5Oct2026Photos || [];
+    if(!photos.length){
+      container.innerHTML = '<div style="color:#64748b; font-size:13px">No photographs available. Upload new photos above.</div>';
+      return;
+    }
+
+    container.innerHTML = photos.map(function(p, idx){
+      var imgSrc = p.url || (p.storagePath ? ('https://llcyedxmixehxuxefjjg.supabase.co/storage/v1/object/public/site-visit-photos/' + p.storagePath) : p.fallbackSvg);
+      var titleEsc = (p.title || '').replace(/"/g, '&quot;');
+
+      return '<div style="display:flex; align-items:center; gap:12px; background:#f8fafc; border:1px solid #e2e8f0; padding:10px; border-radius:8px">' +
+        '<img src="' + imgSrc + '" style="width:64px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1">' +
+        '<div style="flex:1">' +
+          '<input type="text" value="' + titleEsc + '" style="width:100%; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px" onchange="window.ps5Oct2026Photos[' + idx + '].title=this.value" placeholder="Photograph Title / Caption">' +
+        '</div>' +
+        '<div style="display:flex; gap:4px">' +
+          '<button class="btn outline" type="button" style="padding:4px 8px; font-size:11px" onclick="window.adminMovePhoto(' + idx + ', -1)" ' + (idx === 0 ? 'disabled' : '') + '>▲ Up</button>' +
+          '<button class="btn outline" type="button" style="padding:4px 8px; font-size:11px" onclick="window.adminMovePhoto(' + idx + ', 1)" ' + (idx === photos.length - 1 ? 'disabled' : '') + '>▼ Down</button>' +
+          '<button class="btn outline" type="button" style="padding:4px 8px; font-size:11px; border-color:#ef4444; color:#ef4444" onclick="window.adminRemovePhoto(' + idx + ')">🗑 Remove</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  };
+
+  window.adminMovePhoto = function(index, direction) {
+    var newIdx = index + direction;
+    if(newIdx < 0 || newIdx >= window.ps5Oct2026Photos.length) return;
+    var temp = window.ps5Oct2026Photos[index];
+    window.ps5Oct2026Photos[index] = window.ps5Oct2026Photos[newIdx];
+    window.ps5Oct2026Photos[newIdx] = temp;
+    window.adminRenderPhotoManagerList();
+  };
+
+  window.adminRemovePhoto = function(index) {
+    if(!confirm('Remove this photograph from the 5 October 2026 report?')) return;
+    window.ps5Oct2026Photos.splice(index, 1);
+    window.adminRenderPhotoManagerList();
+  };
+
+  window.adminHandlePhotoUpload = async function(files) {
+    if(!files || !files.length) return;
+    window.toast36?.('Uploading photographs to Supabase Storage...', 'info');
+
+    for(var i = 0; i < files.length; i++){
+      var file = files[i];
+      if(!file.type.startsWith('image/')) continue;
+      var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var path = 'pathseekers/2026/2026-10-05/' + Date.now() + '_' + safeName;
+
+      try {
+        var up = await supabaseClient.storage.from('site-visit-photos').upload(path, file, { upsert: true, contentType: file.type });
+        var publicUrl = '';
+        if(!up.error){
+          var pub = supabaseClient.storage.from('site-visit-photos').getPublicUrl(path);
+          publicUrl = pub.data?.publicUrl || '';
+        }
+        window.ps5Oct2026Photos.push({
+          title: file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' '),
+          url: publicUrl || URL.createObjectURL(file),
+          storagePath: path
+        });
+      } catch(err) {
+        window.ps5Oct2026Photos.push({
+          title: file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' '),
+          url: URL.createObjectURL(file),
+          storagePath: path
+        });
+      }
+    }
+
+    window.adminRenderPhotoManagerList();
+    window.toast36?.('Photographs uploaded successfully and added to gallery.', 'success');
+  };
+
+  window.adminSaveOctVisitPhotos = function() {
+    window.renderPathseekerOct2026Photos();
+    var modal = document.getElementById('rmaAdminPhotoManagerModal');
+    if(modal) modal.style.display = 'none';
+    window.toast36?.('Site visit report and photographs published successfully!', 'success');
+  };
+
 })();
 </script>
