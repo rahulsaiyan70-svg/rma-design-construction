@@ -2250,6 +2250,7 @@ window.RAZORPAY_KEY_ID = RAZORPAY_KEY_ID;
 const RMA_CREATE_ORDER_URL = SUPABASE_URL + "/functions/v1/create-razorpay-order";
 const RMA_VERIFY_PAYMENT_URL = SUPABASE_URL + "/functions/v1/verify-razorpay-payment";
 const RMA_GST_INVOICE_URL = SUPABASE_URL + "/functions/v1/generate-gst-invoice";
+const RMA_MANUAL_GST_INVOICE_URL = SUPABASE_URL + "/functions/v1/generate-manual-gst-invoice";
 const RMA_GSTIN = "01CBCPB0524K1ZG";
 const RMA_INVOICE_FROM = "rma.studies07@gmail.com";
 
@@ -2306,6 +2307,39 @@ async function rmaGenerateAndSendGSTInvoice(invoiceData){
   if(!r.ok || !d.success) throw new Error(d.error||('GST invoice server returned HTTP '+r.status+'. Check the Edge Function deployment and Supabase secrets.'));
   return d;
 }
+
+async function rmaGenerateManualGSTInvoice(invoiceData){
+  const {data:{session}} = await supabaseClient.auth.getSession();
+  if(!session?.access_token){
+    throw new Error('Administrator authentication required. Please sign in as an admin user.');
+  }
+  const headers={
+    "Content-Type":"application/json",
+    "apikey":SUPABASE_PUBLISHABLE_KEY,
+    "Authorization":"Bearer "+session.access_token
+  };
+  let r;
+  try{
+    r=await fetch(RMA_MANUAL_GST_INVOICE_URL,{method:"POST",headers,body:JSON.stringify({
+      ...invoiceData,
+      supplier:{
+        legal_name:"Rahul Bhatti",
+        trade_name:"RMA Design & Construction",
+        gstin:RMA_GSTIN,
+        address:"1st Floor, Building No. 21, Choudhary Niwas, Road/Street 2, Ambika Vihar, Jammu, Jammu & Kashmir - 180011",
+        state:"Jammu and Kashmir",
+        email:RMA_INVOICE_FROM,
+        phone:"+91 96221 21692"
+      }
+    })});
+  }catch(e){
+    throw new Error('Manual GST invoice server could not be reached. Ensure generate-manual-gst-invoice Edge Function is deployed.');
+  }
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok || !d.success) throw new Error(d.error||('Manual GST invoice server returned HTTP '+r.status));
+  return d;
+}
+window.rmaGenerateManualGSTInvoice = rmaGenerateManualGSTInvoice;
 
 
 async function rmaCreateRazorpayOrder(amount, receipt, description, notes={}){
@@ -7716,7 +7750,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
         <div style="display:flex; gap:10px; justify-content:flex-end">
           <button type="button" class="btn outline" onclick="document.getElementById('rmaAdminInvoiceModal').style.display='none'">Cancel</button>
-          <button type="button" class="btn gold" style="background:#2e7d5b; color:#fff" onclick="adminExecuteGenerateInvoice('${esc(paymentId)}', '${esc(requestId)}')">Generate GST Bill</button>
+          <button type="button" id="btnAdminGenGstBill" class="btn gold" style="background:#2e7d5b; color:#fff" onclick="adminExecuteGenerateInvoice('${esc(paymentId)}', '${esc(requestId)}')">Generate GST Bill</button>
         </div>
       </div>
     `;
@@ -7737,34 +7771,60 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   async function adminExecuteGenerateInvoice(paymentId, requestId) {
-    const name = document.getElementById('admInvClientName')?.value.trim() || 'Customer';
+    const name = document.getElementById('admInvClientName')?.value.trim() || '';
     const email = document.getElementById('admInvClientEmail')?.value.trim() || '';
     const mobile = document.getElementById('admInvClientMobile')?.value.trim() || '';
     const address = document.getElementById('admInvClientAddress')?.value.trim() || '';
     const gstin = document.getElementById('admInvClientGSTIN')?.value.trim() || '';
-    const description = document.getElementById('admInvDescription')?.value.trim() || 'RMA Design & Construction Service';
+    const description = document.getElementById('admInvDescription')?.value.trim() || '';
     const total = Number(document.getElementById('admInvTotal')?.value || 0);
     const discount = Number(document.getElementById('admInvDiscount')?.value || 0);
     const state = document.getElementById('admInvState')?.value || 'Jammu and Kashmir';
 
-    const effPaymentId = paymentId || ('PAY-' + Date.now());
-    const effRequestId = requestId || ('REQ-' + Date.now());
+    // Frontend Validations
+    if (!name) {
+      window.toast36?.('Client name is required.', 'error');
+      return;
+    }
+    if (!description) {
+      window.toast36?.('Service description is required.', 'error');
+      return;
+    }
+    if (isNaN(total) || total <= 0) {
+      window.toast36?.('Please enter a valid total amount greater than ₹0.', 'error');
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      window.toast36?.('Please enter a valid client email address.', 'error');
+      return;
+    }
+
+    const genBtn = document.getElementById('btnAdminGenGstBill');
+    const originalBtnText = genBtn ? genBtn.innerHTML : 'Generate GST Bill';
 
     try {
-      window.toast36?.('Generating GST invoice server-side...', 'info');
-      const inv = await rmaGenerateAndSendGSTInvoice({
-        payment_id: effPaymentId,
-        receipt: effRequestId,
+      if (genBtn) {
+        genBtn.disabled = true;
+        genBtn.innerHTML = '⏳ Generating Invoice...';
+      }
+
+      window.toast36?.('Generating manual GST invoice server-side...', 'info');
+      const inv = await rmaGenerateManualGSTInvoice({
+        payment_id: paymentId || null,
+        receipt: requestId || null,
         invoice_type: 'service',
         customer: { name, email, mobile, address, gstin, state },
         description: description,
         total_amount: total,
         discount: discount,
-        action: 'regenerate',
-        force_email: true
+        payment_status: paymentId ? 'paid' : 'unpaid'
       });
 
       window.toast36?.('GST Invoice generated successfully! Invoice No: ' + inv.invoice_number, 'success');
+      if (inv.notice) {
+        window.toast36?.(inv.notice, 'info');
+      }
+
       if (document.getElementById('rmaAdminInvoiceModal')) {
         document.getElementById('rmaAdminInvoiceModal').style.display = 'none';
       }
@@ -7774,6 +7834,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       await loadRMAdminPaymentsSection();
     } catch (e) {
       window.toast36?.('Invoice generation error: ' + e.message, 'error');
+    } finally {
+      if (genBtn) {
+        genBtn.disabled = false;
+        genBtn.innerHTML = originalBtnText;
+      }
     }
   }
 
