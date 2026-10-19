@@ -7353,6 +7353,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
     const typeFilter = window.rmaLedgerTypeFilter || 'ALL';
     const dateFilter = window.rmaLedgerDateFilter || 'THIS_MONTH';
+    const methodFilter = window.rmaLedgerMethodFilter || 'ALL';
     const searchQuery = (window.rmaLedgerSearchQuery || '').trim().toLowerCase();
 
     let allEntries = [];
@@ -7363,6 +7364,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     } catch (e) {
       console.warn('Ledger error:', e);
     }
+
+    window.rmaLedgerAllEntries = allEntries;
 
     // Chronological Running Balance Computation from ALL Supabase records
     let runningBal = 0;
@@ -7387,9 +7390,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if (dt === todayStr) {
         const amt = Number(x.gross_amount || x.amount || 0);
         const isInc = (x.entry_type || '').toUpperCase() === 'INCOME';
+        const isXfer = Boolean(x.is_transfer || x.category === 'Internal Transfer' || x.payment_method === 'TRANSFER');
         if (isInc) {
           todayMoneyIn += amt;
-          todayGstCollected += Number(x.gst_amount || 0);
+          if (!isXfer) todayGstCollected += Number(x.gst_amount || 0);
         } else {
           todayMoneyOut += amt;
         }
@@ -7422,14 +7426,20 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         if (toDt && entryDt > toDt) return false;
       }
 
-      // 3. Search Filter
+      // 3. Payment Method Filter
+      if (methodFilter !== 'ALL' && (x.payment_method || 'CASH').toUpperCase() !== methodFilter.toUpperCase()) {
+        return false;
+      }
+
+      // 4. Search Filter
       if (searchQuery) {
         const party = (x.client_vendor_name || x.party_name || '').toLowerCase();
+        const project = (x.project_name || '').toLowerCase();
         const desc = (x.description || '').toLowerCase();
         const cat = (x.category || '').toLowerCase();
         const inv = (x.invoice_number || '').toLowerCase();
         const ref = (x.reference || '').toLowerCase();
-        if (!party.includes(searchQuery) && !desc.includes(searchQuery) && !cat.includes(searchQuery) && !inv.includes(searchQuery) && !ref.includes(searchQuery)) {
+        if (!party.includes(searchQuery) && !project.includes(searchQuery) && !desc.includes(searchQuery) && !cat.includes(searchQuery) && !inv.includes(searchQuery) && !ref.includes(searchQuery)) {
           return false;
         }
       }
@@ -7442,15 +7452,17 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     let totalMoneyOut = 0;
     let totalTaxableIncome = 0;
     let totalGstCollected = 0;
-    let txCount = filteredEntries.length;
 
     filteredEntries.forEach(x => {
       const amt = Number(x.gross_amount || x.amount || 0);
       const isInc = (x.entry_type || '').toUpperCase() === 'INCOME';
+      const isXfer = Boolean(x.is_transfer || x.category === 'Internal Transfer' || x.payment_method === 'TRANSFER');
       if (isInc) {
         totalMoneyIn += amt;
-        totalTaxableIncome += Number(x.taxable_amount || (amt / 1.18));
-        totalGstCollected += Number(x.gst_amount || (amt - (amt / 1.18)));
+        if (!isXfer) {
+          totalTaxableIncome += Number(x.taxable_amount || (amt / 1.18));
+          totalGstCollected += Number(x.gst_amount || (amt - (amt / 1.18)));
+        }
       } else {
         totalMoneyOut += amt;
       }
@@ -7476,19 +7488,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
     const rowsHtml = displayEntries.length > 0 ? displayEntries.map(x => {
       const isInc = (x.entry_type || '').toUpperCase() === 'INCOME';
-      const badgeBg = isInc ? '#e2f2e9' : '#fbeae8';
-      const badgeColor = isInc ? '#1d6342' : '#a82315';
-      const amtColor = isInc ? '#0d5c3a' : '#a82315';
+      const isXfer = Boolean(x.is_transfer || x.category === 'Internal Transfer' || x.payment_method === 'TRANSFER');
+      const badgeBg = isXfer ? '#e2e8f0' : (isInc ? '#e2f2e9' : '#fbeae8');
+      const badgeColor = isXfer ? '#334155' : (isInc ? '#1d6342' : '#a82315');
+      const badgeText = isXfer ? 'TRANSFER' : (isInc ? 'MONEY IN' : 'MONEY OUT');
       const gross = Number(x.gross_amount || x.amount || 0);
-      const taxable = Number(x.taxable_amount || (isInc ? gross / 1.18 : gross));
-      const gstAmt = Number(x.gst_amount || (isInc ? gross - taxable : 0));
+      const taxable = Number(x.taxable_amount || (isInc && !isXfer ? gross / 1.18 : gross));
+      const gstAmt = Number(x.gst_amount || (isInc && !isXfer ? gross - taxable : 0));
       const runBal = Number(x.calc_running_balance || 0);
 
       return `
         <tr style="border-bottom:1px solid #eef4f0; font-size:12px">
           <td style="padding:10px 12px; white-space:nowrap"><b>${esc(x.entry_date || x.transaction_date)}</b></td>
-          <td style="padding:10px 12px"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:4px; font-weight:800; font-size:11px">${isInc ? 'MONEY IN' : 'MONEY OUT'}</span></td>
-          <td style="padding:10px 12px"><b>${esc(x.client_vendor_name || x.party_name || '—')}</b></td>
+          <td style="padding:10px 12px"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:4px; font-weight:800; font-size:11px">${badgeText}</span></td>
+          <td style="padding:10px 12px">
+            <b>${esc(x.client_vendor_name || x.party_name || '—')}</b>
+            ${x.project_name ? `<br><small style="color:#0d5c3a"><b>Proj:</b> ${esc(x.project_name)}</small>` : ''}
+          </td>
           <td style="padding:10px 12px">${esc(x.description || '—')} ${x.invoice_number ? `<br><small style="color:#666">Inv #: ${esc(x.invoice_number)}</small>` : ''}</td>
           <td style="padding:10px 12px"><span style="background:#f1f5f9; color:#334155; padding:2px 6px; border-radius:3px; font-size:11px">${esc(x.category || 'General')}</span></td>
           <td style="padding:10px 12px">${esc(x.payment_method || 'CASH')}</td>
@@ -7498,7 +7514,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           <td style="padding:10px 12px; font-weight:800; color:#0d5c3a">${isInc ? `+₹${gross.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '—'}</td>
           <td style="padding:10px 12px; font-weight:800; color:#a82315">${!isInc ? `-₹${gross.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '—'}</td>
           <td style="padding:10px 12px; font-weight:800; color:${runBal >= 0 ? '#1d6342' : '#a82315'}; background:#f8fafc">₹${runBal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-          <td style="padding:10px 12px; text-align:right">
+          <td style="padding:10px 12px; text-align:right; white-space:nowrap">
+            <button class="btn outline" type="button" style="border-color:#2e7d5b; color:#2e7d5b; font-size:11px; padding:3px 8px; margin-right:4px" onclick="adminOpenEditLedgerModal('${esc(x.id)}')">✏️</button>
             <button class="btn outline" type="button" style="border-color:#e74c3c; color:#c0392b; font-size:11px; padding:3px 8px" onclick="adminDeleteLedgerEntry('${esc(x.id)}')">🗑️</button>
           </td>
         </tr>
@@ -7603,6 +7620,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
             <div>
+              <label style="font-size:11px; font-weight:700">Project / Service Name</label>
+              <input type="text" id="ledgerIncProject" placeholder="Project Name (Optional)" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+            </div>
+            <div>
               <label style="font-size:11px; font-weight:700">Category *</label>
               <select id="ledgerIncCategory" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
                 <option value="Site Visit Fee">Site Visit Fee</option>
@@ -7612,9 +7633,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
                 <option value="Construction Payment">Construction Payment</option>
                 <option value="Advance Payment">Advance Payment</option>
                 <option value="Consultation Fee">Consultation Fee</option>
+                <option value="Internal Transfer">Internal Transfer</option>
                 <option value="Other Income">Other Income</option>
               </select>
             </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
             <div>
               <label style="font-size:11px; font-weight:700">Payment Method *</label>
               <select id="ledgerIncMethod" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
@@ -7623,23 +7647,22 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
                 <option value="Bank Transfer">Bank Transfer</option>
                 <option value="UPI">UPI</option>
                 <option value="Cheque">Cheque</option>
+                <option value="TRANSFER">Transfer (Account Transfer)</option>
               </select>
             </div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
             <div>
               <label style="font-size:11px; font-weight:700">Amount Received (₹) *</label>
               <input type="number" id="ledgerIncAmount" placeholder="Amount (GST Inclusive)" oninput="adminRecalculateLedgerIncLive()" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px; font-weight:700; color:#0d5c3a">
             </div>
-            <div>
-              <label style="font-size:11px; font-weight:700">GST Rate (%)</label>
-              <select id="ledgerIncGstRate" onchange="adminRecalculateLedgerIncLive()" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
-                <option value="18" selected>18% GST Included</option>
-                <option value="12">12% GST Included</option>
-                <option value="5">5% GST Included</option>
-                <option value="0">0% (GST Exempt / Less)</option>
-              </select>
-            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label style="font-size:11px; font-weight:700">GST Rate (%)</label>
+            <select id="ledgerIncGstRate" onchange="adminRecalculateLedgerIncLive()" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+              <option value="18" selected>18% GST Included</option>
+              <option value="12">12% GST Included</option>
+              <option value="5">5% GST Included</option>
+              <option value="0">0% (GST Exempt / Less / Transfer)</option>
+            </select>
           </div>
 
           <!-- Live GST Breakdown Preview Card -->
@@ -7658,16 +7681,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             </div>
           </div>
           <div style="margin-bottom:12px">
-            <label style="font-size:11px; font-weight:700">Description / Notes</label>
+            <label style="font-size:11px; font-weight:700">Description / Purpose</label>
             <input type="text" id="ledgerIncDesc" placeholder="Description of receipt" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
           </div>
-          <button class="btn dark full" type="button" style="padding:9px; font-size:13px; font-weight:800; background:#2e7d5b" onclick="adminAddLedgerEntry('INCOME')">➕ Record MONEY IN</button>
+          <button id="btnIncSubmit" class="btn dark full" type="button" style="padding:9px; font-size:13px; font-weight:800; background:#2e7d5b" onclick="adminAddLedgerEntry('INCOME')">➕ Record MONEY IN</button>
         </div>
 
         <!-- Add Expense (MONEY OUT) Form Card -->
         <div style="background:#ffffff; padding:16px; border-radius:10px; border:2px solid #c0392b">
           <h4 style="margin:0 0 12px; color:#a82315; font-size:15px; display:flex; align-items:center; gap:6px">
-            <span>outbox</span> <b>MONEY OUT (RECORD EXPENSE)</b>
+            <span>outbox</span> <b>MONEY OUT (RECORD EXPENSE / PAYMENT)</b>
           </h4>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
             <div>
@@ -7681,6 +7704,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
             <div>
+              <label style="font-size:11px; font-weight:700">Project Name</label>
+              <input type="text" id="ledgerExpProject" placeholder="Project Name (Optional)" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+            </div>
+            <div>
               <label style="font-size:11px; font-weight:700">Category *</label>
               <select id="ledgerExpCategory" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
                 <option value="Fuel">Fuel</option>
@@ -7693,9 +7720,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
                 <option value="Travel">Travel</option>
                 <option value="Electricity">Electricity</option>
                 <option value="Equipment">Equipment</option>
+                <option value="Internal Transfer">Internal Transfer</option>
                 <option value="Other Expense">Other Expense</option>
               </select>
             </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
             <div>
               <label style="font-size:11px; font-weight:700">Payment Method *</label>
               <select id="ledgerExpMethod" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
@@ -7703,21 +7733,20 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
                 <option value="Bank Transfer">Bank Transfer</option>
                 <option value="UPI">UPI</option>
                 <option value="Cheque">Cheque</option>
+                <option value="TRANSFER">Transfer (Account Transfer)</option>
               </select>
             </div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px">
             <div>
               <label style="font-size:11px; font-weight:700">Amount Paid (₹) *</label>
               <input type="number" id="ledgerExpAmount" placeholder="Amount Paid" oninput="adminRecalculateLedgerExpLive()" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px; font-weight:700; color:#a82315">
             </div>
-            <div>
-              <label style="font-size:11px; font-weight:700">GST Included?</label>
-              <select id="ledgerExpGstInc" onchange="adminRecalculateLedgerExpLive()" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
-                <option value="NO" selected>NO (No GST Component)</option>
-                <option value="YES">YES (Calculate GST)</option>
-              </select>
-            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label style="font-size:11px; font-weight:700">GST Included?</label>
+            <select id="ledgerExpGstInc" onchange="adminRecalculateLedgerExpLive()" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+              <option value="NO" selected>NO (No GST Component)</option>
+              <option value="YES">YES (Calculate GST)</option>
+            </select>
           </div>
           <div id="ledgerExpGstRateWrap" style="display:none; margin-bottom:8px">
             <label style="font-size:11px; font-weight:700">Applicable Expense GST Rate (%)</label>
@@ -7748,7 +7777,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <label style="font-size:11px; font-weight:700">Description</label>
             <input type="text" id="ledgerExpDesc" placeholder="Description of expense" style="width:100%; padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px">
           </div>
-          <button class="btn outline full" type="button" style="padding:9px; font-size:13px; border-color:#c0392b; color:#c0392b; font-weight:800" onclick="adminAddLedgerEntry('EXPENSE')">➖ Record MONEY OUT</button>
+          <button id="btnExpSubmit" class="btn outline full" type="button" style="padding:9px; font-size:13px; border-color:#c0392b; color:#c0392b; font-weight:800" onclick="adminAddLedgerEntry('EXPENSE')">➖ Record MONEY OUT</button>
         </div>
       </div>
 
@@ -7772,6 +7801,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               <option value="CUSTOM" ${dateFilter === 'CUSTOM' ? 'selected' : ''}>Custom Range</option>
             </select>
           </div>
+          <div>
+            <label style="font-size:11px; font-weight:700; display:block">Payment Method:</label>
+            <select id="ledgerMethodFilter" onchange="adminApplyLedgerFilters()" style="padding:5px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+              <option value="ALL" ${methodFilter === 'ALL' ? 'selected' : ''}>All Methods</option>
+              <option value="CASH" ${methodFilter === 'CASH' ? 'selected' : ''}>Cash</option>
+              <option value="UPI" ${methodFilter === 'UPI' ? 'selected' : ''}>UPI</option>
+              <option value="Bank Transfer" ${methodFilter === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
+              <option value="Razorpay" ${methodFilter === 'Razorpay' ? 'selected' : ''}>Razorpay</option>
+              <option value="Cheque" ${methodFilter === 'Cheque' ? 'selected' : ''}>Cheque</option>
+              <option value="TRANSFER" ${methodFilter === 'TRANSFER' ? 'selected' : ''}>Transfer</option>
+            </select>
+          </div>
           <div id="ledgerCustomRangeWrap" style="display:${dateFilter === 'CUSTOM' ? 'flex' : 'none'}; gap:6px; align-items:center">
             <input type="date" id="ledgerCustomFrom" value="${esc(window.rmaLedgerCustomFrom || '')}" onchange="adminApplyLedgerFilters()" style="padding:4px; font-size:12px; border:1px solid #ccc; border-radius:4px">
             <span style="font-size:12px">to</span>
@@ -7780,7 +7821,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         </div>
         <div style="flex:1; min-width:220px; max-width:320px">
           <label style="font-size:11px; font-weight:700; display:block">Search Ledger:</label>
-          <input type="text" id="ledgerSearchInput" value="${esc(searchQuery)}" placeholder="Search party, description, invoice #..." oninput="adminApplyLedgerFilters()" style="width:100%; padding:5px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+          <input type="text" id="ledgerSearchInput" value="${esc(searchQuery)}" placeholder="Search party, project, desc, invoice #..." oninput="adminApplyLedgerFilters()" style="width:100%; padding:5px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px">
         </div>
       </div>
 
@@ -7791,7 +7832,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <tr style="background:#2e7d5b; color:#fff">
               <th style="padding:10px 12px">Date</th>
               <th style="padding:10px 12px">Type</th>
-              <th style="padding:10px 12px">Client / Vendor</th>
+              <th style="padding:10px 12px">Client / Vendor / Project</th>
               <th style="padding:10px 12px">Description</th>
               <th style="padding:10px 12px">Category</th>
               <th style="padding:10px 12px">Method</th>
@@ -7815,6 +7856,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   function adminApplyLedgerFilters() {
     window.rmaLedgerTypeFilter = document.getElementById('ledgerTypeFilter')?.value || 'ALL';
     window.rmaLedgerDateFilter = document.getElementById('ledgerDateFilter')?.value || 'THIS_MONTH';
+    window.rmaLedgerMethodFilter = document.getElementById('ledgerMethodFilter')?.value || 'ALL';
     window.rmaLedgerCustomFrom = document.getElementById('ledgerCustomFrom')?.value || '';
     window.rmaLedgerCustomTo = document.getElementById('ledgerCustomTo')?.value || '';
     window.rmaLedgerSearchQuery = document.getElementById('ledgerSearchInput')?.value || '';
@@ -7826,13 +7868,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   async function adminAddLedgerEntry(entryType) {
     const isInc = entryType === 'INCOME';
     const prefix = isInc ? 'ledgerInc' : 'ledgerExp';
+    const btn = document.getElementById(isInc ? 'btnIncSubmit' : 'btnExpSubmit');
 
     const dateVal = document.getElementById(prefix + 'Date')?.value || new Date().toISOString().split('T')[0];
     const nameVal = document.getElementById(prefix + (isInc ? 'Client' : 'Vendor'))?.value.trim() || '';
+    const projectVal = document.getElementById(prefix + 'Project')?.value.trim() || null;
     const categoryVal = document.getElementById(prefix + 'Category')?.value || 'General';
     const descVal = document.getElementById(prefix + 'Desc')?.value.trim() || '';
     const invoiceVal = isInc ? (document.getElementById('ledgerIncInvoice')?.value.trim() || null) : null;
-    const refVal = document.getElementById(prefix + (isInc ? 'Ref' : 'Ref'))?.value.trim() || null;
+    const refVal = document.getElementById(prefix + 'Ref')?.value.trim() || null;
     const notesVal = isInc ? null : (document.getElementById('ledgerExpNotes')?.value.trim() || null);
     const methodVal = document.getElementById(prefix + 'Method')?.value || 'CASH';
     const amountVal = Number(document.getElementById(prefix + 'Amount')?.value || 0);
@@ -7842,9 +7886,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       return;
     }
 
+    const isTransfer = categoryVal === 'Internal Transfer' || methodVal === 'TRANSFER';
+
     let gstRate = 18;
     let gstInc = true;
-    if (isInc) {
+    if (isTransfer) {
+      gstRate = 0;
+    } else if (isInc) {
       gstRate = Number(document.getElementById('ledgerIncGstRate')?.value || 18);
     } else {
       gstInc = document.getElementById('ledgerExpGstInc')?.value === 'YES';
@@ -7858,6 +7906,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       gstAmt = Number((amountVal - taxable).toFixed(2));
     }
 
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+    }
+
     try {
       window.toast36?.('Saving transaction to Supabase business_ledger...', 'info');
 
@@ -7868,6 +7921,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         transaction_date: dateVal,
         client_vendor_name: nameVal || (isInc ? 'Client' : 'Vendor'),
         party_name: nameVal || (isInc ? 'Client' : 'Vendor'),
+        project_name: projectVal,
         category: categoryVal,
         description: descVal,
         invoice_number: invoiceVal,
@@ -7880,6 +7934,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         net_amount: amountVal,
         reference: refVal,
         notes: notesVal,
+        is_transfer: isTransfer,
         created_by: 'RMA Admin',
         updated_at: new Date().toISOString()
       };
@@ -7896,6 +7951,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if (document.getElementById(prefix + 'Amount')) document.getElementById(prefix + 'Amount').value = '';
       if (document.getElementById(prefix + 'Desc')) document.getElementById(prefix + 'Desc').value = '';
       if (document.getElementById(prefix + (isInc ? 'Client' : 'Vendor'))) document.getElementById(prefix + (isInc ? 'Client' : 'Vendor')).value = '';
+      if (document.getElementById(prefix + 'Project')) document.getElementById(prefix + 'Project').value = '';
       if (document.getElementById(prefix + 'Ref')) document.getElementById(prefix + 'Ref').value = '';
       if (document.getElementById('ledgerExpNotes')) document.getElementById('ledgerExpNotes').value = '';
       if (isInc && document.getElementById('ledgerIncInvoice')) document.getElementById('ledgerIncInvoice').value = '';
@@ -7908,6 +7964,246 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       console.error('Ledger save failed:', err);
       alert('SUPABASE LEDGER INSERT ERROR: ' + err.message);
       window.toast36?.('Failed to save ledger entry: ' + err.message, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = isInc ? '➕ Record MONEY IN' : '➖ Record MONEY OUT';
+      }
+    }
+  }
+
+  function adminOpenEditLedgerModal(id) {
+    if (!id) return;
+    const entries = window.rmaLedgerAllEntries || [];
+    const item = entries.find(x => x.id === id);
+    if (!item) {
+      window.toast36?.('Record not found in active ledger list.', 'error');
+      return;
+    }
+
+    let modal = document.getElementById('rmaEditLedgerModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'rmaEditLedgerModal';
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;box-sizing:border-box;overflow-y:auto';
+      document.body.appendChild(modal);
+    }
+
+    const isInc = (item.entry_type || '').toUpperCase() === 'INCOME';
+    const gross = Number(item.gross_amount || item.amount || 0);
+
+    modal.innerHTML = `
+      <div style="background:#fff; width:100%; max-width:550px; border-radius:12px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.3); border:2px solid ${isInc ? '#2e7d5b' : '#c0392b'}">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px">
+          <h3 style="margin:0; color:${isInc ? '#1d6342' : '#a82315'}; font-size:17px">
+            ✏️ Edit Ledger Transaction (${isInc ? 'MONEY IN' : 'MONEY OUT'})
+          </h3>
+          <button type="button" onclick="document.getElementById('rmaEditLedgerModal').remove()" style="background:none; border:none; font-size:18px; cursor:pointer; font-weight:bold">✕</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px">
+          <div>
+            <label style="font-size:11px; font-weight:700">Date *</label>
+            <input type="date" id="editLedgerDate" value="${esc(item.entry_date || item.transaction_date || '')}" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700">Type *</label>
+            <select id="editLedgerType" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+              <option value="INCOME" ${isInc ? 'selected' : ''}>MONEY IN (Receipt)</option>
+              <option value="EXPENSE" ${!isInc ? 'selected' : ''}>MONEY OUT (Expense)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px">
+          <div>
+            <label style="font-size:11px; font-weight:700">Client / Vendor Name *</label>
+            <input type="text" id="editLedgerPartyName" value="${esc(item.client_vendor_name || item.party_name || '')}" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700">Project / Service Name</label>
+            <input type="text" id="editLedgerProjectName" value="${esc(item.project_name || '')}" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px">
+          <div>
+            <label style="font-size:11px; font-weight:700">Category *</label>
+            <select id="editLedgerCategory" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+              <option value="Site Visit Fee" ${item.category === 'Site Visit Fee' ? 'selected' : ''}>Site Visit Fee</option>
+              <option value="Architectural Design Fee" ${item.category === 'Architectural Design Fee' ? 'selected' : ''}>Architectural Design Fee</option>
+              <option value="Structural Design Fee" ${item.category === 'Structural Design Fee' ? 'selected' : ''}>Structural Design Fee</option>
+              <option value="Planning Fee" ${item.category === 'Planning Fee' ? 'selected' : ''}>Planning Fee</option>
+              <option value="Construction Payment" ${item.category === 'Construction Payment' ? 'selected' : ''}>Construction Payment</option>
+              <option value="Advance Payment" ${item.category === 'Advance Payment' ? 'selected' : ''}>Advance Payment</option>
+              <option value="Consultation Fee" ${item.category === 'Consultation Fee' ? 'selected' : ''}>Consultation Fee</option>
+              <option value="Fuel" ${item.category === 'Fuel' ? 'selected' : ''}>Fuel</option>
+              <option value="Material" ${item.category === 'Material' ? 'selected' : ''}>Material</option>
+              <option value="Labour" ${item.category === 'Labour' ? 'selected' : ''}>Labour</option>
+              <option value="Printing" ${item.category === 'Printing' ? 'selected' : ''}>Printing</option>
+              <option value="Office Expense" ${item.category === 'Office Expense' ? 'selected' : ''}>Office Expense</option>
+              <option value="Software" ${item.category === 'Software' ? 'selected' : ''}>Software</option>
+              <option value="Advertisement" ${item.category === 'Advertisement' ? 'selected' : ''}>Advertisement</option>
+              <option value="Travel" ${item.category === 'Travel' ? 'selected' : ''}>Travel</option>
+              <option value="Electricity" ${item.category === 'Electricity' ? 'selected' : ''}>Electricity</option>
+              <option value="Equipment" ${item.category === 'Equipment' ? 'selected' : ''}>Equipment</option>
+              <option value="Internal Transfer" ${item.category === 'Internal Transfer' ? 'selected' : ''}>Internal Transfer</option>
+              <option value="General" ${item.category === 'General' ? 'selected' : ''}>General</option>
+              <option value="Other Income" ${item.category === 'Other Income' ? 'selected' : ''}>Other Income</option>
+              <option value="Other Expense" ${item.category === 'Other Expense' ? 'selected' : ''}>Other Expense</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700">Payment Method *</label>
+            <select id="editLedgerMethod" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+              <option value="CASH" ${item.payment_method === 'CASH' ? 'selected' : ''}>Cash</option>
+              <option value="Bank Transfer" ${item.payment_method === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
+              <option value="UPI" ${item.payment_method === 'UPI' ? 'selected' : ''}>UPI</option>
+              <option value="Razorpay" ${item.payment_method === 'Razorpay' ? 'selected' : ''}>Razorpay</option>
+              <option value="Cheque" ${item.payment_method === 'Cheque' ? 'selected' : ''}>Cheque</option>
+              <option value="TRANSFER" ${item.payment_method === 'TRANSFER' ? 'selected' : ''}>Transfer</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px">
+          <div>
+            <label style="font-size:11px; font-weight:700">Amount (₹) *</label>
+            <input type="number" id="editLedgerAmount" value="${gross}" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px; font-weight:700">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700">GST Rate (%)</label>
+            <select id="editLedgerGstRate" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+              <option value="18" ${Number(item.gst_rate) === 18 ? 'selected' : ''}>18% GST</option>
+              <option value="12" ${Number(item.gst_rate) === 12 ? 'selected' : ''}>12% GST</option>
+              <option value="5" ${Number(item.gst_rate) === 5 ? 'selected' : ''}>5% GST</option>
+              <option value="0" ${Number(item.gst_rate) === 0 ? 'selected' : ''}>0% (Exempt / Less)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px">
+          <div>
+            <label style="font-size:11px; font-weight:700">Invoice Number</label>
+            <input type="text" id="editLedgerInvoice" value="${esc(item.invoice_number || '')}" placeholder="Invoice # (Optional)" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700">Reference / Ref #</label>
+            <input type="text" id="editLedgerRef" value="${esc(item.reference || '')}" placeholder="Ref # / UTR" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+          </div>
+        </div>
+
+        <div style="margin-bottom:10px">
+          <label style="font-size:11px; font-weight:700">Description</label>
+          <input type="text" id="editLedgerDesc" value="${esc(item.description || '')}" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+        </div>
+
+        <div style="margin-bottom:15px">
+          <label style="font-size:11px; font-weight:700">Notes</label>
+          <input type="text" id="editLedgerNotes" value="${esc(item.notes || '')}" style="width:100%; padding:6px; font-size:12px; border:1px solid #ccc; border-radius:4px">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px">
+          <button type="button" class="btn outline" onclick="document.getElementById('rmaEditLedgerModal').remove()" style="padding:8px 16px; font-size:12px">Cancel</button>
+          <button id="btnSaveLedgerEdit" type="button" class="btn dark" style="padding:8px 20px; font-size:12px; font-weight:800; background:#2e7d5b" onclick="adminSaveLedgerEdit('${esc(item.id)}')">💾 Save Changes</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function adminSaveLedgerEdit(id) {
+    if (!id) return;
+    const entries = window.rmaLedgerAllEntries || [];
+    const item = entries.find(x => x.id === id);
+    if (!item) return;
+
+    const btn = document.getElementById('btnSaveLedgerEdit');
+    const dateVal = document.getElementById('editLedgerDate')?.value || new Date().toISOString().split('T')[0];
+    const typeVal = document.getElementById('editLedgerType')?.value || 'INCOME';
+    const isInc = typeVal === 'INCOME';
+    const partyVal = document.getElementById('editLedgerPartyName')?.value.trim() || '';
+    const projectVal = document.getElementById('editLedgerProjectName')?.value.trim() || null;
+    const catVal = document.getElementById('editLedgerCategory')?.value || 'General';
+    const methodVal = document.getElementById('editLedgerMethod')?.value || 'CASH';
+    const amountVal = Number(document.getElementById('editLedgerAmount')?.value || 0);
+    const invoiceVal = document.getElementById('editLedgerInvoice')?.value.trim() || null;
+    const refVal = document.getElementById('editLedgerRef')?.value.trim() || null;
+    const descVal = document.getElementById('editLedgerDesc')?.value.trim() || '';
+    const notesVal = document.getElementById('editLedgerNotes')?.value.trim() || null;
+    const gstRateVal = Number(document.getElementById('editLedgerGstRate')?.value || 0);
+
+    if (!amountVal || amountVal <= 0 || isNaN(amountVal)) {
+      window.toast36?.('Please enter a valid amount greater than zero.', 'error');
+      return;
+    }
+
+    const isTransfer = catVal === 'Internal Transfer' || methodVal === 'TRANSFER';
+
+    let gstRate = isTransfer ? 0 : gstRateVal;
+    let taxable = amountVal;
+    let gstAmt = 0;
+    if (gstRate > 0) {
+      taxable = Number((amountVal / (1 + (gstRate / 100))).toFixed(2));
+      gstAmt = Number((amountVal - taxable).toFixed(2));
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Updating...';
+    }
+
+    try {
+      const existingAudit = Array.isArray(item.audit_trail) ? item.audit_trail : [];
+      const auditEntry = {
+        updated_at: new Date().toISOString(),
+        updated_by: 'RMA Admin',
+        previous_amount: item.amount || item.gross_amount,
+        new_amount: amountVal,
+        previous_party: item.party_name || item.client_vendor_name,
+        new_party: partyVal
+      };
+
+      const payload = {
+        entry_type: typeVal,
+        transaction_type: typeVal.toLowerCase(),
+        entry_date: dateVal,
+        transaction_date: dateVal,
+        client_vendor_name: partyVal,
+        party_name: partyVal,
+        project_name: projectVal,
+        category: catVal,
+        payment_method: methodVal,
+        amount: amountVal,
+        gross_amount: amountVal,
+        taxable_amount: taxable,
+        gst_rate: gstRate,
+        gst_amount: gstAmt,
+        net_amount: amountVal,
+        invoice_number: invoiceVal,
+        reference: refVal,
+        description: descVal,
+        notes: notesVal,
+        is_transfer: isTransfer,
+        last_modified_by: 'RMA Admin',
+        audit_trail: [...existingAudit, auditEntry],
+        updated_at: new Date().toISOString()
+      };
+
+      const upd = await supabaseClient.from('business_ledger').update(payload).eq('id', id);
+      if (upd.error) throw upd.error;
+
+      window.toast36?.('Ledger transaction updated successfully!', 'success');
+      document.getElementById('rmaEditLedgerModal')?.remove();
+      await loadRMAAdminBusinessLedgerSection();
+    } catch (err) {
+      console.error('Ledger edit error:', err);
+      alert('SUPABASE UPDATE ERROR: ' + err.message);
+      window.toast36?.('Failed to update ledger entry: ' + err.message, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
+      }
     }
   }
 
@@ -7938,6 +8234,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   window.loadRMAAdminBusinessLedgerSection = loadRMAAdminBusinessLedgerSection;
   window.adminAddLedgerEntry = adminAddLedgerEntry;
+  window.adminOpenEditLedgerModal = adminOpenEditLedgerModal;
+  window.adminSaveLedgerEdit = adminSaveLedgerEdit;
   window.adminDeleteLedgerEntry = adminDeleteLedgerEntry;
   window.adminSetLedgerMonthFilter = adminSetLedgerMonthFilter;
 
