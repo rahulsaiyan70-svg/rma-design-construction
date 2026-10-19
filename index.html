@@ -512,7 +512,379 @@ section{padding:78px 0}
 #rmaPathSeekerPortal .ps-v63-view{display:none!important;}
 #rmaPathSeekerPortal .ps-v63-view.active{display:block!important;}
 </style>
-</head></head>
+<style id="rma-admin-portal-redesign">
+/* RMA Admin Portal Dashboard Redesign */
+#staffPortal {
+  padding: 0 0 50px 0 !important;
+  background: #f4f8f6 !important;
+  min-height: 100vh !important;
+}
+
+#staffPortal > .container {
+  width: min(1280px, 94%) !important;
+}
+
+.rma-admin-dashboard {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding-top: 20px;
+}
+
+/* Sidebar Styles */
+.rma-admin-sidebar {
+  background: #ffffff;
+  border: 1px solid #dce9e3;
+  border-radius: 16px;
+  padding: 20px 16px;
+  box-shadow: 0 4px 20px rgba(23, 63, 47, 0.06);
+  position: sticky;
+  top: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.rma-admin-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e8f0eb;
+}
+
+.rma-admin-brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #0d5c3a;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.rma-admin-brand-title {
+  font-weight: 900;
+  font-size: 15px;
+  color: #123a2d;
+  line-height: 1.2;
+}
+
+.rma-admin-brand-title span {
+  color: #3f8f68;
+}
+
+.rma-admin-profile-card {
+  background: #f4f9f6;
+  border: 1px solid #d4e5dc;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rma-admin-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #0d5c3a;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 16px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+.rma-admin-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.rma-admin-name {
+  font-weight: 800;
+  font-size: 14px;
+  color: #123a2d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rma-admin-role {
+  font-size: 11px;
+  color: #567267;
+  font-weight: 600;
+}
+
+.rma-admin-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #0d5c3a;
+  background: #e0f3ea;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-top: 3px;
+}
+
+.rma-admin-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2ecc71;
+}
+
+/* Sidebar Nav Links */
+.rma-admin-nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rma-admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #2a4338;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.rma-admin-nav-item:hover {
+  background: #eef7f2;
+  color: #0d5c3a;
+}
+
+.rma-admin-nav-item.active {
+  background: #0d5c3a;
+  color: #ffffff;
+  border-color: #0d5c3a;
+  box-shadow: 0 4px 12px rgba(13, 92, 58, 0.2);
+}
+
+.rma-admin-nav-icon {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.rma-admin-sidebar-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #e8f0eb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rma-admin-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #f2c2c2;
+  background: #fff5f5;
+  color: #c0392b;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rma-admin-logout-btn:hover {
+  background: #c0392b;
+  color: #ffffff;
+  border-color: #c0392b;
+}
+
+/* Mobile Sidebar Toggle Button */
+.rma-admin-mobile-toggle {
+  display: none;
+  background: #ffffff;
+  border: 1px solid #dce9e3;
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #0d5c3a;
+  font-weight: 800;
+  font-size: 14px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Workspace Styles */
+.rma-admin-workspace {
+  min-width: 0;
+}
+
+.rma-admin-header-bar {
+  background: #ffffff;
+  border: 1px solid #dce9e3;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 18px rgba(23, 63, 47, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rma-admin-header-title h2 {
+  font-size: 24px;
+  font-weight: 900;
+  color: #123a2d;
+  margin: 0;
+}
+
+.rma-admin-header-title p {
+  font-size: 13px;
+  color: #6a7b73;
+  margin: 4px 0 0 0;
+}
+
+.rma-admin-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rma-admin-date-badge {
+  background: #f4f9f6;
+  border: 1px solid #d4e5dc;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d5c3a;
+}
+
+/* Workspace Panels */
+.rma-admin-panel {
+  display: none;
+}
+
+.rma-admin-panel.active {
+  display: block;
+}
+
+/* Stats Cards in Overview */
+.rma-admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.rma-admin-stat-card {
+  background: #ffffff;
+  border: 1px solid #dce9e3;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(23, 63, 47, 0.04);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.rma-admin-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: #2e7d5b;
+  box-shadow: 0 8px 24px rgba(23, 63, 47, 0.08);
+}
+
+.rma-admin-stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.rma-admin-stat-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #eef7f2;
+  color: #0d5c3a;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.rma-admin-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6a7b73;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rma-admin-stat-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: #123a2d;
+  line-height: 1.1;
+  margin-top: 4px;
+}
+
+.rma-admin-stat-sub {
+  font-size: 11px;
+  color: #2e7d5b;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+/* Responsive Styles */
+@media (max-width: 900px) {
+  .rma-admin-dashboard {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .rma-admin-mobile-toggle {
+    display: flex;
+  }
+
+  .rma-admin-sidebar {
+    position: relative;
+    top: 0;
+    max-height: none;
+    display: none;
+  }
+
+  .rma-admin-sidebar.mobile-open {
+    display: flex;
+  }
+}
+</style>
+</head>
 <body>
 <style id="rma-v38-auth-fix">
 #authLoginSection.hidden{display:none!important}
@@ -1066,13 +1438,272 @@ section{padding:78px 0}
 <div class="portal-grid"><div class="portal-card"><h3>My Projects</h3><div class="muted" id="portalProjects">Loading projects...</div></div><div class="portal-card"><h3>Payments</h3><div class="muted" id="portalPayments">Payment information will appear here.</div></div><div class="portal-card"><h3>Project Status</h3><div class="muted" id="portalStatus">Status information will appear here.</div></div></div>
 <div class="form-panel" style="margin-top:20px"><h2>Documents &amp; Drawings</h2><p class="form-note">Your approved drawings and project documents uploaded by RMA will appear here.</p><div class="doc-list" id="portalDocuments"><div class="muted">Loading documents...</div></div></div>
 </div></section>
-<section class="hidden" id="staffPortal"><div class="container">
-<div class="backrow"><button onclick="signOutUser()">← Sign Out</button></div>
-<div class="heading"><span class="kicker">RMA STAFF / ADMIN</span><h2 id="staffWelcome">Dashboard</h2><p>Authorized staff and administrators can access RMA management functions here.</p></div>
-<div class="portal-grid"><div class="portal-card"><h3>Bookings</h3><p class="muted">Manage service and site-visit bookings.</p></div><div class="portal-card"><h3>Projects</h3><p class="muted">Manage client projects and project status.</p></div><div class="portal-card"><h3>Documents</h3><p class="muted">Upload drawings, estimates, BOQs, invoices and other project documents.</p></div></div>
-<div class="form-panel" style="margin-top:20px"><h2>Path Seeker Site-Visit Requests</h2><p class="form-note">Approve requests when accepted and mark them completed after the physical visit. The client portal counts a complimentary visit only after completion.</p><div id="staffSiteVisitRequests"><div class="muted">Loading requests...</div></div></div>
-<div class="notice info">The dashboard is role-protected. Admin/staff access is determined from the authenticated RMA profile.</div>
-</div></section>
+<section class="hidden" id="staffPortal">
+  <div class="container">
+    <button class="rma-admin-mobile-toggle" type="button" onclick="toggleAdminSidebarMobile()">
+      <span>☰ RMA Admin Menu</span>
+      <span id="rmaAdminActiveModuleLabel">Admin Overview</span>
+    </button>
+    <div class="rma-admin-dashboard">
+      <!-- LEFT SIDEBAR -->
+      <aside class="rma-admin-sidebar" id="rmaAdminSidebar">
+        <!-- Brand Header -->
+        <div class="rma-admin-brand-header">
+          <div class="rma-admin-brand-logo">RMA</div>
+          <div class="rma-admin-brand-title">
+            RMA Design <span>&amp; Construction</span>
+            <small style="display:block; font-size:10px; color:#6a7b73; font-weight:normal">Admin Dashboard</small>
+          </div>
+        </div>
+
+        <!-- Compact Admin Profile Area -->
+        <div class="rma-admin-profile-card">
+          <div class="rma-admin-avatar">RA</div>
+          <div class="rma-admin-info">
+            <div class="rma-admin-name">RMA Admin</div>
+            <div class="rma-admin-role">Administrator</div>
+            <div class="rma-admin-status-pill"><span class="rma-admin-status-dot"></span> Active Session</div>
+          </div>
+        </div>
+
+        <!-- Navigation Menu (6 exact items in order) -->
+        <nav class="rma-admin-nav-menu" aria-label="Admin Navigation">
+          <button class="rma-admin-nav-item active" id="navItem_overview" type="button" onclick="switchAdminWorkspace('overview')">
+            <span class="rma-admin-nav-icon">📊</span>
+            <span>Admin Overview</span>
+          </button>
+          <button class="rma-admin-nav-item" id="navItem_site-visits" type="button" onclick="switchAdminWorkspace('site-visits')">
+            <span class="rma-admin-nav-icon">📍</span>
+            <span>Manage Site Visits</span>
+          </button>
+          <button class="rma-admin-nav-item" id="navItem_ledger" type="button" onclick="switchAdminWorkspace('ledger')">
+            <span class="rma-admin-nav-icon">💵</span>
+            <span>Business Cash Flow Ledger</span>
+          </button>
+          <button class="rma-admin-nav-item" id="navItem_gst-bill" type="button" onclick="switchAdminWorkspace('gst-bill')">
+            <span class="rma-admin-nav-icon">📜</span>
+            <span>Generate GST Bill</span>
+          </button>
+          <button class="rma-admin-nav-item" id="navItem_conversations" type="button" onclick="switchAdminWorkspace('conversations')">
+            <span class="rma-admin-nav-icon">💬</span>
+            <span>Client Conversations</span>
+          </button>
+          <button class="rma-admin-nav-item" id="navItem_projects" type="button" onclick="switchAdminWorkspace('projects')">
+            <span class="rma-admin-nav-icon">🏗️</span>
+            <span>Client Projects</span>
+          </button>
+        </nav>
+
+        <!-- Bottom Controls -->
+        <div class="rma-admin-sidebar-footer">
+          <button class="rma-admin-logout-btn" type="button" onclick="signOutUser()">
+            <span>←</span>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- RIGHT MAIN WORKSPACE -->
+      <main class="rma-admin-workspace">
+        <!-- Header Bar -->
+        <header class="rma-admin-header-bar">
+          <div class="rma-admin-header-title">
+            <h2 id="rmaAdminWorkspaceTitle">Admin Overview</h2>
+            <p id="rmaAdminWorkspaceDesc">Welcome to RMA Design &amp; Construction management portal.</p>
+          </div>
+          <div class="rma-admin-header-meta">
+            <div class="rma-admin-date-badge" id="rmaAdminCurrentDate">Today</div>
+            <button class="btn outline" type="button" style="padding:8px 14px; font-size:12px; font-weight:700" onclick="refreshCurrentAdminWorkspace()">🔄 Refresh</button>
+          </div>
+        </header>
+
+        <!-- 1. ADMIN OVERVIEW WORKSPACE PANEL -->
+        <div class="rma-admin-panel active" id="rmaAdminWorkspaceOverview">
+          <!-- Summary Cards Grid -->
+          <div class="rma-admin-stats-grid">
+            <div class="rma-admin-stat-card" onclick="switchAdminWorkspace('site-visits')">
+              <div class="rma-admin-stat-header">
+                <span class="rma-admin-stat-label">Pending Visits</span>
+                <div class="rma-admin-stat-icon">⏳</div>
+              </div>
+              <div class="rma-admin-stat-value" id="ovStatPending">—</div>
+              <div class="rma-admin-stat-sub">Click to review requests →</div>
+            </div>
+
+            <div class="rma-admin-stat-card" onclick="switchAdminWorkspace('site-visits')">
+              <div class="rma-admin-stat-header">
+                <span class="rma-admin-stat-label">Confirmed Visits</span>
+                <div class="rma-admin-stat-icon">📅</div>
+              </div>
+              <div class="rma-admin-stat-value" id="ovStatApproved">—</div>
+              <div class="rma-admin-stat-sub">Scheduled appointments →</div>
+            </div>
+
+            <div class="rma-admin-stat-card" onclick="switchAdminWorkspace('projects')">
+              <div class="rma-admin-stat-header">
+                <span class="rma-admin-stat-label">Active Projects</span>
+                <div class="rma-admin-stat-icon">🏗️</div>
+              </div>
+              <div class="rma-admin-stat-value" id="ovStatProjects">1</div>
+              <div class="rma-admin-stat-sub">Path Seeker &amp; Consultation →</div>
+            </div>
+
+            <div class="rma-admin-stat-card" onclick="switchAdminWorkspace('ledger')">
+              <div class="rma-admin-stat-header">
+                <span class="rma-admin-stat-label">Cash Flow Balance</span>
+                <div class="rma-admin-stat-icon">💵</div>
+              </div>
+              <div class="rma-admin-stat-value" id="ovStatCashFlow">—</div>
+              <div class="rma-admin-stat-sub">View Business Ledger →</div>
+            </div>
+
+            <div class="rma-admin-stat-card" onclick="switchAdminWorkspace('conversations')">
+              <div class="rma-admin-stat-header">
+                <span class="rma-admin-stat-label">Client Messages</span>
+                <div class="rma-admin-stat-icon">💬</div>
+              </div>
+              <div class="rma-admin-stat-value" id="ovStatMessages">—</div>
+              <div class="rma-admin-stat-sub">Open conversations →</div>
+            </div>
+          </div>
+
+          <!-- Overview Details Section -->
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px">
+            <div class="ps-v40-card">
+              <span class="ps-v40-kicker">ADMINISTRATOR PROFILE</span>
+              <h3 style="margin-top:6px; color:#123a2d">RMA Design &amp; Construction</h3>
+              <p class="muted" style="font-size:12px">Authorized master administration account</p>
+              <div class="ps-v40-profile-grid" style="margin-top:12px">
+                <div class="ps-v40-field"><small>Admin Name</small><b>RMA Admin</b></div>
+                <div class="ps-v40-field"><small>Admin Email</small><b>rma.studies07@gmail.com</b></div>
+                <div class="ps-v40-field"><small>RMA Contact</small><b>+91 96221 21692</b></div>
+                <div class="ps-v40-field"><small>System Role</small><b>Master Administrator</b></div>
+              </div>
+            </div>
+
+            <div class="ps-v40-card">
+              <span class="ps-v40-kicker">FEATURED CONSULTATION CLIENT</span>
+              <h3 style="margin-top:6px; color:#123a2d">Path Seeker International School</h3>
+              <p class="muted" style="font-size:12px">Active institutional architectural &amp; structural project</p>
+              <div class="ps-v40-profile-grid" style="margin-top:12px">
+                <div class="ps-v40-field"><small>Client ID</small><b>PSIS261</b></div>
+                <div class="ps-v40-field"><small>Client Phone</small><b>9419118424</b></div>
+                <div class="ps-v40-field" style="grid-column:1/-1"><small>Client Email</small><b>pathseekers.vijaypur@gmail.com</b></div>
+                <div class="ps-v40-field" style="grid-column:1/-1"><small>Project Address</small><b>Ramgarh, Jammu &amp; Kashmir, India</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. MANAGE SITE VISITS WORKSPACE PANEL -->
+        <div class="rma-admin-panel" id="rmaAdminWorkspaceSiteVisits">
+          <div class="form-panel" style="margin-top:0">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:12px">
+              <div>
+                <h2>Site Visit Requests &amp; Appointments</h2>
+                <p class="form-note" style="margin-bottom:0">Manage incoming site-visit requests, assign engineers, schedule slots, verify cash payments, and upload reports.</p>
+              </div>
+              <button class="btn outline" type="button" onclick="loadRMAAdminSiteVisitRequests()">Refresh Requests</button>
+            </div>
+            <div id="staffSiteVisitRequests"><div class="muted">Loading requests...</div></div>
+          </div>
+          <div id="rmaAdminCalendarSection" style="margin-top:20px"></div>
+        </div>
+
+        <!-- 3. BUSINESS CASH FLOW LEDGER WORKSPACE PANEL -->
+        <div class="rma-admin-panel" id="rmaAdminWorkspaceLedger">
+          <div id="rmaAdminBusinessLedgerSection" class="ps-v40-card">
+            <div class="muted">Loading Business Cash Flow Ledger...</div>
+          </div>
+          <div id="rmaAdminPaymentsSection" class="ps-v40-card" style="margin-top:20px">
+            <div class="muted">Loading payments reconciliation history...</div>
+          </div>
+        </div>
+
+        <!-- 4. GENERATE GST BILL WORKSPACE PANEL -->
+        <div class="rma-admin-panel" id="rmaAdminWorkspaceGSTBill">
+          <div class="ps-v40-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:16px; border-bottom:1px solid #eef4f0; padding-bottom:12px">
+              <div>
+                <span class="ps-v40-kicker">TAX INVOICES &amp; BILLING</span>
+                <h3 style="margin:4px 0 0; color:#123a2d">Generate GST Tax Invoices &amp; Non-GST Bills</h3>
+              </div>
+              <button class="btn gold" type="button" style="background:#2e7d5b; color:#fff" onclick="adminOpenInvoiceRecalculateModal('','',0,'','','')">➕ Create New GST Bill</button>
+            </div>
+
+            <!-- Quick Bill Action Cards -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; margin-bottom:20px">
+              <div style="background:#f4f9f6; border:1px solid #c2ded0; border-radius:12px; padding:16px; cursor:pointer" onclick="adminOpenInvoiceRecalculateModal('','',0,'','','')">
+                <div style="font-size:24px; margin-bottom:6px">📜</div>
+                <b style="color:#0d5c3a; font-size:15px; display:block">Create GST Tax Invoice</b>
+                <p style="font-size:12px; color:#567267; margin:4px 0 0">Generate official 18% GST tax invoice with CGST/SGST/IGST breakdown, downloadable PDF &amp; email dispatch.</p>
+              </div>
+
+              <div style="background:#f4f9f6; border:1px solid #c2ded0; border-radius:12px; padding:16px; cursor:pointer" onclick="adminOpenInvoiceRecalculateModal('NON-GST','',0,'','','')">
+                <div style="font-size:24px; margin-bottom:6px">📄</div>
+                <b style="color:#0d5c3a; font-size:15px; display:block">Create Non-GST / Exempt Bill</b>
+                <p style="font-size:12px; color:#567267; margin:4px 0 0">Generate payment receipt or non-GST bill for GST LESS transactions or exempted client consultation services.</p>
+              </div>
+
+              <div style="background:#f4f9f6; border:1px solid #c2ded0; border-radius:12px; padding:16px; cursor:pointer" onclick="switchAdminWorkspace('ledger')">
+                <div style="font-size:24px; margin-bottom:6px">📥</div>
+                <b style="color:#0d5c3a; font-size:15px; display:block">Pre-Fill Ledger Record</b>
+                <p style="font-size:12px; color:#567267; margin:4px 0 0">Link generated bills directly into the Business Cash Flow Ledger as verified Money In income entries.</p>
+              </div>
+            </div>
+
+            <!-- GST Invoices History Register -->
+            <div style="border-top:1px solid #eef4f0; padding-top:16px">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:12px; gap:10px">
+                <h4 style="margin:0; color:#123a2d; font-size:16px">Generated Invoices &amp; Receipts Register</h4>
+                <div style="display:flex; gap:8px">
+                  <input type="text" id="gstInvoiceSearchInput" placeholder="Search invoice # or customer..." oninput="filterGSTInvoicesRegister()" style="padding:6px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; min-width:200px">
+                  <button class="btn outline" type="button" style="padding:6px 12px; font-size:12px" onclick="loadAdminGSTInvoicesRegister()">Refresh Register</button>
+                </div>
+              </div>
+
+              <div id="gstInvoicesRegisterBox" style="overflow-x:auto">
+                <div class="muted">Loading GST invoice history register...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. CLIENT CONVERSATIONS WORKSPACE PANEL -->
+        <div class="rma-admin-panel" id="rmaAdminWorkspaceConversations">
+          <div id="rmaV36AdminMessages" class="ps-v36-card">
+            <div class="muted">Loading client conversations...</div>
+          </div>
+        </div>
+
+        <!-- 6. CLIENT PROJECTS WORKSPACE PANEL -->
+        <div class="rma-admin-panel" id="rmaAdminWorkspaceProjects">
+          <div class="ps-v40-card" id="rmaV40ClientProject">
+            <span class="ps-v40-kicker">CLIENT PROJECTS REGISTER</span>
+            <h3 style="margin-top:6px; color:#123a2d">Path Seeker International School</h3>
+            <p class="muted" style="font-size:13px">Architect &amp; Engineering Consultant — active project consultation &amp; drawing repository.</p>
+
+            <div class="ps-v40-profile-grid" style="margin-top:14px">
+              <div class="ps-v40-field"><small>Client ID</small><b>PSIS261</b></div>
+              <div class="ps-v40-field"><small>Project Type</small><b>Institutional / Educational</b></div>
+              <div class="ps-v40-field"><small>Client Phone</small><b>9419118424</b></div>
+              <div class="ps-v40-field"><small>Client Email</small><b>pathseekers.vijaypur@gmail.com</b></div>
+              <div class="ps-v40-field" style="grid-column:1/-1"><small>Consultation Scope</small><b>Architectural planning, structural design, site consultation, tie beam reinforcement inspection &amp; client coordination.</b></div>
+              <div class="ps-v40-field" style="grid-column:1/-1"><small>Project Address</small><b>Ramgarh, Jammu &amp; Kashmir, India</b></div>
+            </div>
+
+            <div style="margin-top:20px; border-top:1px solid #eef4f0; padding-top:16px">
+              <h4 style="margin:0 0 10px 0; color:#123a2d">Uploaded Drawings &amp; Project Documents</h4>
+              <div id="adminProjectDocumentsBox">
+                <div class="muted">Loading project documents...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
 </main>
 <!-- ABOUT -->
 <main class="page" id="page-about">
@@ -9064,3 +9695,311 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 })();
 </script>
+
+<script id="rma-admin-workspace-engine">
+(function(){
+  'use strict';
+
+  const WORKSPACE_METADATA = {
+    'overview': {
+      title: 'Admin Overview',
+      desc: 'Welcome to RMA Design & Construction master dashboard and system summary.'
+    },
+    'site-visits': {
+      title: 'Manage Site Visits',
+      desc: 'Incoming site-visit requests, appointment scheduling, engineer assignment, cash verification, and reports.'
+    },
+    'ledger': {
+      title: 'Business Cash Flow Ledger',
+      desc: 'Real-time financial income/expense entries, 18% GST breakdown, and running account balances.'
+    },
+    'gst-bill': {
+      title: 'Generate GST Bill',
+      desc: 'Create official GST tax invoices, non-GST bills, payment receipts, and view billing register.'
+    },
+    'conversations': {
+      title: 'Client Conversations',
+      desc: 'Direct multi-channel messaging history and project communication threads with clients.'
+    },
+    'projects': {
+      title: 'Client Projects',
+      desc: 'Client profiles, consultation project records, drawings, and uploaded project documents.'
+    }
+  };
+
+  window.switchAdminWorkspace = function(moduleKey) {
+    if (!WORKSPACE_METADATA[moduleKey]) moduleKey = 'overview';
+    window.rmaActiveAdminModule = moduleKey;
+
+    // 1. Update Sidebar Active Links
+    document.querySelectorAll('.rma-admin-nav-item').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    const activeBtn = document.getElementById('navItem_' + moduleKey);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // 2. Update Header Title & Description
+    const meta = WORKSPACE_METADATA[moduleKey];
+    const titleEl = document.getElementById('rmaAdminWorkspaceTitle');
+    const descEl = document.getElementById('rmaAdminWorkspaceDesc');
+    const labelEl = document.getElementById('rmaAdminActiveModuleLabel');
+
+    if (titleEl) titleEl.textContent = meta.title;
+    if (descEl) descEl.textContent = meta.desc;
+    if (labelEl) labelEl.textContent = meta.title;
+
+    // 3. Update Current Date Badge
+    const dateEl = document.getElementById('rmaAdminCurrentDate');
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString('en-IN', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+    }
+
+    // 4. Hide all Workspace Panels, Show Selected
+    document.querySelectorAll('.rma-admin-panel').forEach(panel => {
+      panel.classList.remove('active');
+    });
+
+    const targetPanelId = {
+      'overview': 'rmaAdminWorkspaceOverview',
+      'site-visits': 'rmaAdminWorkspaceSiteVisits',
+      'ledger': 'rmaAdminWorkspaceLedger',
+      'gst-bill': 'rmaAdminWorkspaceGSTBill',
+      'conversations': 'rmaAdminWorkspaceConversations',
+      'projects': 'rmaAdminWorkspaceProjects'
+    }[moduleKey];
+
+    const targetPanel = document.getElementById(targetPanelId);
+    if (targetPanel) targetPanel.classList.add('active');
+
+    // Close mobile drawer if open
+    const sidebar = document.getElementById('rmaAdminSidebar');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+
+    // 5. Trigger Data Refreshes for Module
+    window.refreshCurrentAdminWorkspace();
+  };
+
+  window.toggleAdminSidebarMobile = function() {
+    const sidebar = document.getElementById('rmaAdminSidebar');
+    if (sidebar) sidebar.classList.toggle('mobile-open');
+  };
+
+  window.refreshCurrentAdminWorkspace = async function() {
+    const moduleKey = window.rmaActiveAdminModule || 'overview';
+
+    // Refresh Overview Dynamic Stats
+    window.refreshAdminOverviewStats();
+
+    if (moduleKey === 'site-visits' || moduleKey === 'overview') {
+      if (typeof window.loadRMAAdminSiteVisitRequests === 'function') {
+        window.loadRMAAdminSiteVisitRequests();
+      }
+      if (typeof window.loadRMAAdminCalendarSection === 'function') {
+        window.loadRMAAdminCalendarSection();
+      }
+    }
+
+    if (moduleKey === 'ledger') {
+      if (typeof window.loadRMAAdminBusinessLedgerSection === 'function') {
+        window.loadRMAAdminBusinessLedgerSection();
+      }
+      if (typeof window.loadRMAdminPaymentsSection === 'function') {
+        window.loadRMAdminPaymentsSection();
+      }
+    }
+
+    if (moduleKey === 'gst-bill') {
+      window.loadAdminGSTInvoicesRegister();
+    }
+
+    if (moduleKey === 'conversations') {
+      if (typeof window.loadAdminMessages36 === 'function') {
+        window.loadAdminMessages36();
+      }
+    }
+
+    if (moduleKey === 'projects') {
+      window.loadAdminProjectDocumentsRegister();
+    }
+  };
+
+  window.refreshAdminOverviewStats = async function() {
+    try {
+      // 1. Query Bookings
+      const { data: bookings } = await supabaseClient.from('bookings').select('status,service_type,total_amount,visit_fee');
+      if (bookings) {
+        const count = s => bookings.filter(x => String(x.status || 'pending').toLowerCase() === s).length;
+        const pending = count('pending') + count('pending_payment') + count('pending_cash_verification');
+        const approved = count('approved') + count('confirmed') + count('accepted') + count('cash_received');
+
+        const pEl = document.getElementById('ovStatPending');
+        const aEl = document.getElementById('ovStatApproved');
+        if (pEl) pEl.textContent = String(pending);
+        if (aEl) aEl.textContent = String(approved);
+      }
+    } catch(e) {}
+
+    try {
+      // 2. Query Messages
+      const { count: msgCount } = await supabaseClient.from('client_messages').select('id', { count: 'exact', head: true });
+      const mEl = document.getElementById('ovStatMessages');
+      if (mEl) mEl.textContent = String(msgCount || 0);
+    } catch(e) {}
+
+    try {
+      // 3. Query Business Ledger for Running Balance
+      const { data: ledger } = await supabaseClient.from('business_ledger').select('amount,gross_amount,entry_type');
+      if (ledger) {
+        let bal = 0;
+        ledger.forEach(x => {
+          const amt = Number(x.gross_amount || x.amount || 0);
+          if ((x.entry_type || '').toUpperCase() === 'INCOME') bal += amt;
+          else bal -= amt;
+        });
+        const cEl = document.getElementById('ovStatCashFlow');
+        if (cEl) cEl.textContent = '₹' + bal.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+      }
+    } catch(e) {}
+  };
+
+  window.loadAdminGSTInvoicesRegister = async function() {
+    const box = document.getElementById('gstInvoicesRegisterBox');
+    if (!box) return;
+
+    try {
+      const { data, error } = await supabaseClient.from('gst_invoices').select('*').order('created_at', { ascending: false }).limit(100);
+      if (error) throw error;
+
+      window.rmaAllGSTInvoices = data || [];
+      window.renderGSTInvoicesRegisterRows(window.rmaAllGSTInvoices);
+    } catch(err) {
+      box.innerHTML = '<div class="notice error">Failed to load GST invoices: ' + (err.message || 'Check database permissions') + '</div>';
+    }
+  };
+
+  window.filterGSTInvoicesRegister = function() {
+    const q = (document.getElementById('gstInvoiceSearchInput')?.value || '').trim().toLowerCase();
+    const rows = window.rmaAllGSTInvoices || [];
+    if (!q) {
+      window.renderGSTInvoicesRegisterRows(rows);
+      return;
+    }
+    const filtered = rows.filter(x => {
+      const num = (x.invoice_number || '').toLowerCase();
+      const name = (x.customer_name || '').toLowerCase();
+      const mob = (x.customer_mobile || '').toLowerCase();
+      const pay = (x.payment_id || '').toLowerCase();
+      return num.includes(q) || name.includes(q) || mob.includes(q) || pay.includes(q);
+    });
+    window.renderGSTInvoicesRegisterRows(filtered);
+  };
+
+  window.renderGSTInvoicesRegisterRows = function(invoices) {
+    const box = document.getElementById('gstInvoicesRegisterBox');
+    if (!box) return;
+
+    if (!invoices || !invoices.length) {
+      box.innerHTML = '<div class="muted" style="padding:15px; text-align:center">No GST invoice records found.</div>';
+      return;
+    }
+
+    const rowsHtml = invoices.map(x => {
+      const invNum = x.invoice_number || 'RMA/GST/DRAFT';
+      const dUrl = x.download_url || '#';
+      const dt = x.created_at ? new Date(x.created_at).toLocaleDateString('en-IN') : '—';
+
+      return `
+        <tr style="border-bottom:1px solid #eef4f0; font-size:12px">
+          <td style="padding:10px 12px"><b>${esc(invNum)}</b></td>
+          <td style="padding:10px 12px">${esc(x.customer_name || 'Customer')}</td>
+          <td style="padding:10px 12px">${esc(x.customer_mobile || '—')}</td>
+          <td style="padding:10px 12px">₹${Number(x.total_amount || 0).toLocaleString('en-IN')}</td>
+          <td style="padding:10px 12px">₹${Number(x.gst_amount || x.total_gst || 0).toLocaleString('en-IN')}</td>
+          <td style="padding:10px 12px">${esc(dt)}</td>
+          <td style="padding:10px 12px"><span class="role-badge" style="background:#e0f3ea; color:#084c38">${esc(x.status || 'GENERATED')}</span></td>
+          <td style="padding:10px 12px; text-align:right">
+            ${dUrl !== '#' ? `<a href="${esc(dUrl)}" target="_blank" class="btn outline" style="padding:3px 8px; font-size:11px; text-decoration:none">📥 View / PDF</a>` : '<span class="muted">PDF N/A</span>'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    box.innerHTML = `
+      <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left">
+        <thead>
+          <tr style="background:#2e7d5b; color:#fff">
+            <th style="padding:10px 12px">Invoice #</th>
+            <th style="padding:10px 12px">Customer Name</th>
+            <th style="padding:10px 12px">Mobile</th>
+            <th style="padding:10px 12px">Total Amount</th>
+            <th style="padding:10px 12px">GST (18%)</th>
+            <th style="padding:10px 12px">Date</th>
+            <th style="padding:10px 12px">Status</th>
+            <th style="padding:10px 12px; text-align:right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    `;
+  };
+
+  window.loadAdminProjectDocumentsRegister = async function() {
+    const box = document.getElementById('adminProjectDocumentsBox');
+    if (!box) return;
+
+    try {
+      const { data, error } = await supabaseClient.from('project_documents').select('*').order('created_at', { ascending: false }).limit(50);
+      if (error) throw error;
+
+      if (!data || !data.length) {
+        box.innerHTML = '<div class="muted">No project documents uploaded yet.</div>';
+        return;
+      }
+
+      box.innerHTML = data.map(d => `
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:10px 14px; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px">
+          <div>
+            <b style="color:#123a2d; font-size:13px">${esc(d.title || d.document_name || 'Project Document')}</b>
+            <div style="font-size:11px; color:#666; margin-top:2px">Uploaded: ${new Date(d.created_at).toLocaleDateString('en-IN')} | Scope: ${esc(d.category || 'Drawing')}</div>
+          </div>
+          ${d.file_url ? `<a href="${esc(d.file_url)}" target="_blank" class="btn outline" style="padding:4px 10px; font-size:11px; text-decoration:none">📥 View File</a>` : ''}
+        </div>
+      `).join('');
+    } catch(err) {
+      box.innerHTML = '<div class="notice error">Failed to load project documents.</div>';
+    }
+  };
+
+  // Helper escape
+  const esc = s => {
+    const d = document.createElement('div');
+    d.textContent = String(s ?? '');
+    return d.innerHTML;
+  };
+
+  // Patch enhanceStaffPortal36
+  const oldEnhance = window.enhanceStaffPortal36;
+  window.enhanceStaffPortal36 = async function() {
+    if (oldEnhance) await oldEnhance();
+    switchAdminWorkspace(window.rmaActiveAdminModule || 'overview');
+  };
+
+  // Auto-init on DOMReady
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+      if (document.getElementById('staffPortal') && !document.getElementById('staffPortal').classList.contains('hidden')) {
+        switchAdminWorkspace('overview');
+      }
+    }, 400);
+  });
+})();
+</script>
+</body>
+</html>
