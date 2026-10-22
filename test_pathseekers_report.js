@@ -77,18 +77,32 @@ assert(htmlContent.includes('2 of 3 used') || htmlContent.includes('2 / 3'), 'Mi
 assert(htmlContent.includes('25'), 'Missing total completed visit count of 25');
 console.log('✔ TEST 7 PASSED: Completed visits count (25) & October counter (2 of 3) verified.\n');
 
-// 8. Regression Test: Verify JS Photo Array Isolation Logic
-console.log('[TEST 8] Verifying Photo Array Isolation via Code Execution...');
+// 8. Regression Test: Verify JS Photo Array Isolation Logic & Deletion Safeguards
+console.log('[TEST 8] Verifying Photo Array Isolation & Photo Deletion Safeguards via Code Execution...');
 const scriptCode = htmlContent.substring(
   htmlContent.indexOf('<script id="rma-v66-site-visit-photos">') + '<script id="rma-v66-site-visit-photos">'.length,
   htmlContent.indexOf('</script>', htmlContent.indexOf('<script id="rma-v66-site-visit-photos">'))
 );
 
+let rendered10OctHTML = '';
+let rendered5OctHTML = '';
+
+const mockDOM = {
+  elements: {},
+  getElementById(id) {
+    if (!this.elements[id]) {
+      this.elements[id] = { innerHTML: '', style: {} };
+    }
+    return this.elements[id];
+  }
+};
+
 const sandbox = {
   window: {},
-  document: { getElementById: () => null, body: { appendChild: () => {} } },
+  document: mockDOM,
   supabaseClient: {},
-  console: console
+  console: console,
+  confirm: () => true
 };
 vm.createContext(sandbox);
 vm.runInContext(scriptCode, sandbox);
@@ -100,12 +114,28 @@ assert(sandbox.window.ps5Oct2026Photos !== sandbox.window.ps10Oct2026Photos, 'ps
 const initial5OctLen = sandbox.window.ps5Oct2026Photos.length;
 const initial10OctLen = sandbox.window.ps10Oct2026Photos.length;
 
-// Mutate 10 Oct photos (e.g. remove one photo)
-sandbox.window.ps10Oct2026Photos.pop();
+// Initial render check
+sandbox.window.renderPathseeker5Oct2026Photos();
+sandbox.window.renderPathseeker10Oct2026Photos();
 
-assert.strictEqual(sandbox.window.ps5Oct2026Photos.length, initial5OctLen, 'Modifying 10 Oct photo array must not alter 5 Oct photo array length');
+assert(mockDOM.elements['ps5OctPhotosGrid'].innerHTML.includes('Tie beam reinforcement steel'), '5 Oct photos grid should render 5 Oct photos');
+assert(mockDOM.elements['psOctPhotosGrid'].innerHTML.includes('staircase modifications'), '10 Oct photos grid should render 10 Oct photos');
+
+// Test deleting photo from 10 Oct array via adminRemovePhoto
+sandbox.window.adminRemovePhoto(0);
+
+assert.strictEqual(sandbox.window.ps5Oct2026Photos.length, initial5OctLen, 'Removing 10 Oct photo must NOT change 5 Oct photo array length');
 assert.strictEqual(sandbox.window.ps10Oct2026Photos.length, initial10OctLen - 1, '10 Oct photo array length correctly decremented');
 
-console.log('✔ TEST 8 PASSED: Code execution regression test confirmed photo array isolation.\n');
+// Test clearing 10 Oct photos array completely
+sandbox.window.ps10Oct2026Photos.length = 0;
+sandbox.window.renderPathseeker10Oct2026Photos();
+sandbox.window.renderPathseeker5Oct2026Photos();
+
+assert.strictEqual(sandbox.window.ps5Oct2026Photos.length, initial5OctLen, 'Clearing 10 Oct photo array must NOT affect 5 Oct photo array');
+assert(mockDOM.elements['psOctPhotosGrid'].innerHTML.includes('No site photographs recorded yet'), '10 Oct photo grid gracefully displays empty state');
+assert(mockDOM.elements['ps5OctPhotosGrid'].innerHTML.includes('Tie beam reinforcement steel'), '5 Oct photo grid remains fully intact');
+
+console.log('✔ TEST 8 PASSED: Code execution regression test confirmed photo array isolation and photo deletion safeguards.\n');
 
 console.log('=== ALL PATHSEEKERS SITE VISIT REPORT & REGRESSION TESTS PASSED SUCCESSFULLY ===');
