@@ -37,35 +37,29 @@ assert(htmlContent.includes('C. Site Progress Observed'), 'Missing Section C hea
 assert(htmlContent.includes('carrying out filling work in the plinth/tie beam area'), 'Missing site progress filling work text');
 console.log('✔ TEST 4 PASSED: Section C content verified successfully.\n');
 
-// 5. Verify Site Photographs Gallery & Lightbox Integration
-console.log('[TEST 5] Verifying Site Photographs Gallery & Lightbox...');
-assert(htmlContent.includes('SITE PHOTOGRAPHS – 10 OCTOBER 2026'), 'Missing SITE PHOTOGRAPHS section title');
+// 5. Verify Site Photographs Gallery & Lightbox Integration on 5 October Report
+console.log('[TEST 5] Verifying Site Photographs Gallery & Lightbox on 5 October Report...');
+assert(htmlContent.includes('SITE PHOTOGRAPHS – 5 OCTOBER 2026'), 'Missing SITE PHOTOGRAPHS section title');
 assert(htmlContent.includes('psOctPhotosGrid'), 'Missing photo gallery container ID');
 assert(htmlContent.includes('site-visit-photos'), 'Missing Supabase storage bucket reference');
-assert(htmlContent.includes('pathseekers/2026/2026-10-10/'), 'Missing Supabase storage folder path');
 assert(htmlContent.includes('openRMAPhotoLightbox'), 'Missing Lightbox modal function');
-console.log('✔ TEST 5 PASSED: Site photographs gallery and Lightbox modal correctly configured.\n');
+console.log('✔ TEST 5 PASSED: Site photographs gallery attached to 5 October report and Lightbox modal correctly configured.\n');
 
-// 6. Verify Download October Report Button & Download File Name
-console.log('[TEST 6] Verifying Downloadable October Report...');
-assert(htmlContent.includes('psV63DownloadReportOct'), 'Missing Download October Report button ID');
-assert(htmlContent.includes('RMA-Path-Seeker-Site-Visit-Report-2026-10-10.txt'), 'Missing updated report filename');
-assert(htmlContent.includes('SITE VISIT REPORT — 10 OCTOBER 2026'), 'Missing updated report header in download text');
-console.log('✔ TEST 6 PASSED: Downloadable report contains complete 10 October 2026 report.\n');
+// 6. Verify Preserved Reports & Downloadable October Reports
+console.log('[TEST 6] Verifying All 3 Preserved Site Visit Reports (15 Sep, 5 Oct, 10 Oct)...');
+assert(htmlContent.includes('15 September 2026 · Site Visit Report'), 'Missing 15 September 2026 report');
+assert(htmlContent.includes('5 October 2026 · Monthly Periodic Site Inspection'), 'Missing 5 October 2026 report');
+assert(htmlContent.includes('10 October 2026 · Site Visit Report'), 'Missing 10 October 2026 report');
+assert(htmlContent.includes('psV63DownloadReportOct10'), 'Missing Download 10 October Report button ID');
+assert(htmlContent.includes('psV63DownloadReportOct5'), 'Missing Download 5 October Report button ID');
+assert(htmlContent.includes('RMA-Path-Seeker-Site-Visit-Report-2026-10-10.txt'), 'Missing 10 October report filename');
+assert(htmlContent.includes('RMA-Path-Seeker-Site-Visit-Report-2026-10-05.txt'), 'Missing 5 October report filename');
+console.log('✔ TEST 6 PASSED: All 3 site visit reports preserved with individual download buttons.\n');
 
-// 7. Verify Admin Photo Manager Modal & Functions
-console.log('[TEST 7] Verifying Admin Photo Manager...');
-assert(htmlContent.includes('Pathseekers School — 10 October 2026 Photos & Report Manager'), 'Missing Admin Photo Manager title');
-assert(htmlContent.includes('adminOpenPhotoManagerModal'), 'Missing adminOpenPhotoManagerModal function');
-assert(htmlContent.includes('adminRenderPhotoManagerList'), 'Missing adminRenderPhotoManagerList function');
-assert(htmlContent.includes('adminMovePhoto'), 'Missing adminMovePhoto function');
-assert(htmlContent.includes('adminRemovePhoto'), 'Missing adminRemovePhoto function');
-assert(htmlContent.includes('adminSaveOctVisitPhotos'), 'Missing adminSaveOctVisitPhotos function');
-console.log('✔ TEST 7 PASSED: Admin Photo Manager functions fully defined.\n');
-
-// 8. Verify October Visits Counter Status
-console.log('[TEST 8] Verifying October Visit Counter Status...');
-assert(htmlContent.includes('1 of 3 used') || htmlContent.includes('1 / 3'), 'Missing 1 of 3 used counter status');
-console.log('✔ TEST 8 PASSED: October visit counter status verified as 1 of 3 used.\n');
+// 7. Verify Completed Visits Counter Status (25 Completed Visits, 2 of 3 used in October)
+console.log('[TEST 7] Verifying Completed Visits & Monthly Counter Status...');
+assert(htmlContent.includes('<strong>25</strong>'), 'Missing 25 total completed visits counter');
+assert(htmlContent.includes('2 / 3'), 'Missing 2 / 3 monthly visits counter status');
+console.log('✔ TEST 7 PASSED: Completed visits counter verified as 25 total visits and 2 / 3 used for October.\n');
 
 console.log('=== ALL PATHSEEKERS 10 OCTOBER 2026 REPORT TESTS PASSED SUCCESSFULLY ===');
