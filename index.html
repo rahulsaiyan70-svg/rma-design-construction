@@ -5177,7 +5177,74 @@ if(originalEnhance&&!window.rmaV41ClientPatched){
 }
 window.deleteSiteVisitRequest41=deleteRequest41;
 window.approvePathSeeker36=approvePathSeeker41;
-function init41(){patchAdminCards41();const row=document.getElementById('psV36LatestStatus');if(row)getCurrentUser41().then(u=>u&&renderLatestStatus41(row,u.id))}
+
+async function syncPathSeekerSiteVisit26(){
+  try {
+    const reqId = 'RMA-SV-PSIS-26';
+    const existing = await supabaseClient.from('bookings').select('id,status').eq('request_id', reqId).maybeSingle();
+    let bookingId = existing.data?.id;
+
+    const visitScopePayload = {
+      site_visit_number: 26,
+      requested_date: '28th',
+      scheduled_date: '2026-10-28',
+      scheduled_time: '14:30',
+      reason: 'Discussion and explanation of revised architectural and structural planning at the actual site.',
+      purpose: 'The client requested a site visit to understand the latest changes incorporated into the current plan and to get a practical explanation of how the proposed design and construction arrangements would be executed on the ground.',
+      summary: 'Site Visit No. 26 – Revised Planning and On-Site Coordination. Revised planning, staircase arrangements, lift provision, and pillar positioning discussed and explained on-site.',
+      outcome: 'Revised planning, staircase arrangements, lift provision, and pillar positioning discussed and explained on-site.'
+    };
+
+    if(!bookingId){
+      const newBooking = {
+        request_id: reqId,
+        client_name: 'Path Seeker International School',
+        service_type: 'Path Seeker Site Visit Request',
+        status: 'completed',
+        scheduled_date: '2026-10-28',
+        scheduled_time: '14:30',
+        confirmed_date: '2026-10-28',
+        confirmed_time: '14:30',
+        completion_date: '2026-10-28T14:30:00+05:30',
+        completed_by: 'RMA Engineer',
+        engineer_name: 'RMA Engineer',
+        email: V41_CLIENT_EMAIL,
+        mobile: '9419118424',
+        project_address: 'Ramgarh, Jammu & Kashmir, India',
+        visit_scope: JSON.stringify(visitScopePayload),
+        site_observations: 'Discussion and explanation of revised architectural and structural planning at the actual site (revised planning, two staircases, lift provision, pillar positioning).'
+      };
+      const insRes = await supabaseClient.from('bookings').insert(newBooking).select('id').maybeSingle();
+      if(!insRes.error && insRes.data?.id){
+        bookingId = insRes.data.id;
+      }
+    }
+
+    if(bookingId){
+      const repCheck = await supabaseClient.from('site_visit_reports').select('id').eq('booking_id', bookingId).maybeSingle();
+      if(!repCheck.data){
+        await supabaseClient.from('site_visit_reports').insert({
+          booking_id: bookingId,
+          request_id: reqId,
+          title: 'Site Visit No. 26 – Revised Planning and On-Site Coordination',
+          engineer_name: 'RMA Engineer',
+          observations: 'Revised planning, staircase arrangements (two staircases), lift provision, and pillar positioning discussed and explained on-site.',
+          file_url: 'data:text/plain;charset=utf-8,' + encodeURIComponent('Site Visit No. 26 Report - 28 October 2026')
+        });
+      }
+    }
+  } catch(syncErr){
+    console.warn('Path Seeker Site Visit 26 sync check:', syncErr);
+  }
+}
+window.syncPathSeekerSiteVisit26 = syncPathSeekerSiteVisit26;
+
+function init41(){
+  syncPathSeekerSiteVisit26();
+  patchAdminCards41();
+  const row=document.getElementById('psV36LatestStatus');
+  if(row)getCurrentUser41().then(u=>u&&renderLatestStatus41(row,u.id));
+}
 setTimeout(init41,1200);
 setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36LatestStatus');if(row)getCurrentUser41().then(u=>u&&renderLatestStatus41(row,u.id))},15000);
 })();
@@ -5237,8 +5304,8 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     /* Dashboard — only dashboard content is visible initially. */
     var dash=makeView(main,'dashboard','Welcome to Your Project Portal','Your project information, drawings, site visits and RMA communication are available from the menu.');dash.classList.add('active');
     var welcome=document.createElement('div');welcome.className='ps-v62-welcome';welcome.innerHTML='<div><h3>Path Seeker International School</h3><p>Project ID: <b>PSIS 261</b> · Vijaypur, Ramgarh</p></div><div class="ps-v62-status"><span class="ps-v62-pill">ACTIVE CLIENT</span><span class="ps-v62-pill">G+2 SCHOOL PROJECT</span></div>';dash.appendChild(welcome);
-    var stats=document.createElement('div');stats.className='ps-v62-dashboard-grid';stats.innerHTML='<div class="ps-v62-stat"><span class="label">SITE VISITS THIS MONTH</span><strong id="psV63StatMonthly">2 / 3</strong></div><div class="ps-v62-stat"><span class="label">TOTAL COMPLETED VISITS</span><strong>25</strong></div><div class="ps-v62-stat"><span class="label">PROJECT STATUS</span><strong>Active</strong></div>';dash.appendChild(stats);
-    var watch=document.createElement('div');watch.className='ps-v62-watch';watch.innerHTML='<div class="ps-v62-watch-head"><div><div class="ps-v62-watch-title">Next Site Visit · 24 October 2026 · 11:00 AM</div><div class="muted" style="font-size:11px">Appointment watch</div></div><span class="ps-v62-pill">UPCOMING</span></div><div class="ps-v62-countdown" id="psV63Countdown"></div>';dash.appendChild(watch);countdown(watch.querySelector('#psV63Countdown'));
+    var stats=document.createElement('div');stats.className='ps-v62-dashboard-grid';stats.innerHTML='<div class="ps-v62-stat"><span class="label">SITE VISITS THIS MONTH</span><strong id="psV63StatMonthly">3 / 3</strong></div><div class="ps-v62-stat"><span class="label">TOTAL COMPLETED VISITS</span><strong>26</strong></div><div class="ps-v62-stat"><span class="label">PROJECT STATUS</span><strong>Active</strong></div>';dash.appendChild(stats);
+    var watch=document.createElement('div');watch.className='ps-v62-watch';watch.innerHTML='<div class="ps-v62-watch-head"><div><div class="ps-v62-watch-title">Site Visit No. 26 · 28 October 2026 · 2:30 PM</div><div class="muted" style="font-size:11px">Latest Site Visit Completed</div></div><span class="ps-v62-pill">COMPLETED</span></div><div class="ps-v62-countdown" id="psV63Countdown"></div>';dash.appendChild(watch);countdown(watch.querySelector('#psV63Countdown'));
     var quick=document.createElement('div');quick.className='ps-v63-quick-grid';quick.innerHTML=[
       ['project','▣','Project Information','View your project profile and scope.'],
       ['docs','▤','Drawings & Documents','View or download RMA drawings.'],
@@ -5257,9 +5324,111 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 
     /* Site Visits — request + history + report, and nothing else. */
     var visit=makeView(main,'visit','Site Visits','View completed visits, upcoming appointments and request a new site visit.');
-    var visitIntro=document.createElement('div');visitIntro.className='ps-v63-visit-summary';visitIntro.innerHTML='<div><b>October site visits</b><span>2 of 3 used</span></div><div><b>Total completed site visits</b><span>25</span></div><button type="button" class="btn dark" onclick="togglePathSeekerVisitRequest()">Book Site Visit</button>';visit.appendChild(visitIntro);
+    var visitIntro=document.createElement('div');visitIntro.className='ps-v63-visit-summary';visitIntro.innerHTML='<div><b>October site visits</b><span>3 of 3 used</span></div><div><b>Total completed site visits</b><span>26</span></div><button type="button" class="btn dark" onclick="togglePathSeekerVisitRequest()">Book Site Visit</button>';visit.appendChild(visitIntro);
     if(req)visit.appendChild(req);
     if(history)visit.appendChild(history);
+
+    /* Site Visit No. 26 Card */
+    var reportOct28=document.createElement('div');reportOct28.className='ps-v62-report';reportOct28.style.marginBottom='18px';
+    reportOct28.innerHTML='<h3>Site Visit No. 26 – Revised Planning and On-Site Coordination <span class="ps-v62-pill" style="float:right">COMPLETED</span></h3>' +
+      '<p><b>PROJECT:</b> Pathseeker International Schools &nbsp; | &nbsp; <b>DATE:</b> 28th &nbsp; | &nbsp; <b>TIME:</b> 2:30 PM &nbsp; | &nbsp; <b>MONTH:</b> October 2026<br>' +
+      '<b>SITE VISIT NUMBER:</b> 26 &nbsp; | &nbsp; <b>STATUS:</b> Completed &nbsp; | &nbsp; <b>VISIT TYPE:</b> Client-requested site visit<br>' +
+      '<b>CONSULTANT:</b> RMA Design & Construction<br>' +
+      '<b>PURPOSE:</b> Discussion and explanation of revised architectural and structural planning at the actual site.</p>' +
+      '<div style="margin:14px 0;padding:14px 16px;background:#f0f7f4;border-left:4px solid #123a2d;border-radius:8px">' +
+        '<h4 style="margin:0 0 6px 0;color:#123a2d;font-size:14px;letter-spacing:0.3px;text-transform:uppercase">PURPOSE OF THE VISIT</h4>' +
+        '<p style="margin:0 0 8px 0;line-height:1.6;font-size:13px;color:#2c3e50">The client requested a site visit to understand the latest changes incorporated into the current plan and to get a practical explanation of how the proposed design and construction arrangements would be executed on the ground.</p>' +
+        '<p style="margin:0 0 8px 0;line-height:1.6;font-size:13px;color:#2c3e50">The revised plan and new changes were prepared and incorporated by me in response to the client\'s requirements and requests.</p>' +
+        '<p style="margin:0;line-height:1.6;font-size:13px;color:#2c3e50">During the visit, I explained the revised planning and demonstrated how the proposed arrangements would translate into actual site execution.</p>' +
+      '</div>' +
+      '<p style="margin-top:14px"><b>WORK DISCUSSED AND EXPLAINED DURING THE VISIT:</b></p>' +
+      '<div style="margin-top:10px">' +
+        '<p style="margin:6px 0 4px;font-weight:700;color:#123a2d">A. Revised Plan and New Changes</p>' +
+        '<ul style="margin:0 0 10px 18px;padding:0;line-height:1.6;font-size:13px;color:#2c3e50">' +
+          '<li>Discussed the latest revised architectural plan.</li>' +
+          '<li>Explained the modifications and new changes incorporated as per the client\'s requirements.</li>' +
+          '<li>Demonstrated the practical implementation of the revised plan at the site.</li>' +
+        '</ul>' +
+        '<p style="margin:6px 0 4px;font-weight:700;color:#123a2d">B. Staircase Arrangements</p>' +
+        '<ul style="margin:0 0 10px 18px;padding:0;line-height:1.6;font-size:13px;color:#2c3e50">' +
+          '<li>Discussed the provision of two staircases in the building.</li>' +
+          '<li>Explained their proposed locations and arrangements.</li>' +
+          '<li>Discussed how both staircases would be accommodated within the overall building layout.</li>' +
+        '</ul>' +
+        '<p style="margin:6px 0 4px;font-weight:700;color:#123a2d">C. Lift Provision</p>' +
+        '<ul style="margin:0 0 10px 18px;padding:0;line-height:1.6;font-size:13px;color:#2c3e50">' +
+          '<li>Identified and explained the proposed lift location.</li>' +
+          '<li>Discussed the lift provision and its integration into the building planning.</li>' +
+        '</ul>' +
+        '<p style="margin:6px 0 4px;font-weight:700;color:#123a2d">D. Pillar and Structural Arrangements</p>' +
+        '<ul style="margin:0 0 10px 18px;padding:0;line-height:1.6;font-size:13px;color:#2c3e50">' +
+          '<li>Discussed the proposed pillar locations and their positioning.</li>' +
+          '<li>Explained the structural arrangements to the client and contractor.</li>' +
+          '<li>Mutually discussed the positioning and coordination of pillars with the revised architectural layout.</li>' +
+          '<li>Explained how the structural elements would be arranged for practical execution.</li>' +
+        '</ul>' +
+      '</div>' +
+      '<div style="margin:14px 0;padding:14px 16px;background:#f7faf8;border-left:4px solid #2e7d5b;border-radius:8px">' +
+        '<h4 style="margin:0 0 6px 0;color:#123a2d;font-size:14px;letter-spacing:0.3px;text-transform:uppercase">CLIENT AND CONTRACTOR COORDINATION</h4>' +
+        '<p style="margin:0 0 8px 0;line-height:1.6;font-size:13px;color:#2c3e50">The revised arrangements, including the two staircases, lift provision, and pillar positioning, were discussed jointly with the client and contractor.</p>' +
+        '<p style="margin:0;line-height:1.6;font-size:13px;color:#2c3e50">The purpose was to ensure that all concerned parties understood the proposed changes and how the building layout would be implemented at the actual construction site.</p>' +
+      '</div>' +
+      '<div style="margin:14px 0;padding:14px 16px;background:#eef7f3;border-radius:8px">' +
+        '<h4 style="margin:0 0 6px 0;color:#123a2d;font-size:14px;letter-spacing:0.3px;text-transform:uppercase">FINAL REPORT / CLIENT-FACING SUMMARY</h4>' +
+        '<p style="margin:0 0 8px 0;line-height:1.6;font-size:13px;color:#2c3e50">A site visit was conducted on the 28th at 2:30 PM at the client\'s request to explain the latest revised building plan and the new modifications incorporated as per the client\'s requirements.</p>' +
+        '<p style="margin:0 0 8px 0;line-height:1.6;font-size:13px;color:#2c3e50">During the visit, the revised layout was explained in detail, including the provision of two staircases, the proposed lift location, and the positioning and coordination of structural pillars.</p>' +
+        '<p style="margin:0 0 8px 0;line-height:1.6;font-size:13px;color:#2c3e50">The client and contractor were briefed on how these arrangements would be executed on the ground. The discussions were carried out mutually to establish a clear understanding of the revised architectural and structural planning before proceeding with the subsequent construction activities.</p>' +
+        '<p style="margin:0;line-height:1.6;font-size:13px;color:#123a2d;font-weight:700"><b>Visit Outcome:</b> Revised planning, staircase arrangements, lift provision, and pillar positioning discussed and explained on-site.</p>' +
+      '</div>' +
+      '<div class="ps-v62-report-actions" style="margin-top:18px"><button class="btn outline" type="button" id="psV63DownloadReportOct28">Download Report (Site Visit No. 26)</button></div>';
+    visit.appendChild(reportOct28);
+
+    document.getElementById('psV63DownloadReportOct28').onclick=function(){
+      var t='RMA DESIGN & CONSTRUCTION\nPATHSEEKER INTERNATIONAL SCHOOLS — PSIS 261\n\n' +
+        'SITE VISIT REPORT — SITE VISIT NO. 26\n' +
+        'Site Visit Number: 26\n' +
+        'Project: Pathseeker International Schools\n' +
+        'Date: 28th (28 October 2026)\n' +
+        'Time: 2:30 PM\n' +
+        'Month: October 2026\n' +
+        'Status: Completed\n' +
+        'Visit Type: Client-requested site visit\n' +
+        'Consultant: RMA Design & Construction\n' +
+        'Purpose: Discussion and explanation of revised architectural and structural planning at the actual site.\n' +
+        'October visits: 3 of 3\n' +
+        'Total completed visits: 26\n\n' +
+        'PURPOSE OF THE VISIT:\n' +
+        'The client requested a site visit to understand the latest changes incorporated into the current plan and to get a practical explanation of how the proposed design and construction arrangements would be executed on the ground.\n' +
+        'The revised plan and new changes were prepared and incorporated by me in response to the client\'s requirements and requests.\n' +
+        'During the visit, I explained the revised planning and demonstrated how the proposed arrangements would translate into actual site execution.\n\n' +
+        'WORK DISCUSSED AND EXPLAINED DURING THE VISIT:\n' +
+        'A. Revised Plan and New Changes:\n' +
+        '- Discussed the latest revised architectural plan.\n' +
+        '- Explained the modifications and new changes incorporated as per the client\'s requirements.\n' +
+        '- Demonstrated the practical implementation of the revised plan at the site.\n\n' +
+        'B. Staircase Arrangements:\n' +
+        '- Discussed the provision of two staircases in the building.\n' +
+        '- Explained their proposed locations and arrangements.\n' +
+        '- Discussed how both staircases would be accommodated within the overall building layout.\n\n' +
+        'C. Lift Provision:\n' +
+        '- Identified and explained the proposed lift location.\n' +
+        '- Discussed the lift provision and its integration into the building planning.\n\n' +
+        'D. Pillar and Structural Arrangements:\n' +
+        '- Discussed the proposed pillar locations and their positioning.\n' +
+        '- Explained the structural arrangements to the client and contractor.\n' +
+        '- Mutually discussed the positioning and coordination of pillars with the revised architectural layout.\n' +
+        '- Explained how the structural elements would be arranged for practical execution.\n\n' +
+        'CLIENT AND CONTRACTOR COORDINATION:\n' +
+        'The revised arrangements, including the two staircases, lift provision, and pillar positioning, were discussed jointly with the client and contractor.\n' +
+        'The purpose was to ensure that all concerned parties understood the proposed changes and how the building layout would be implemented at the actual construction site.\n\n' +
+        'FINAL REPORT / CLIENT-FACING SUMMARY:\n' +
+        'Site Visit No. 26 – Revised Planning and On-Site Coordination\n' +
+        'A site visit was conducted on the 28th at 2:30 PM at the client\'s request to explain the latest revised building plan and the new modifications incorporated as per the client\'s requirements.\n' +
+        'During the visit, the revised layout was explained in detail, including the provision of two staircases, the proposed lift location, and the positioning and coordination of structural pillars.\n' +
+        'The client and contractor were briefed on how these arrangements would be executed on the ground. The discussions were carried out mutually to establish a clear understanding of the revised architectural and structural planning before proceeding with the subsequent construction activities.\n\n' +
+        'Visit Outcome: Revised planning, staircase arrangements, lift provision, and pillar positioning discussed and explained on-site.';
+      var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download='RMA-Path-Seeker-Site-Visit-Report-No-26-28th.txt';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},500);
+    };
 
     /* 10 October 2026 Site Visit Card */
     var reportOct10=document.createElement('div');reportOct10.className='ps-v62-report';reportOct10.style.marginBottom='18px';
@@ -5667,7 +5836,7 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 'use strict';
 var TARGET=new Date('2026-10-24T11:00:00+05:30').getTime(),timer=null;
 function root(){return document.getElementById('rmaPathSeekerPortal')||document;}
-function counter(){var r=root();['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent='2 / 3';});if(r.querySelectorAll)r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){if(/used/i.test(e.textContent||''))e.textContent='2 of 3 used';});}
+function counter(){var r=root();['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent='3 / 3';});if(r.querySelectorAll)r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){if(/used/i.test(e.textContent||''))e.textContent='3 of 3 used';});}
 function watch(){var e=document.getElementById('psV63Countdown');if(!e)return false;var total=Math.max(0,Math.floor((TARGET-Date.now())/1000)),d=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60),s=total%60;e.innerHTML='<div class="ps-v62-time"><strong>'+String(d).padStart(2,'0')+'</strong><small>Days</small></div><div class="ps-v62-time"><strong>'+String(h).padStart(2,'0')+'</strong><small>Hours</small></div><div class="ps-v62-time"><strong>'+String(m).padStart(2,'0')+'</strong><small>Minutes</small></div><div class="ps-v62-time"><strong>'+String(s).padStart(2,'0')+'</strong><small>Seconds</small></div>';return true;}
 function start(){counter();watch();if(timer)clearInterval(timer);timer=setInterval(function(){counter();watch();},1000);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
