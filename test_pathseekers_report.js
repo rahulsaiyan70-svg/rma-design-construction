@@ -72,10 +72,28 @@ assert(htmlContent.includes('adminSaveOctVisitPhotos'), 'Missing adminSaveOctVis
 console.log('✔ TEST 6 PASSED: Admin Photo Manager functions verified.\n');
 
 // 7. Verify Completed Visits Count & October Visits Counter
-console.log('[TEST 7] Verifying Completed Visit Count (25) & October Counter (2 of 3)...');
-assert(htmlContent.includes('2 of 3 used') || htmlContent.includes('2 / 3'), 'Missing 2 of 3 used counter status');
-assert(htmlContent.includes('25'), 'Missing total completed visit count of 25');
-console.log('✔ TEST 7 PASSED: Completed visits count (25) & October counter (2 of 3) verified.\n');
+console.log('[TEST 7] Verifying Completed Visit Count (26) & October Counter (3 of 3)...');
+assert(htmlContent.includes('3 of 3 used') || htmlContent.includes('3 / 3'), 'Missing 3 of 3 used counter status');
+assert(htmlContent.includes('26'), 'Missing total completed visit count of 26');
+console.log('✔ TEST 7 PASSED: Completed visits count (26) & October counter (3 of 3) verified.\n');
+
+// 7b. Verify Site Visit No. 26 Report Title, Metadata & Content
+console.log('[TEST 7b] Verifying Site Visit No. 26 Report & Detailed Sections...');
+assert(htmlContent.includes('Site Visit No. 26 – Revised Planning and On-Site Coordination'), 'Missing Site Visit No. 26 Report title');
+assert(htmlContent.includes('<b>SITE VISIT NUMBER:</b> 26'), 'Missing report metadata site visit number 26');
+assert(htmlContent.includes('<b>DATE:</b> 28th'), 'Missing report metadata date 28th');
+assert(htmlContent.includes('<b>TIME:</b> 2:30 PM'), 'Missing report metadata time 2:30 PM');
+assert(htmlContent.includes('<b>STATUS:</b> Completed'), 'Missing report metadata status Completed');
+assert(htmlContent.includes('<b>VISIT TYPE:</b> Client-requested site visit'), 'Missing report metadata visit type');
+assert(htmlContent.includes('A. Revised Plan and New Changes'), 'Missing Section A in Site Visit 26');
+assert(htmlContent.includes('B. Staircase Arrangements'), 'Missing Section B in Site Visit 26');
+assert(htmlContent.includes('C. Lift Provision'), 'Missing Section C in Site Visit 26');
+assert(htmlContent.includes('D. Pillar and Structural Arrangements'), 'Missing Section D in Site Visit 26');
+assert(htmlContent.includes('CLIENT AND CONTRACTOR COORDINATION'), 'Missing client and contractor coordination section');
+assert(htmlContent.includes('FINAL REPORT / CLIENT-FACING SUMMARY'), 'Missing final report summary section');
+assert(htmlContent.includes('psV63DownloadReportOct28'), 'Missing download button for Site Visit No. 26');
+assert(htmlContent.includes('syncPathSeekerSiteVisit26'), 'Missing Supabase synchronization function for Site Visit No. 26');
+console.log('✔ TEST 7b PASSED: Site Visit No. 26 verified successfully.\n');
 
 // 8. Regression Test: Verify JS Photo Array Isolation Logic
 console.log('[TEST 8] Verifying Photo Array Isolation via Code Execution...');
