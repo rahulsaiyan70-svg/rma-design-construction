@@ -5264,12 +5264,28 @@ function pathSeekerSiteVisit27ReportText(){
 }
 window.pathSeekerSiteVisit27ReportText = pathSeekerSiteVisit27ReportText;
 
+function setPathSeekerSiteVisit27SaveStatus(status){
+  const messages = {
+    pending: 'Checking the Supabase visit record…',
+    saved: 'Report saved to the Supabase site visit record.',
+    error: 'The report is shown here, but its Supabase save could not be confirmed. Please contact RMA.'
+  };
+  window.pathSeekerSiteVisit27SaveStatus = status;
+  const element = document.getElementById('psSiteVisit27SaveStatus');
+  if(element){
+    element.textContent = messages[status];
+    element.setAttribute('role', status === 'error' ? 'alert' : 'status');
+    element.style.color = status === 'error' ? '#9b1c1c' : '#31564a';
+  }
+}
+
 async function syncPathSeekerSiteVisit27(userId){
   const reqId = 'RMA-SV-PSIS-27';
+  setPathSeekerSiteVisit27SaveStatus('pending');
   try {
     if(!userId) throw new Error('Authenticated Path Seeker user ID is required.');
     const existing = await supabaseClient.from('bookings')
-      .select('id,client_name,service_type').eq('request_id', reqId).maybeSingle();
+      .select('id,client_user_id,client_name,service_type').eq('request_id', reqId).maybeSingle();
     if(existing.error) throw existing.error;
 
     let booking = existing.data;
@@ -5297,11 +5313,11 @@ async function syncPathSeekerSiteVisit27(userId){
           source: 'Path Seeker Client Portal'
         }),
         site_observations: report
-      }).select('id,client_name,service_type').maybeSingle();
+      }).select('id,client_user_id,client_name,service_type').maybeSingle();
       if(newBooking.error){
         if(newBooking.error.code !== '23505') throw newBooking.error;
         const duplicateBooking = await supabaseClient.from('bookings')
-          .select('id,client_name,service_type')
+          .select('id,client_user_id,client_name,service_type')
           .eq('request_id', reqId).maybeSingle();
         if(duplicateBooking.error) throw duplicateBooking.error;
         if(!duplicateBooking.data) throw newBooking.error;
@@ -5312,7 +5328,8 @@ async function syncPathSeekerSiteVisit27(userId){
     }
 
     if(!booking?.id || !String(booking.client_name||'').toLowerCase().includes('path seeker') ||
-      !String(booking.service_type||'').toLowerCase().includes('site visit')){
+      !String(booking.service_type||'').toLowerCase().includes('site visit') ||
+      booking.client_user_id !== userId){
       throw new Error('Stable request ID did not resolve to the expected Pathseeker site-visit booking.');
     }
 
@@ -5329,14 +5346,15 @@ async function syncPathSeekerSiteVisit27(userId){
     };
     if(siteVisit.data){
       const updatedVisit = await supabaseClient.from('site_visits').update(siteVisitFields)
-        .eq('id', siteVisit.data.id);
+        .eq('id', siteVisit.data.id).select('id').maybeSingle();
       if(updatedVisit.error) throw updatedVisit.error;
+      if(!updatedVisit.data) throw new Error('Supabase did not confirm the existing site visit update.');
     } else {
       const insertedVisit = await supabaseClient.from('site_visits').insert({
         booking_id: booking.id,
         staff_id: null,
         ...siteVisitFields
-      });
+      }).select('id').maybeSingle();
       if(insertedVisit.error){
         if(insertedVisit.error.code !== '23505') throw insertedVisit.error;
         const concurrentVisit = await supabaseClient.from('site_visits').select('id')
@@ -5344,12 +5362,16 @@ async function syncPathSeekerSiteVisit27(userId){
         if(concurrentVisit.error) throw concurrentVisit.error;
         if(!concurrentVisit.data) throw insertedVisit.error;
         const updatedVisit = await supabaseClient.from('site_visits').update(siteVisitFields)
-          .eq('id', concurrentVisit.data.id);
+          .eq('id', concurrentVisit.data.id).select('id').maybeSingle();
         if(updatedVisit.error) throw updatedVisit.error;
+        if(!updatedVisit.data) throw new Error('Supabase did not confirm the concurrent site visit update.');
       }
+      if(!insertedVisit.error && !insertedVisit.data) throw new Error('Supabase did not confirm the site visit insert.');
     }
+    setPathSeekerSiteVisit27SaveStatus('saved');
   } catch(syncErr){
     console.error('Path Seeker Site Visit 27 sync failed:', syncErr);
+    setPathSeekerSiteVisit27SaveStatus('error');
   }
 }
 window.syncPathSeekerSiteVisit27 = syncPathSeekerSiteVisit27;
@@ -5463,8 +5485,12 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
       '</ul>' +
       '<p style="margin-top:14px"><b>ENGINEER\'S REMARKS</b></p>' +
       '<p style="margin:6px 0 10px;line-height:1.6;font-size:13px;color:#2c3e50">The construction work observed during the visit was found to be satisfactory. The work was progressing properly, and everything was satisfactory up to the date of inspection.</p>' +
+      '<p id="psSiteVisit27SaveStatus" role="status" style="font-size:12px;color:#31564a" aria-live="polite">Database save status will appear after sign-in.</p>' +
       '<div class="ps-v62-report-actions" style="margin-top:18px"><button class="btn outline" type="button" id="psV63DownloadReportNov17">Download 17 November Report</button></div>';
     visit.appendChild(reportNov17);
+    if(window.pathSeekerSiteVisit27SaveStatus){
+      setPathSeekerSiteVisit27SaveStatus(window.pathSeekerSiteVisit27SaveStatus);
+    }
     document.getElementById('psV63DownloadReportNov17').onclick=function(){
       var reportText=window.pathSeekerSiteVisit27ReportText();
       var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([reportText],{type:'text/plain'}));a.download='RMA-Path-Seeker-Site-Visit-Report-2026-11-17.txt';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},500);

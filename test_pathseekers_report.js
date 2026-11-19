@@ -120,7 +120,10 @@ assert(visit27Sync.includes('visit_notes: pathSeekerSiteVisit27ReportText()'), '
 assert(visit27Sync.includes("completed_at: '2026-11-17 00:00:00'"), 'Missing site_visits.completed_at value');
 assert(visit27Sync.includes('staff_id: null'), 'New site visit must not assign an unverified staff profile ID');
 assert(!visit27Sync.slice(visit27Sync.indexOf('const siteVisitFields'), visit27Sync.indexOf('if(siteVisit.data)')).includes('staff_id'), 'Existing staff attribution must not be overwritten');
+assert(visit27Sync.includes('booking.client_user_id !== userId'), 'Stable booking must belong to the authenticated client');
 assert(!visit27Sync.includes('site_visit_reports'), 'Pathseeker visit must not write to site_visit_reports');
+assert(htmlContent.includes('The report is shown here, but its Supabase save could not be confirmed.'), 'Failed database save must be visible in the report card');
+assert(htmlContent.includes('Report saved to the Supabase site visit record.'), 'Report card must distinguish confirmed persistence');
 assert(visit27Migration.includes('idx_bookings_psis_sv27_request_id'), 'Missing booking uniqueness index for Site Visit No. 27');
 assert(!visit27Migration.includes('site_visit_reports'), 'Visit migration must not reference site_visit_reports');
 assert((visit27Migration.match(/WHERE request_id = 'RMA-SV-PSIS-27'/g) || []).length === 1, 'Booking uniqueness index must be scoped to the stable visit 27 ID');
