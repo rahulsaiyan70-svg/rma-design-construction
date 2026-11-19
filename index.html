@@ -5322,7 +5322,6 @@ async function syncPathSeekerSiteVisit27(userId){
 
     const siteVisitFields = {
       scheduled_date: '2026-11-17',
-      staff_id: null,
       status: 'completed',
       visit_notes: pathSeekerSiteVisit27ReportText(),
       completed_at: '2026-11-17 00:00:00',
@@ -5335,6 +5334,7 @@ async function syncPathSeekerSiteVisit27(userId){
     } else {
       const insertedVisit = await supabaseClient.from('site_visits').insert({
         booking_id: booking.id,
+        staff_id: null,
         ...siteVisitFields
       });
       if(insertedVisit.error){

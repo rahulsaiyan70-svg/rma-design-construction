@@ -118,7 +118,8 @@ assert(visit27Sync.includes("scheduled_date: '2026-11-17'"), 'Missing existing s
 assert(visit27Sync.includes("status: 'completed'"), 'Missing completed site_visits status');
 assert(visit27Sync.includes('visit_notes: pathSeekerSiteVisit27ReportText()'), 'Missing report content in site_visits.visit_notes');
 assert(visit27Sync.includes("completed_at: '2026-11-17 00:00:00'"), 'Missing site_visits.completed_at value');
-assert(visit27Sync.includes('staff_id: null'), 'Site visit must not assign an unverified staff profile ID');
+assert(visit27Sync.includes('staff_id: null'), 'New site visit must not assign an unverified staff profile ID');
+assert(!visit27Sync.slice(visit27Sync.indexOf('const siteVisitFields'), visit27Sync.indexOf('if(siteVisit.data)')).includes('staff_id'), 'Existing staff attribution must not be overwritten');
 assert(!visit27Sync.includes('site_visit_reports'), 'Pathseeker visit must not write to site_visit_reports');
 assert(visit27Migration.includes('idx_bookings_psis_sv27_request_id'), 'Missing booking uniqueness index for Site Visit No. 27');
 assert(!visit27Migration.includes('site_visit_reports'), 'Visit migration must not reference site_visit_reports');
