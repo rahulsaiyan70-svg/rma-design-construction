@@ -5268,12 +5268,12 @@ async function syncPathSeekerSiteVisit27(userId){
   const reqId = 'RMA-SV-PSIS-27';
   try {
     if(!userId) throw new Error('Authenticated Path Seeker user ID is required.');
-    const existing = await supabaseClient.from('bookings').select('id')
-      .eq('request_id', reqId).order('created_at', {ascending:true}).limit(1).maybeSingle();
+    const existing = await supabaseClient.from('bookings')
+      .select('id,client_name,service_type').eq('request_id', reqId).maybeSingle();
     if(existing.error) throw existing.error;
 
-    let bookingId = existing.data?.id;
-    if(!bookingId){
+    let booking = existing.data;
+    if(!booking){
       const report = pathSeekerSiteVisit27ReportText();
       const newBooking = await supabaseClient.from('bookings').insert({
         request_id: reqId,
@@ -5297,39 +5297,55 @@ async function syncPathSeekerSiteVisit27(userId){
           source: 'Path Seeker Client Portal'
         }),
         site_observations: report
-      }).select('id').maybeSingle();
+      }).select('id,client_name,service_type').maybeSingle();
       if(newBooking.error){
         if(newBooking.error.code !== '23505') throw newBooking.error;
-        const duplicateBooking = await supabaseClient.from('bookings').select('id')
+        const duplicateBooking = await supabaseClient.from('bookings')
+          .select('id,client_name,service_type')
           .eq('request_id', reqId).maybeSingle();
         if(duplicateBooking.error) throw duplicateBooking.error;
-        bookingId = duplicateBooking.data?.id;
+        if(!duplicateBooking.data) throw newBooking.error;
+        booking = duplicateBooking.data;
       } else {
-        bookingId = newBooking.data?.id;
+        booking = newBooking.data;
       }
     }
 
-    if(!bookingId) throw new Error('Booking record for site visit 27 could not be resolved.');
+    if(!booking?.id || !String(booking.client_name||'').toLowerCase().includes('path seeker') ||
+      !String(booking.service_type||'').toLowerCase().includes('site visit')){
+      throw new Error('Stable request ID did not resolve to the expected Pathseeker site-visit booking.');
+    }
 
-    const existingReport = await supabaseClient.from('site_visit_reports').select('id')
-      .eq('request_id', reqId).order('created_at', {ascending:true}).limit(1).maybeSingle();
-    if(existingReport.error) throw existingReport.error;
-    if(!existingReport.data){
-      const insertedReport = await supabaseClient.from('site_visit_reports').insert({
-        booking_id: bookingId,
-        request_id: reqId,
-        client_user_id: userId,
-        title: 'Site Visit No. 27 — Construction Progress Inspection',
-        engineer_name: 'Rahul Bhatti',
-        observations: pathSeekerSiteVisit27ReportText(),
-        file_url: 'data:text/plain;charset=utf-8,' + encodeURIComponent(pathSeekerSiteVisit27ReportText())
+    const siteVisit = await supabaseClient.from('site_visits').select('id')
+      .eq('booking_id', booking.id).maybeSingle();
+    if(siteVisit.error) throw siteVisit.error;
+
+    const siteVisitFields = {
+      scheduled_date: '2026-11-17',
+      staff_id: null,
+      status: 'completed',
+      visit_notes: pathSeekerSiteVisit27ReportText(),
+      completed_at: '2026-11-17 00:00:00',
+      updated_at: new Date().toISOString()
+    };
+    if(siteVisit.data){
+      const updatedVisit = await supabaseClient.from('site_visits').update(siteVisitFields)
+        .eq('id', siteVisit.data.id);
+      if(updatedVisit.error) throw updatedVisit.error;
+    } else {
+      const insertedVisit = await supabaseClient.from('site_visits').insert({
+        booking_id: booking.id,
+        ...siteVisitFields
       });
-      if(insertedReport.error){
-        if(insertedReport.error.code !== '23505') throw insertedReport.error;
-        const duplicateReport = await supabaseClient.from('site_visit_reports').select('id')
-          .eq('request_id', reqId).maybeSingle();
-        if(duplicateReport.error) throw duplicateReport.error;
-        if(!duplicateReport.data) throw insertedReport.error;
+      if(insertedVisit.error){
+        if(insertedVisit.error.code !== '23505') throw insertedVisit.error;
+        const concurrentVisit = await supabaseClient.from('site_visits').select('id')
+          .eq('booking_id', booking.id).maybeSingle();
+        if(concurrentVisit.error) throw concurrentVisit.error;
+        if(!concurrentVisit.data) throw insertedVisit.error;
+        const updatedVisit = await supabaseClient.from('site_visits').update(siteVisitFields)
+          .eq('id', concurrentVisit.data.id);
+        if(updatedVisit.error) throw updatedVisit.error;
       }
     }
   } catch(syncErr){

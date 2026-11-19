@@ -107,13 +107,24 @@ assert(htmlContent.includes('Construction work up to a height of 8 feet had alre
 assert(htmlContent.includes('Column filling above the 8-foot level was in progress.'), 'Missing column-filling observation');
 assert(htmlContent.includes('everything was satisfactory up to the date of inspection.'), 'Missing engineer remarks');
 assert(htmlContent.includes('RMA-SV-PSIS-27'), 'Missing stable request ID for duplicate prevention');
-assert(htmlContent.includes(".from('site_visit_reports').select('id')"), 'Missing existing-report check before report insertion');
-assert(htmlContent.includes(".from('site_visit_reports').insert({"), 'Missing persistent Supabase report insertion');
+const visit27Sync = htmlContent.slice(
+  htmlContent.indexOf('async function syncPathSeekerSiteVisit27'),
+  htmlContent.indexOf('window.syncPathSeekerSiteVisit27 = syncPathSeekerSiteVisit27;')
+);
+assert(visit27Sync.includes(".from('site_visits').select('id')"), 'Missing site_visits lookup by booking ID');
+assert(visit27Sync.includes(".from('site_visits').update(siteVisitFields)"), 'Missing update for an existing site visit');
+assert(visit27Sync.includes(".from('site_visits').insert({"), 'Missing insertion into the existing site_visits table');
+assert(visit27Sync.includes("scheduled_date: '2026-11-17'"), 'Missing existing site_visits scheduled_date column');
+assert(visit27Sync.includes("status: 'completed'"), 'Missing completed site_visits status');
+assert(visit27Sync.includes('visit_notes: pathSeekerSiteVisit27ReportText()'), 'Missing report content in site_visits.visit_notes');
+assert(visit27Sync.includes("completed_at: '2026-11-17 00:00:00'"), 'Missing site_visits.completed_at value');
+assert(visit27Sync.includes('staff_id: null'), 'Site visit must not assign an unverified staff profile ID');
+assert(!visit27Sync.includes('site_visit_reports'), 'Pathseeker visit must not write to site_visit_reports');
 assert(visit27Migration.includes('idx_bookings_psis_sv27_request_id'), 'Missing booking uniqueness index for Site Visit No. 27');
-assert(visit27Migration.includes('idx_site_visit_reports_psis_sv27_request_id'), 'Missing report uniqueness index for Site Visit No. 27');
-assert((visit27Migration.match(/WHERE request_id = 'RMA-SV-PSIS-27'/g) || []).length === 2, 'Visit 27 uniqueness indexes must be scoped to its stable request ID');
+assert(!visit27Migration.includes('site_visit_reports'), 'Visit migration must not reference site_visit_reports');
+assert((visit27Migration.match(/WHERE request_id = 'RMA-SV-PSIS-27'/g) || []).length === 1, 'Booking uniqueness index must be scoped to the stable visit 27 ID');
 assert(htmlContent.includes("newBooking.error.code !== '23505'"), 'Missing booking conflict recheck after a concurrent insert');
-assert(htmlContent.includes("insertedReport.error.code !== '23505'"), 'Missing report conflict recheck after a concurrent insert');
+assert(htmlContent.includes("insertedVisit.error.code !== '23505'"), 'Missing site_visits conflict recovery after a concurrent insert');
 assert(htmlContent.includes('psV63DownloadReportNov17'), 'Missing 17 November report download control');
 assert(htmlContent.includes('syncPathSeekerSiteVisit27'), 'Missing Site Visit No. 27 synchronization');
 console.log('✔ TEST 7c PASSED: Site Visit No. 27 content and persistence path verified.\n');
