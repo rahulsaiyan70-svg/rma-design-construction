@@ -71,11 +71,12 @@ assert(htmlContent.includes('adminRemovePhoto'), 'Missing adminRemovePhoto funct
 assert(htmlContent.includes('adminSaveOctVisitPhotos'), 'Missing adminSaveOctVisitPhotos function');
 console.log('✔ TEST 6 PASSED: Admin Photo Manager functions verified.\n');
 
-// 7. Verify Completed Visits Count & October Visits Counter
-console.log('[TEST 7] Verifying Completed Visit Count (26) & October Counter (3 of 3)...');
-assert(htmlContent.includes('3 of 3 used') || htmlContent.includes('3 / 3'), 'Missing 3 of 3 used counter status');
-assert(htmlContent.includes('26'), 'Missing total completed visit count of 26');
-console.log('✔ TEST 7 PASSED: Completed visits count (26) & October counter (3 of 3) verified.\n');
+// 7. Verify Completed Visits Count & November Visits Counter
+console.log('[TEST 7] Verifying Completed Visit Count (27) & November Counter (1 of 3)...');
+assert(htmlContent.includes('1 of 3 completed') && htmlContent.includes('1 / 3'), 'Missing November 1 of 3 completed counter');
+assert(htmlContent.includes('TOTAL COMPLETED VISITS</span><strong>27</strong>'), 'Missing dashboard total completed visit count of 27');
+assert(htmlContent.includes('Total completed site visits</b><span>27</span>'), 'Missing Site Visits total completed count of 27');
+console.log('✔ TEST 7 PASSED: Completed visits count (27) & November counter (1 of 3) verified.\n');
 
 // 7b. Verify Site Visit No. 26 Report Title, Metadata & Content
 console.log('[TEST 7b] Verifying Site Visit No. 26 Report & Detailed Sections...');
@@ -94,6 +95,22 @@ assert(htmlContent.includes('FINAL REPORT / CLIENT-FACING SUMMARY'), 'Missing fi
 assert(htmlContent.includes('psV63DownloadReportOct28'), 'Missing download button for Site Visit No. 26');
 assert(htmlContent.includes('syncPathSeekerSiteVisit26'), 'Missing Supabase synchronization function for Site Visit No. 26');
 console.log('✔ TEST 7b PASSED: Site Visit No. 26 verified successfully.\n');
+
+// 7c. Verify the 17 November 2026 Site Visit No. 27 report and persistence path
+console.log('[TEST 7c] Verifying 17 November Site Visit No. 27...');
+assert(htmlContent.includes('Site Visit No. 27 — Construction Progress Inspection'), 'Missing Site Visit No. 27 report title');
+assert(htmlContent.includes('Tuesday, 17 November 2026'), 'Missing latest visit date');
+assert(htmlContent.includes('Shri Nimrandeep Singh Ji — Representative of the School.'), 'Missing school representative');
+assert(htmlContent.includes('Rahul Bhatti — Engineer, RMA Design and Construction.'), 'Missing RMA engineer');
+assert(htmlContent.includes('Construction work up to a height of 8 feet had already been completed.'), 'Missing 8-foot construction progress observation');
+assert(htmlContent.includes('Column filling above the 8-foot level was in progress.'), 'Missing column-filling observation');
+assert(htmlContent.includes('everything was satisfactory up to the date of inspection.'), 'Missing engineer remarks');
+assert(htmlContent.includes('RMA-SV-PSIS-27'), 'Missing stable request ID for duplicate prevention');
+assert(htmlContent.includes(".from('site_visit_reports').select('id')"), 'Missing existing-report check before report insertion');
+assert(htmlContent.includes(".from('site_visit_reports').insert({"), 'Missing persistent Supabase report insertion');
+assert(htmlContent.includes('psV63DownloadReportNov17'), 'Missing 17 November report download control');
+assert(htmlContent.includes('syncPathSeekerSiteVisit27'), 'Missing Site Visit No. 27 synchronization');
+console.log('✔ TEST 7c PASSED: Site Visit No. 27 content and persistence path verified.\n');
 
 // 8. Regression Test: Verify JS Photo Array Isolation Logic
 console.log('[TEST 8] Verifying Photo Array Isolation via Code Execution...');
