@@ -7,6 +7,8 @@ console.log('=== Starting Pathseekers School Site Visit Reports & Photo Array Is
 
 const htmlContent = fs.readFileSync('./index.html', 'utf8');
 const visit27Migration = fs.readFileSync('./supabase/migrations/20261119000000_pathseeker_visit_27_unique_ids.sql', 'utf8');
+const secureSiteVisitsMigration = fs.readFileSync('./supabase/migrations/20261120000000_secure_site_visits.sql', 'utf8');
+const siteVisitFunction = fs.readFileSync('./supabase/functions/pathseeker-site-visit/index.ts', 'utf8');
 
 // 1. Verify 10 October Report Title & Metadata
 console.log('[TEST 1] Verifying 10 October 2026 Site Visit Report...');
@@ -94,11 +96,11 @@ assert(htmlContent.includes('D. Pillar and Structural Arrangements'), 'Missing S
 assert(htmlContent.includes('CLIENT AND CONTRACTOR COORDINATION'), 'Missing client and contractor coordination section');
 assert(htmlContent.includes('FINAL REPORT / CLIENT-FACING SUMMARY'), 'Missing final report summary section');
 assert(htmlContent.includes('psV63DownloadReportOct28'), 'Missing download button for Site Visit No. 26');
-assert(htmlContent.includes('syncPathSeekerSiteVisit26'), 'Missing Supabase synchronization function for Site Visit No. 26');
+assert(!htmlContent.includes('syncPathSeekerSiteVisit26'), 'Site Visit No. 26 must not be auto-written from the browser');
 console.log('✔ TEST 7b PASSED: Site Visit No. 26 verified successfully.\n');
 
-// 7c. Verify the 17 November 2026 Site Visit No. 27 report and persistence path
-console.log('[TEST 7c] Verifying 17 November Site Visit No. 27...');
+// 7c. Verify the 17 November 2026 report and secure persistence path
+console.log('[TEST 7c] Verifying 17 November Site Visit No. 27 and secure persistence...');
 assert(htmlContent.includes('Site Visit No. 27 — Construction Progress Inspection'), 'Missing Site Visit No. 27 report title');
 assert(htmlContent.includes('Tuesday, 17 November 2026'), 'Missing latest visit date');
 assert(htmlContent.includes('Shri Nimrandeep Singh Ji — Representative of the School.'), 'Missing school representative');
@@ -107,30 +109,35 @@ assert(htmlContent.includes('Construction work up to a height of 8 feet had alre
 assert(htmlContent.includes('Column filling above the 8-foot level was in progress.'), 'Missing column-filling observation');
 assert(htmlContent.includes('everything was satisfactory up to the date of inspection.'), 'Missing engineer remarks');
 assert(htmlContent.includes('RMA-SV-PSIS-27'), 'Missing stable request ID for duplicate prevention');
-const visit27Sync = htmlContent.slice(
-  htmlContent.indexOf('async function syncPathSeekerSiteVisit27'),
-  htmlContent.indexOf('window.syncPathSeekerSiteVisit27 = syncPathSeekerSiteVisit27;')
-);
-assert(visit27Sync.includes(".from('site_visits').select('id')"), 'Missing site_visits lookup by booking ID');
-assert(visit27Sync.includes(".from('site_visits').update(siteVisitFields)"), 'Missing update for an existing site visit');
-assert(visit27Sync.includes(".from('site_visits').insert({"), 'Missing insertion into the existing site_visits table');
-assert(visit27Sync.includes("scheduled_date: '2026-11-17'"), 'Missing existing site_visits scheduled_date column');
-assert(visit27Sync.includes("status: 'completed'"), 'Missing completed site_visits status');
-assert(visit27Sync.includes('visit_notes: pathSeekerSiteVisit27ReportText()'), 'Missing report content in site_visits.visit_notes');
-assert(visit27Sync.includes("completed_at: '2026-11-17 00:00:00'"), 'Missing site_visits.completed_at value');
-assert(visit27Sync.includes('staff_id: null'), 'New site visit must not assign an unverified staff profile ID');
-assert(!visit27Sync.slice(visit27Sync.indexOf('const siteVisitFields'), visit27Sync.indexOf('if(siteVisit.data)')).includes('staff_id'), 'Existing staff attribution must not be overwritten');
-assert(visit27Sync.includes('booking.client_user_id !== userId'), 'Stable booking must belong to the authenticated client');
-assert(!visit27Sync.includes('site_visit_reports'), 'Pathseeker visit must not write to site_visit_reports');
-assert(htmlContent.includes('The report is shown here, but its Supabase save could not be confirmed.'), 'Failed database save must be visible in the report card');
-assert(htmlContent.includes('Report saved to the Supabase site visit record.'), 'Report card must distinguish confirmed persistence');
+assert(htmlContent.includes('The report is shown here, but Supabase could not confirm the record.'), 'Failed database save must be visible in the report card');
+assert(htmlContent.includes('The report is shown here, but no matching saved Supabase record was found.'), 'Missing unsaved report state');
+assert(htmlContent.includes('Report verified in the Supabase site visit record.'), 'Report card must distinguish confirmed persistence');
 assert(visit27Migration.includes('idx_bookings_psis_sv27_request_id'), 'Missing booking uniqueness index for Site Visit No. 27');
 assert(!visit27Migration.includes('site_visit_reports'), 'Visit migration must not reference site_visit_reports');
 assert((visit27Migration.match(/WHERE request_id = 'RMA-SV-PSIS-27'/g) || []).length === 1, 'Booking uniqueness index must be scoped to the stable visit 27 ID');
-assert(htmlContent.includes("newBooking.error.code !== '23505'"), 'Missing booking conflict recheck after a concurrent insert');
-assert(htmlContent.includes("insertedVisit.error.code !== '23505'"), 'Missing site_visits conflict recovery after a concurrent insert');
+assert(!htmlContent.includes('syncPathSeekerSiteVisit27'), 'Site Visit No. 27 must not be written directly by the browser');
+assert(!/\.from\(['"]site_visits['"]\)\s*\.(?:insert|update|upsert)\s*\(/.test(htmlContent), 'The browser must not mutate site_visits directly');
+assert(!/\.from\(['"]site_visit_reports['"]\)\s*\.(?:insert|update)\s*\(/.test(htmlContent), 'The browser must not create or modify site visit reports directly');
+assert(htmlContent.includes("functions.invoke('pathseeker-site-visit'"), 'Portal must use the authorized Edge Function');
+assert(htmlContent.includes("body: {action: 'publish_visit_27'}"), 'Staff publish action is missing');
+assert(htmlContent.includes("body: {action: 'read_visit_27'}"), 'Client own-report read action is missing');
+assert(htmlContent.includes('rmaEngineerSiteVisitPortal') && htmlContent.includes("role==='engineer'&&profile?.active===true"), 'Active engineers must have a dedicated report workflow');
+assert(!htmlContent.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Service-role key must not appear in frontend code');
+assert(siteVisitFunction.includes('supabase.auth.getUser(tokenMatch[1])'), 'Edge Function must validate the user token');
+assert(siteVisitFunction.includes('profile?.active !== true'), 'Edge Function must reject inactive staff profiles');
+assert(siteVisitFunction.includes('role !== "admin" && role !== "engineer"'), 'Edge Function must restrict writes to administrators and engineers');
+assert(siteVisitFunction.includes('.eq("client_user_id", authData.user.id)'), 'Client read must be scoped to the authenticated booking owner');
+assert(siteVisitFunction.includes('.eq("request_id", REQUEST_ID)'), 'Staff write must target the stable Pathseeker booking');
+assert(siteVisitFunction.includes('.from("site_visits")'), 'Edge Function must persist to the existing site_visits table');
+assert(siteVisitFunction.includes('action === "save_uploaded_report"'), 'Existing report uploads must use the authorized server workflow');
+assert(secureSiteVisitsMigration.includes('AS RESTRICTIVE'), 'Migration must add a restrictive site visit read boundary');
+assert(secureSiteVisitsMigration.includes('b.client_user_id = (SELECT auth.uid())'), 'RLS read policy must scope clients to their own booking');
+assert(secureSiteVisitsMigration.includes('REVOKE ALL PRIVILEGES ON TABLE public.site_visits FROM PUBLIC, anon, authenticated'), 'Direct ordinary-role access must be revoked');
+assert(secureSiteVisitsMigration.includes('REVOKE ALL PRIVILEGES ON TABLE public.site_visit_reports FROM PUBLIC, anon, authenticated'), 'Legacy report table writes must be revoked when that table exists');
+assert(secureSiteVisitsMigration.includes('GRANT SELECT, INSERT, UPDATE ON TABLE public.site_visits TO service_role'), 'Server-side role must retain required site visit access');
+assert(!/DROP POLICY|DISABLE ROW LEVEL SECURITY/i.test(secureSiteVisitsMigration), 'Migration must not drop policies or disable RLS');
 assert(htmlContent.includes('psV63DownloadReportNov17'), 'Missing 17 November report download control');
-assert(htmlContent.includes('syncPathSeekerSiteVisit27'), 'Missing Site Visit No. 27 synchronization');
+assert(htmlContent.includes('publishPathSeekerSiteVisit27'), 'Staff portal publish action is missing');
 console.log('✔ TEST 7c PASSED: Site Visit No. 27 content and persistence path verified.\n');
 
 // 8. Regression Test: Verify JS Photo Array Isolation Logic
