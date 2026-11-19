@@ -1605,6 +1605,10 @@ section{padding:78px 0}
               </div>
               <button class="btn outline" type="button" onclick="loadRMAAdminSiteVisitRequests()">Refresh Requests</button>
             </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+              <button class="btn dark rma-site-visit-publish" type="button" onclick="publishPathSeekerSiteVisit27()">Save Pathseeker 17 November Report</button>
+              <span id="rmaSiteVisit27PublishStatus" role="status" aria-live="polite"></span>
+            </div>
             <div id="staffSiteVisitRequests"><div class="muted">Loading requests...</div></div>
           </div>
           <div id="rmaAdminCalendarSection" style="margin-top:20px"></div>
@@ -1701,6 +1705,18 @@ section{padding:78px 0}
           </div>
         </div>
       </main>
+    </div>
+  </div>
+</section>
+<section class="hidden" id="rmaEngineerSiteVisitPortal">
+  <div class="container">
+    <div class="backrow"><button onclick="signOutUser()">← Sign Out</button></div>
+    <div class="heading"><span class="kicker">RMA ENGINEER WORKSPACE</span><h2>Inspection Reports</h2><p>Authorized site-visit report actions.</p></div>
+    <div class="form-panel">
+      <h3>Pathseeker International School — 17 November 2026</h3>
+      <p class="form-note">Save or update Site Visit No. 27 in the existing <code>site_visits</code> record. The server verifies your active engineer role before writing.</p>
+      <button class="btn dark" type="button" onclick="publishPathSeekerSiteVisit27()">Save Site Visit Report</button>
+      <span id="rmaEngineerSiteVisit27Status" role="status" aria-live="polite" style="margin-left:10px"></span>
     </div>
   </div>
 </section>
@@ -1814,6 +1830,7 @@ async function loadSignedInPortal(user){
   document.getElementById('clientPortal')?.classList.add('hidden');
   document.getElementById('staffPortal')?.classList.add('hidden');
   document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');
+  document.getElementById('rmaEngineerSiteVisitPortal')?.classList.add('hidden');
   document.getElementById('rmaTarseemPortal')?.classList.add('hidden');
 
   const isTarseemAgent = (user.email||'').toLowerCase()==='tarseem@rma.com' || (user.role||'').toLowerCase()==='agent';
@@ -1838,6 +1855,8 @@ async function loadSignedInPortal(user){
     if(!r.error) profile=r.data;
     role=(profile?.role||user.role||'client').toLowerCase();
   }catch(e){}
+  const adminReportButton=document.querySelector('.rma-site-visit-publish');
+  if(adminReportButton) adminReportButton.hidden=!(role==='admin'&&profile?.active===true);
 
   const identity=((profile?.full_name||'')+' '+(user.email||'')+' '+(user.user_metadata?.full_name||'')).toLowerCase();
   if(isTarseemAgent){
@@ -1888,6 +1907,12 @@ async function loadSignedInPortal(user){
     return;
   }
 
+  if(role==='engineer'&&profile?.active===true){
+    document.getElementById('rmaEngineerSiteVisitPortal')?.classList.remove('hidden');
+    document.getElementById('signinNavBtn').textContent='Account';
+    return;
+  }
+
   const isRmaAdminIdentity=(user.email||'').toLowerCase()==='rma.studies07@gmail.com';
   if(role==='admin'||role==='staff'||role==='employee'){
     document.getElementById('authLoginSection')?.classList.add('hidden');
@@ -1933,7 +1958,7 @@ async function resetPassword(){
   const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
   authMsg(error?error.message:'Password reset instructions have been sent to your email.','info');
 }
-async function signOutUser(){await supabaseClient.auth.signOut();document.getElementById('authLoginSection')?.classList.remove('hidden');document.getElementById('clientPortal')?.classList.add('hidden');document.getElementById('staffPortal')?.classList.add('hidden');document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');document.getElementById('signinNavBtn').textContent='Sign In';showPage('signin');}
+async function signOutUser(){await supabaseClient.auth.signOut();document.getElementById('authLoginSection')?.classList.remove('hidden');document.getElementById('clientPortal')?.classList.add('hidden');document.getElementById('staffPortal')?.classList.add('hidden');document.getElementById('rmaPathSeekerPortal')?.classList.add('hidden');document.getElementById('rmaEngineerSiteVisitPortal')?.classList.add('hidden');document.getElementById('signinNavBtn').textContent='Sign In';showPage('signin');}
 async function checkExistingSession(){try{const {data}=await supabaseClient.auth.getSession();if(data?.session?.user) await loadSignedInPortal(data.session.user);}catch(e){}}
 
 /* ---------- pages ---------- */
@@ -5178,67 +5203,6 @@ if(originalEnhance&&!window.rmaV41ClientPatched){
 window.deleteSiteVisitRequest41=deleteRequest41;
 window.approvePathSeeker36=approvePathSeeker41;
 
-async function syncPathSeekerSiteVisit26(){
-  try {
-    const reqId = 'RMA-SV-PSIS-26';
-    const existing = await supabaseClient.from('bookings').select('id,status').eq('request_id', reqId).maybeSingle();
-    let bookingId = existing.data?.id;
-
-    const visitScopePayload = {
-      site_visit_number: 26,
-      requested_date: '28th',
-      scheduled_date: '2026-10-28',
-      scheduled_time: '14:30',
-      reason: 'Discussion and explanation of revised architectural and structural planning at the actual site.',
-      purpose: 'The client requested a site visit to understand the latest changes incorporated into the current plan and to get a practical explanation of how the proposed design and construction arrangements would be executed on the ground.',
-      summary: 'Site Visit No. 26 – Revised Planning and On-Site Coordination. Revised planning, staircase arrangements, lift provision, and pillar positioning discussed and explained on-site.',
-      outcome: 'Revised planning, staircase arrangements, lift provision, and pillar positioning discussed and explained on-site.'
-    };
-
-    if(!bookingId){
-      const newBooking = {
-        request_id: reqId,
-        client_name: 'Path Seeker International School',
-        service_type: 'Path Seeker Site Visit Request',
-        status: 'completed',
-        scheduled_date: '2026-10-28',
-        scheduled_time: '14:30',
-        confirmed_date: '2026-10-28',
-        confirmed_time: '14:30',
-        completion_date: '2026-10-28T14:30:00+05:30',
-        completed_by: 'RMA Engineer',
-        engineer_name: 'RMA Engineer',
-        email: V41_CLIENT_EMAIL,
-        mobile: '9419118424',
-        project_address: 'Ramgarh, Jammu & Kashmir, India',
-        visit_scope: JSON.stringify(visitScopePayload),
-        site_observations: 'Discussion and explanation of revised architectural and structural planning at the actual site (revised planning, two staircases, lift provision, pillar positioning).'
-      };
-      const insRes = await supabaseClient.from('bookings').insert(newBooking).select('id').maybeSingle();
-      if(!insRes.error && insRes.data?.id){
-        bookingId = insRes.data.id;
-      }
-    }
-
-    if(bookingId){
-      const repCheck = await supabaseClient.from('site_visit_reports').select('id').eq('booking_id', bookingId).maybeSingle();
-      if(!repCheck.data){
-        await supabaseClient.from('site_visit_reports').insert({
-          booking_id: bookingId,
-          request_id: reqId,
-          title: 'Site Visit No. 26 – Revised Planning and On-Site Coordination',
-          engineer_name: 'RMA Engineer',
-          observations: 'Revised planning, staircase arrangements (two staircases), lift provision, and pillar positioning discussed and explained on-site.',
-          file_url: 'data:text/plain;charset=utf-8,' + encodeURIComponent('Site Visit No. 26 Report - 28 October 2026')
-        });
-      }
-    }
-  } catch(syncErr){
-    console.warn('Path Seeker Site Visit 26 sync check:', syncErr);
-  }
-}
-window.syncPathSeekerSiteVisit26 = syncPathSeekerSiteVisit26;
-
 function pathSeekerSiteVisit27ReportText(){
   return [
     'RMA DESIGN & CONSTRUCTION',
@@ -5264,11 +5228,24 @@ function pathSeekerSiteVisit27ReportText(){
 }
 window.pathSeekerSiteVisit27ReportText = pathSeekerSiteVisit27ReportText;
 
+async function pathSeekerFunctionErrorMessage(error){
+  let message = error?.message || 'Supabase operation failed.';
+  try{
+    const body = await error?.context?.clone?.().json();
+    if(typeof body?.error === 'string') message = body.error;
+  }catch(parseError){
+    console.warn('Could not read the Supabase function error response:', parseError);
+  }
+  return message;
+}
+window.pathSeekerFunctionErrorMessage = pathSeekerFunctionErrorMessage;
+
 function setPathSeekerSiteVisit27SaveStatus(status){
   const messages = {
     pending: 'Checking the Supabase visit record…',
-    saved: 'Report saved to the Supabase site visit record.',
-    error: 'The report is shown here, but its Supabase save could not be confirmed. Please contact RMA.'
+    saved: 'Report verified in the Supabase site visit record.',
+    not_saved: 'The report is shown here, but no matching saved Supabase record was found.',
+    error: 'The report is shown here, but Supabase could not confirm the record. Please contact RMA.'
   };
   window.pathSeekerSiteVisit27SaveStatus = status;
   const element = document.getElementById('psSiteVisit27SaveStatus');
@@ -5279,105 +5256,51 @@ function setPathSeekerSiteVisit27SaveStatus(status){
   }
 }
 
-async function syncPathSeekerSiteVisit27(userId){
-  const reqId = 'RMA-SV-PSIS-27';
+async function loadPathSeekerSiteVisit27(userId){
   setPathSeekerSiteVisit27SaveStatus('pending');
   try {
     if(!userId) throw new Error('Authenticated Path Seeker user ID is required.');
-    const existing = await supabaseClient.from('bookings')
-      .select('id,client_user_id,client_name,service_type').eq('request_id', reqId).maybeSingle();
-    if(existing.error) throw existing.error;
-
-    let booking = existing.data;
-    if(!booking){
-      const report = pathSeekerSiteVisit27ReportText();
-      const newBooking = await supabaseClient.from('bookings').insert({
-        request_id: reqId,
-        client_user_id: userId,
-        client_name: 'Path Seeker International School',
-        service_type: 'Path Seeker Site Visit Request',
-        status: 'completed',
-        scheduled_date: '2026-11-17',
-        confirmed_date: '2026-11-17',
-        completion_date: '2026-11-17T00:00:00+05:30',
-        completed_by: 'Rahul Bhatti',
-        engineer_name: 'Rahul Bhatti',
-        email: V41_CLIENT_EMAIL,
-        mobile: '9419118424',
-        project_address: 'Ramgarh, Jammu & Kashmir, India',
-        visit_scope: JSON.stringify({
-          site_visit_number: 27,
-          requested_date: '2026-11-17',
-          scheduled_date: '2026-11-17',
-          reason: 'Construction progress inspection.',
-          source: 'Path Seeker Client Portal'
-        }),
-        site_observations: report
-      }).select('id,client_user_id,client_name,service_type').maybeSingle();
-      if(newBooking.error){
-        if(newBooking.error.code !== '23505') throw newBooking.error;
-        const duplicateBooking = await supabaseClient.from('bookings')
-          .select('id,client_user_id,client_name,service_type')
-          .eq('request_id', reqId).maybeSingle();
-        if(duplicateBooking.error) throw duplicateBooking.error;
-        if(!duplicateBooking.data) throw newBooking.error;
-        booking = duplicateBooking.data;
-      } else {
-        booking = newBooking.data;
-      }
+    const {data, error} = await supabaseClient.functions.invoke('pathseeker-site-visit', {
+      body: {action: 'read_visit_27'}
+    });
+    if(error) throw new Error(await pathSeekerFunctionErrorMessage(error));
+    if(data?.saved === true){
+      setPathSeekerSiteVisit27SaveStatus('saved');
+    }else if(data?.mismatch){
+      throw new Error('The saved site visit does not match the published report.');
+    }else{
+      setPathSeekerSiteVisit27SaveStatus('not_saved');
     }
-
-    if(!booking?.id || !String(booking.client_name||'').toLowerCase().includes('path seeker') ||
-      !String(booking.service_type||'').toLowerCase().includes('site visit') ||
-      booking.client_user_id !== userId){
-      throw new Error('Stable request ID did not resolve to the expected Pathseeker site-visit booking.');
-    }
-
-    const siteVisit = await supabaseClient.from('site_visits').select('id')
-      .eq('booking_id', booking.id).maybeSingle();
-    if(siteVisit.error) throw siteVisit.error;
-
-    const siteVisitFields = {
-      scheduled_date: '2026-11-17',
-      status: 'completed',
-      visit_notes: pathSeekerSiteVisit27ReportText(),
-      completed_at: '2026-11-17 00:00:00',
-      updated_at: new Date().toISOString()
-    };
-    if(siteVisit.data){
-      const updatedVisit = await supabaseClient.from('site_visits').update(siteVisitFields)
-        .eq('id', siteVisit.data.id).select('id').maybeSingle();
-      if(updatedVisit.error) throw updatedVisit.error;
-      if(!updatedVisit.data) throw new Error('Supabase did not confirm the existing site visit update.');
-    } else {
-      const insertedVisit = await supabaseClient.from('site_visits').insert({
-        booking_id: booking.id,
-        staff_id: null,
-        ...siteVisitFields
-      }).select('id').maybeSingle();
-      if(insertedVisit.error){
-        if(insertedVisit.error.code !== '23505') throw insertedVisit.error;
-        const concurrentVisit = await supabaseClient.from('site_visits').select('id')
-          .eq('booking_id', booking.id).maybeSingle();
-        if(concurrentVisit.error) throw concurrentVisit.error;
-        if(!concurrentVisit.data) throw insertedVisit.error;
-        const updatedVisit = await supabaseClient.from('site_visits').update(siteVisitFields)
-          .eq('id', concurrentVisit.data.id).select('id').maybeSingle();
-        if(updatedVisit.error) throw updatedVisit.error;
-        if(!updatedVisit.data) throw new Error('Supabase did not confirm the concurrent site visit update.');
-      }
-      if(!insertedVisit.error && !insertedVisit.data) throw new Error('Supabase did not confirm the site visit insert.');
-    }
-    setPathSeekerSiteVisit27SaveStatus('saved');
-  } catch(syncErr){
-    console.error('Path Seeker Site Visit 27 sync failed:', syncErr);
+  } catch(readErr){
+    console.error('Path Seeker Site Visit 27 read failed:', readErr);
     setPathSeekerSiteVisit27SaveStatus('error');
   }
 }
-window.syncPathSeekerSiteVisit27 = syncPathSeekerSiteVisit27;
+window.loadPathSeekerSiteVisit27 = loadPathSeekerSiteVisit27;
+
+async function publishPathSeekerSiteVisit27(){
+  const status = document.getElementById('rmaSiteVisit27PublishStatus') ||
+    document.getElementById('rmaEngineerSiteVisit27Status');
+  if(status) status.textContent = 'Saving the report securely…';
+  try{
+    const {data, error} = await supabaseClient.functions.invoke('pathseeker-site-visit', {
+      body: {action: 'publish_visit_27'}
+    });
+    if(error) throw new Error(await pathSeekerFunctionErrorMessage(error));
+    if(data?.saved !== true) throw new Error(data?.error || 'Supabase did not confirm the report save.');
+    setPathSeekerSiteVisit27SaveStatus('saved');
+    if(status) status.textContent = 'Report saved and confirmed.';
+    window.toast36?.('Pathseeker 17 November site visit report saved.','success');
+  }catch(saveErr){
+    const message = saveErr?.message || 'Unknown Supabase error.';
+    if(status) status.textContent = 'Report was not saved: ' + message;
+    setPathSeekerSiteVisit27SaveStatus('error');
+    window.toast36?.('Report save failed: ' + message,'error');
+  }
+}
+window.publishPathSeekerSiteVisit27 = publishPathSeekerSiteVisit27;
 
 function init41(){
-  syncPathSeekerSiteVisit26();
   patchAdminCards41();
   const row=document.getElementById('psV36LatestStatus');
   if(row)getCurrentUser41().then(u=>u&&renderLatestStatus41(row,u.id));
@@ -5773,7 +5696,7 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     show('dashboard');
   }
   var old=window.loadPathSeeker;
-  if(old&&!window.rmaV63Wrapped){window.rmaV63Wrapped=true;window.loadPathSeeker=async function(user){await old(user);if(typeof window.syncPathSeekerSiteVisit27==='function')await window.syncPathSeekerSiteVisit27(user?.id);setTimeout(build,50)}}
+  if(old&&!window.rmaV63Wrapped){window.rmaV63Wrapped=true;window.loadPathSeeker=async function(user){await old(user);if(typeof window.loadPathSeekerSiteVisit27==='function')await window.loadPathSeekerSiteVisit27(user?.id);setTimeout(build,50)}}
   var timer=setInterval(function(){var r=document.getElementById('rmaPathSeekerPortal');if(r&&!r.classList.contains('hidden'))build()},250);setTimeout(function(){clearInterval(timer)},120000);
 })();
 </script>
@@ -9729,42 +9652,20 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   async function adminSaveReportRecord(id, fileUrl, filePath, title){
     try {
-      const bRes = await supabaseClient.from('bookings').select('*').eq('id', id).maybeSingle();
-      if(bRes.error || !bRes.data) throw new Error('Booking record not found.');
-      const b = bRes.data;
-
-      // Insert into site_visit_reports
-      await supabaseClient.from('site_visit_reports').insert({
-        booking_id: id,
-        request_id: b.request_id,
-        client_user_id: b.client_user_id || null,
-        title: title || 'Site Visit Inspection Report',
-        engineer_name: b.engineer_name || 'RMA Engineer',
-        observations: b.site_observations || '',
-        file_path: filePath || null,
-        file_url: fileUrl
-      });
-
-      // Update booking
-      await supabaseClient.from('bookings').update({
-        report_url: fileUrl,
-        report_path: filePath || null
-      }).eq('id', id);
-
-      // Log status history
-      try {
-        await supabaseClient.from('status_history').insert({
+      const {data, error} = await supabaseClient.functions.invoke('pathseeker-site-visit', {
+        body: {
+          action: 'save_uploaded_report',
           booking_id: id,
-          request_id: b.request_id,
-          previous_status: b.status,
-          new_status: b.status,
-          changed_by: 'RMA Admin',
-          remarks: `Report document uploaded: ${title}`
-        });
-      } catch(shErr){ console.warn('status_history warning:', shErr); }
+          file_url: fileUrl,
+          file_path: filePath || null,
+          title: title || 'Site Visit Inspection Report'
+        }
+      });
+      if(error) throw new Error(await window.pathSeekerFunctionErrorMessage(error));
+      if(data?.saved !== true || !data.booking) throw new Error(data?.error || 'Supabase did not confirm the report save.');
 
       // Notify client that report is available
-      await window.notifyClientReportAvailable?.(b, title);
+      await window.notifyClientReportAvailable?.(data.booking, title);
 
       window.toast36?.('Report document uploaded successfully and associated with booking. Client notified.','success');
       await loadRMAAdminSiteVisitRequests();
@@ -9902,7 +9803,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       try { await supabaseClient.from('appointments').delete().eq('booking_id', id); } catch(e){}
       try { await supabaseClient.from('status_history').delete().eq('booking_id', id); } catch(e){}
       try { await supabaseClient.from('notification_logs').delete().eq('booking_id', id); } catch(e){}
-      try { await supabaseClient.from('site_visit_reports').delete().eq('booking_id', id); } catch(e){}
       try { await supabaseClient.from('feedback').delete().eq('booking_id', id); } catch(e){}
       try { await supabaseClient.from('client_notifications').delete().eq('booking_id', id); } catch(e){}
       try { await supabaseClient.from('site_visit_reviews').delete().eq('booking_id', id); } catch(e){}
