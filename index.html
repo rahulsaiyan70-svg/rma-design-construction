@@ -5298,8 +5298,15 @@ async function syncPathSeekerSiteVisit27(userId){
         }),
         site_observations: report
       }).select('id').maybeSingle();
-      if(newBooking.error) throw newBooking.error;
-      bookingId = newBooking.data?.id;
+      if(newBooking.error){
+        if(newBooking.error.code !== '23505') throw newBooking.error;
+        const duplicateBooking = await supabaseClient.from('bookings').select('id')
+          .eq('request_id', reqId).maybeSingle();
+        if(duplicateBooking.error) throw duplicateBooking.error;
+        bookingId = duplicateBooking.data?.id;
+      } else {
+        bookingId = newBooking.data?.id;
+      }
     }
 
     if(!bookingId) throw new Error('Booking record for site visit 27 could not be resolved.');
@@ -5317,7 +5324,13 @@ async function syncPathSeekerSiteVisit27(userId){
         observations: pathSeekerSiteVisit27ReportText(),
         file_url: 'data:text/plain;charset=utf-8,' + encodeURIComponent(pathSeekerSiteVisit27ReportText())
       });
-      if(insertedReport.error) throw insertedReport.error;
+      if(insertedReport.error){
+        if(insertedReport.error.code !== '23505') throw insertedReport.error;
+        const duplicateReport = await supabaseClient.from('site_visit_reports').select('id')
+          .eq('request_id', reqId).maybeSingle();
+        if(duplicateReport.error) throw duplicateReport.error;
+        if(!duplicateReport.data) throw insertedReport.error;
+      }
     }
   } catch(syncErr){
     console.error('Path Seeker Site Visit 27 sync failed:', syncErr);

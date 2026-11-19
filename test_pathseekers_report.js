@@ -6,6 +6,7 @@ const vm = require('vm');
 console.log('=== Starting Pathseekers School Site Visit Reports & Photo Array Isolation Test Suite ===\n');
 
 const htmlContent = fs.readFileSync('./index.html', 'utf8');
+const visit27Migration = fs.readFileSync('./supabase/migrations/20261119000000_pathseeker_visit_27_unique_ids.sql', 'utf8');
 
 // 1. Verify 10 October Report Title & Metadata
 console.log('[TEST 1] Verifying 10 October 2026 Site Visit Report...');
@@ -108,6 +109,11 @@ assert(htmlContent.includes('everything was satisfactory up to the date of inspe
 assert(htmlContent.includes('RMA-SV-PSIS-27'), 'Missing stable request ID for duplicate prevention');
 assert(htmlContent.includes(".from('site_visit_reports').select('id')"), 'Missing existing-report check before report insertion');
 assert(htmlContent.includes(".from('site_visit_reports').insert({"), 'Missing persistent Supabase report insertion');
+assert(visit27Migration.includes('idx_bookings_psis_sv27_request_id'), 'Missing booking uniqueness index for Site Visit No. 27');
+assert(visit27Migration.includes('idx_site_visit_reports_psis_sv27_request_id'), 'Missing report uniqueness index for Site Visit No. 27');
+assert((visit27Migration.match(/WHERE request_id = 'RMA-SV-PSIS-27'/g) || []).length === 2, 'Visit 27 uniqueness indexes must be scoped to its stable request ID');
+assert(htmlContent.includes("newBooking.error.code !== '23505'"), 'Missing booking conflict recheck after a concurrent insert');
+assert(htmlContent.includes("insertedReport.error.code !== '23505'"), 'Missing report conflict recheck after a concurrent insert');
 assert(htmlContent.includes('psV63DownloadReportNov17'), 'Missing 17 November report download control');
 assert(htmlContent.includes('syncPathSeekerSiteVisit27'), 'Missing Site Visit No. 27 synchronization');
 console.log('✔ TEST 7c PASSED: Site Visit No. 27 content and persistence path verified.\n');
