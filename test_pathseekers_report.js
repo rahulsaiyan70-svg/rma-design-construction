@@ -6,6 +6,7 @@ const vm = require('vm');
 console.log('=== Starting Pathseekers School Site Visit Reports & Photo Array Isolation Test Suite ===\n');
 
 const htmlContent = fs.readFileSync('./index.html', 'utf8');
+const visit27Migration = fs.readFileSync('./supabase/migrations/20261119000000_pathseeker_visit_27_unique_ids.sql', 'utf8');
 
 // 1. Verify 10 October Report Title & Metadata
 console.log('[TEST 1] Verifying 10 October 2026 Site Visit Report...');
@@ -71,11 +72,12 @@ assert(htmlContent.includes('adminRemovePhoto'), 'Missing adminRemovePhoto funct
 assert(htmlContent.includes('adminSaveOctVisitPhotos'), 'Missing adminSaveOctVisitPhotos function');
 console.log('✔ TEST 6 PASSED: Admin Photo Manager functions verified.\n');
 
-// 7. Verify Completed Visits Count & October Visits Counter
-console.log('[TEST 7] Verifying Completed Visit Count (26) & October Counter (3 of 3)...');
-assert(htmlContent.includes('3 of 3 used') || htmlContent.includes('3 / 3'), 'Missing 3 of 3 used counter status');
-assert(htmlContent.includes('26'), 'Missing total completed visit count of 26');
-console.log('✔ TEST 7 PASSED: Completed visits count (26) & October counter (3 of 3) verified.\n');
+// 7. Verify Completed Visits Count & November Visits Counter
+console.log('[TEST 7] Verifying Completed Visit Count (27) & November Counter (1 of 3)...');
+assert(htmlContent.includes('1 of 3 completed') && htmlContent.includes('1 / 3'), 'Missing November 1 of 3 completed counter');
+assert(htmlContent.includes('TOTAL COMPLETED VISITS</span><strong>27</strong>'), 'Missing dashboard total completed visit count of 27');
+assert(htmlContent.includes('Total completed site visits</b><span>27</span>'), 'Missing Site Visits total completed count of 27');
+console.log('✔ TEST 7 PASSED: Completed visits count (27) & November counter (1 of 3) verified.\n');
 
 // 7b. Verify Site Visit No. 26 Report Title, Metadata & Content
 console.log('[TEST 7b] Verifying Site Visit No. 26 Report & Detailed Sections...');
@@ -94,6 +96,42 @@ assert(htmlContent.includes('FINAL REPORT / CLIENT-FACING SUMMARY'), 'Missing fi
 assert(htmlContent.includes('psV63DownloadReportOct28'), 'Missing download button for Site Visit No. 26');
 assert(htmlContent.includes('syncPathSeekerSiteVisit26'), 'Missing Supabase synchronization function for Site Visit No. 26');
 console.log('✔ TEST 7b PASSED: Site Visit No. 26 verified successfully.\n');
+
+// 7c. Verify the 17 November 2026 Site Visit No. 27 report and persistence path
+console.log('[TEST 7c] Verifying 17 November Site Visit No. 27...');
+assert(htmlContent.includes('Site Visit No. 27 — Construction Progress Inspection'), 'Missing Site Visit No. 27 report title');
+assert(htmlContent.includes('Tuesday, 17 November 2026'), 'Missing latest visit date');
+assert(htmlContent.includes('Shri Nimrandeep Singh Ji — Representative of the School.'), 'Missing school representative');
+assert(htmlContent.includes('Rahul Bhatti — Engineer, RMA Design and Construction.'), 'Missing RMA engineer');
+assert(htmlContent.includes('Construction work up to a height of 8 feet had already been completed.'), 'Missing 8-foot construction progress observation');
+assert(htmlContent.includes('Column filling above the 8-foot level was in progress.'), 'Missing column-filling observation');
+assert(htmlContent.includes('everything was satisfactory up to the date of inspection.'), 'Missing engineer remarks');
+assert(htmlContent.includes('RMA-SV-PSIS-27'), 'Missing stable request ID for duplicate prevention');
+const visit27Sync = htmlContent.slice(
+  htmlContent.indexOf('async function syncPathSeekerSiteVisit27'),
+  htmlContent.indexOf('window.syncPathSeekerSiteVisit27 = syncPathSeekerSiteVisit27;')
+);
+assert(visit27Sync.includes(".from('site_visits').select('id')"), 'Missing site_visits lookup by booking ID');
+assert(visit27Sync.includes(".from('site_visits').update(siteVisitFields)"), 'Missing update for an existing site visit');
+assert(visit27Sync.includes(".from('site_visits').insert({"), 'Missing insertion into the existing site_visits table');
+assert(visit27Sync.includes("scheduled_date: '2026-11-17'"), 'Missing existing site_visits scheduled_date column');
+assert(visit27Sync.includes("status: 'completed'"), 'Missing completed site_visits status');
+assert(visit27Sync.includes('visit_notes: pathSeekerSiteVisit27ReportText()'), 'Missing report content in site_visits.visit_notes');
+assert(visit27Sync.includes("completed_at: '2026-11-17 00:00:00'"), 'Missing site_visits.completed_at value');
+assert(visit27Sync.includes('staff_id: null'), 'New site visit must not assign an unverified staff profile ID');
+assert(!visit27Sync.slice(visit27Sync.indexOf('const siteVisitFields'), visit27Sync.indexOf('if(siteVisit.data)')).includes('staff_id'), 'Existing staff attribution must not be overwritten');
+assert(visit27Sync.includes('booking.client_user_id !== userId'), 'Stable booking must belong to the authenticated client');
+assert(!visit27Sync.includes('site_visit_reports'), 'Pathseeker visit must not write to site_visit_reports');
+assert(htmlContent.includes('The report is shown here, but its Supabase save could not be confirmed.'), 'Failed database save must be visible in the report card');
+assert(htmlContent.includes('Report saved to the Supabase site visit record.'), 'Report card must distinguish confirmed persistence');
+assert(visit27Migration.includes('idx_bookings_psis_sv27_request_id'), 'Missing booking uniqueness index for Site Visit No. 27');
+assert(!visit27Migration.includes('site_visit_reports'), 'Visit migration must not reference site_visit_reports');
+assert((visit27Migration.match(/WHERE request_id = 'RMA-SV-PSIS-27'/g) || []).length === 1, 'Booking uniqueness index must be scoped to the stable visit 27 ID');
+assert(htmlContent.includes("newBooking.error.code !== '23505'"), 'Missing booking conflict recheck after a concurrent insert');
+assert(htmlContent.includes("insertedVisit.error.code !== '23505'"), 'Missing site_visits conflict recovery after a concurrent insert');
+assert(htmlContent.includes('psV63DownloadReportNov17'), 'Missing 17 November report download control');
+assert(htmlContent.includes('syncPathSeekerSiteVisit27'), 'Missing Site Visit No. 27 synchronization');
+console.log('✔ TEST 7c PASSED: Site Visit No. 27 content and persistence path verified.\n');
 
 // 8. Regression Test: Verify JS Photo Array Isolation Logic
 console.log('[TEST 8] Verifying Photo Array Isolation via Code Execution...');

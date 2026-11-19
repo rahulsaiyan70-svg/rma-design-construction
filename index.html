@@ -5239,6 +5239,143 @@ async function syncPathSeekerSiteVisit26(){
 }
 window.syncPathSeekerSiteVisit26 = syncPathSeekerSiteVisit26;
 
+function pathSeekerSiteVisit27ReportText(){
+  return [
+    'RMA DESIGN & CONSTRUCTION',
+    'SITE VISIT REPORT — 17 NOVEMBER 2026',
+    'Project: Pathseeker International School',
+    'Date: Tuesday, 17 November 2026',
+    'Status: Completed',
+    'Site Visit Number: 27',
+    '',
+    'PERSONS PRESENT:',
+    '- Shri Nimrandeep Singh Ji — Representative of the School.',
+    '- Rahul Bhatti — Engineer, RMA Design and Construction.',
+    '',
+    'SITE OBSERVATIONS:',
+    'During the visit, the construction work was jointly inspected by the school representative and the engineer.',
+    '- Construction work up to a height of 8 feet had already been completed.',
+    '- Column filling above the 8-foot level was in progress.',
+    '- The progress and quality of the ongoing construction work were inspected.',
+    '',
+    "ENGINEER'S REMARKS:",
+    'The construction work observed during the visit was found to be satisfactory. The work was progressing properly, and everything was satisfactory up to the date of inspection.'
+  ].join('\n');
+}
+window.pathSeekerSiteVisit27ReportText = pathSeekerSiteVisit27ReportText;
+
+function setPathSeekerSiteVisit27SaveStatus(status){
+  const messages = {
+    pending: 'Checking the Supabase visit record…',
+    saved: 'Report saved to the Supabase site visit record.',
+    error: 'The report is shown here, but its Supabase save could not be confirmed. Please contact RMA.'
+  };
+  window.pathSeekerSiteVisit27SaveStatus = status;
+  const element = document.getElementById('psSiteVisit27SaveStatus');
+  if(element){
+    element.textContent = messages[status];
+    element.setAttribute('role', status === 'error' ? 'alert' : 'status');
+    element.style.color = status === 'error' ? '#9b1c1c' : '#31564a';
+  }
+}
+
+async function syncPathSeekerSiteVisit27(userId){
+  const reqId = 'RMA-SV-PSIS-27';
+  setPathSeekerSiteVisit27SaveStatus('pending');
+  try {
+    if(!userId) throw new Error('Authenticated Path Seeker user ID is required.');
+    const existing = await supabaseClient.from('bookings')
+      .select('id,client_user_id,client_name,service_type').eq('request_id', reqId).maybeSingle();
+    if(existing.error) throw existing.error;
+
+    let booking = existing.data;
+    if(!booking){
+      const report = pathSeekerSiteVisit27ReportText();
+      const newBooking = await supabaseClient.from('bookings').insert({
+        request_id: reqId,
+        client_user_id: userId,
+        client_name: 'Path Seeker International School',
+        service_type: 'Path Seeker Site Visit Request',
+        status: 'completed',
+        scheduled_date: '2026-11-17',
+        confirmed_date: '2026-11-17',
+        completion_date: '2026-11-17T00:00:00+05:30',
+        completed_by: 'Rahul Bhatti',
+        engineer_name: 'Rahul Bhatti',
+        email: V41_CLIENT_EMAIL,
+        mobile: '9419118424',
+        project_address: 'Ramgarh, Jammu & Kashmir, India',
+        visit_scope: JSON.stringify({
+          site_visit_number: 27,
+          requested_date: '2026-11-17',
+          scheduled_date: '2026-11-17',
+          reason: 'Construction progress inspection.',
+          source: 'Path Seeker Client Portal'
+        }),
+        site_observations: report
+      }).select('id,client_user_id,client_name,service_type').maybeSingle();
+      if(newBooking.error){
+        if(newBooking.error.code !== '23505') throw newBooking.error;
+        const duplicateBooking = await supabaseClient.from('bookings')
+          .select('id,client_user_id,client_name,service_type')
+          .eq('request_id', reqId).maybeSingle();
+        if(duplicateBooking.error) throw duplicateBooking.error;
+        if(!duplicateBooking.data) throw newBooking.error;
+        booking = duplicateBooking.data;
+      } else {
+        booking = newBooking.data;
+      }
+    }
+
+    if(!booking?.id || !String(booking.client_name||'').toLowerCase().includes('path seeker') ||
+      !String(booking.service_type||'').toLowerCase().includes('site visit') ||
+      booking.client_user_id !== userId){
+      throw new Error('Stable request ID did not resolve to the expected Pathseeker site-visit booking.');
+    }
+
+    const siteVisit = await supabaseClient.from('site_visits').select('id')
+      .eq('booking_id', booking.id).maybeSingle();
+    if(siteVisit.error) throw siteVisit.error;
+
+    const siteVisitFields = {
+      scheduled_date: '2026-11-17',
+      status: 'completed',
+      visit_notes: pathSeekerSiteVisit27ReportText(),
+      completed_at: '2026-11-17 00:00:00',
+      updated_at: new Date().toISOString()
+    };
+    if(siteVisit.data){
+      const updatedVisit = await supabaseClient.from('site_visits').update(siteVisitFields)
+        .eq('id', siteVisit.data.id).select('id').maybeSingle();
+      if(updatedVisit.error) throw updatedVisit.error;
+      if(!updatedVisit.data) throw new Error('Supabase did not confirm the existing site visit update.');
+    } else {
+      const insertedVisit = await supabaseClient.from('site_visits').insert({
+        booking_id: booking.id,
+        staff_id: null,
+        ...siteVisitFields
+      }).select('id').maybeSingle();
+      if(insertedVisit.error){
+        if(insertedVisit.error.code !== '23505') throw insertedVisit.error;
+        const concurrentVisit = await supabaseClient.from('site_visits').select('id')
+          .eq('booking_id', booking.id).maybeSingle();
+        if(concurrentVisit.error) throw concurrentVisit.error;
+        if(!concurrentVisit.data) throw insertedVisit.error;
+        const updatedVisit = await supabaseClient.from('site_visits').update(siteVisitFields)
+          .eq('id', concurrentVisit.data.id).select('id').maybeSingle();
+        if(updatedVisit.error) throw updatedVisit.error;
+        if(!updatedVisit.data) throw new Error('Supabase did not confirm the concurrent site visit update.');
+      }
+      if(!insertedVisit.error && !insertedVisit.data) throw new Error('Supabase did not confirm the site visit insert.');
+    }
+    setPathSeekerSiteVisit27SaveStatus('saved');
+  } catch(syncErr){
+    console.error('Path Seeker Site Visit 27 sync failed:', syncErr);
+    setPathSeekerSiteVisit27SaveStatus('error');
+  }
+}
+window.syncPathSeekerSiteVisit27 = syncPathSeekerSiteVisit27;
+
 function init41(){
   syncPathSeekerSiteVisit26();
   patchAdminCards41();
@@ -5304,8 +5441,8 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     /* Dashboard — only dashboard content is visible initially. */
     var dash=makeView(main,'dashboard','Welcome to Your Project Portal','Your project information, drawings, site visits and RMA communication are available from the menu.');dash.classList.add('active');
     var welcome=document.createElement('div');welcome.className='ps-v62-welcome';welcome.innerHTML='<div><h3>Path Seeker International School</h3><p>Project ID: <b>PSIS 261</b> · Vijaypur, Ramgarh</p></div><div class="ps-v62-status"><span class="ps-v62-pill">ACTIVE CLIENT</span><span class="ps-v62-pill">G+2 SCHOOL PROJECT</span></div>';dash.appendChild(welcome);
-    var stats=document.createElement('div');stats.className='ps-v62-dashboard-grid';stats.innerHTML='<div class="ps-v62-stat"><span class="label">SITE VISITS THIS MONTH</span><strong id="psV63StatMonthly">3 / 3</strong></div><div class="ps-v62-stat"><span class="label">TOTAL COMPLETED VISITS</span><strong>26</strong></div><div class="ps-v62-stat"><span class="label">PROJECT STATUS</span><strong>Active</strong></div>';dash.appendChild(stats);
-    var watch=document.createElement('div');watch.className='ps-v62-watch';watch.innerHTML='<div class="ps-v62-watch-head"><div><div class="ps-v62-watch-title">Site Visit No. 26 · 28 October 2026 · 2:30 PM</div><div class="muted" style="font-size:11px">Latest Site Visit Completed</div></div><span class="ps-v62-pill">COMPLETED</span></div><div class="ps-v62-countdown" id="psV63Countdown"></div>';dash.appendChild(watch);countdown(watch.querySelector('#psV63Countdown'));
+    var stats=document.createElement('div');stats.className='ps-v62-dashboard-grid';stats.innerHTML='<div class="ps-v62-stat"><span class="label">SITE VISITS THIS MONTH</span><strong id="psV63StatMonthly">1 / 3</strong></div><div class="ps-v62-stat"><span class="label">TOTAL COMPLETED VISITS</span><strong>27</strong></div><div class="ps-v62-stat"><span class="label">PROJECT STATUS</span><strong>Active</strong></div>';dash.appendChild(stats);
+    var watch=document.createElement('div');watch.className='ps-v62-watch';watch.innerHTML='<div class="ps-v62-watch-head"><div><div class="ps-v62-watch-title">Site Visit No. 27 · Tuesday, 17 November 2026</div><div class="muted" style="font-size:11px">Latest Site Visit Completed</div></div><span class="ps-v62-pill">COMPLETED</span></div><div class="ps-v62-countdown" id="psV63Countdown"></div>';dash.appendChild(watch);countdown(watch.querySelector('#psV63Countdown'));
     var quick=document.createElement('div');quick.className='ps-v63-quick-grid';quick.innerHTML=[
       ['project','▣','Project Information','View your project profile and scope.'],
       ['docs','▤','Drawings & Documents','View or download RMA drawings.'],
@@ -5318,15 +5455,46 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     var project=makeView(main,'project','Project Information','Complete information about your Path Seeker International School project.');
     if(top){
       var limit=top.querySelector('.ps-v33-limit'); if(limit)limit.remove();
+      var totalVisits=top.querySelector('#psTotalVisits'); if(totalVisits)totalVisits.textContent='27';
       var requestBtn=top.querySelector('button[onclick*="togglePathSeekerVisitRequest"]'); if(requestBtn)requestBtn.remove();
       project.appendChild(top);
     }
 
     /* Site Visits — request + history + report, and nothing else. */
     var visit=makeView(main,'visit','Site Visits','View completed visits, upcoming appointments and request a new site visit.');
-    var visitIntro=document.createElement('div');visitIntro.className='ps-v63-visit-summary';visitIntro.innerHTML='<div><b>October site visits</b><span>3 of 3 used</span></div><div><b>Total completed site visits</b><span>26</span></div><button type="button" class="btn dark" onclick="togglePathSeekerVisitRequest()">Book Site Visit</button>';visit.appendChild(visitIntro);
+    var visitIntro=document.createElement('div');visitIntro.className='ps-v63-visit-summary';visitIntro.innerHTML='<div><b>November site visits</b><span>1 of 3 completed</span></div><div><b>Total completed site visits</b><span>27</span></div><button type="button" class="btn dark" onclick="togglePathSeekerVisitRequest()">Book Site Visit</button>';visit.appendChild(visitIntro);
     if(req)visit.appendChild(req);
     if(history)visit.appendChild(history);
+
+    /* Site Visit No. 27 Card */
+    var reportNov17=document.createElement('div');reportNov17.className='ps-v62-report';reportNov17.style.marginBottom='18px';
+    reportNov17.innerHTML='<h3>Site Visit No. 27 — Construction Progress Inspection <span class="ps-v62-pill" style="float:right">COMPLETED</span></h3>' +
+      '<p><b>PROJECT:</b> Pathseeker International School &nbsp; | &nbsp; <b>DATE:</b> Tuesday, 17 November 2026<br>' +
+      '<b>SITE VISIT NUMBER:</b> 27 &nbsp; | &nbsp; <b>STATUS:</b> Completed &nbsp; | &nbsp; <b>MONTH:</b> November 2026</p>' +
+      '<p style="margin-top:14px"><b>PERSONS PRESENT</b></p>' +
+      '<ul style="margin:0 0 12px 18px;padding:0;line-height:1.6;font-size:13px;color:#2c3e50">' +
+        '<li>Shri Nimrandeep Singh Ji — Representative of the School.</li>' +
+        '<li>Rahul Bhatti — Engineer, RMA Design and Construction.</li>' +
+      '</ul>' +
+      '<p style="margin-top:14px"><b>SITE OBSERVATIONS</b></p>' +
+      '<p style="margin:6px 0 10px;line-height:1.6;font-size:13px;color:#2c3e50">During the visit, the construction work was jointly inspected by the school representative and the engineer.</p>' +
+      '<ul style="margin:0 0 12px 18px;padding:0;line-height:1.6;font-size:13px;color:#2c3e50">' +
+        '<li>Construction work up to a height of 8 feet had already been completed.</li>' +
+        '<li>Column filling above the 8-foot level was in progress.</li>' +
+        '<li>The progress and quality of the ongoing construction work were inspected.</li>' +
+      '</ul>' +
+      '<p style="margin-top:14px"><b>ENGINEER\'S REMARKS</b></p>' +
+      '<p style="margin:6px 0 10px;line-height:1.6;font-size:13px;color:#2c3e50">The construction work observed during the visit was found to be satisfactory. The work was progressing properly, and everything was satisfactory up to the date of inspection.</p>' +
+      '<p id="psSiteVisit27SaveStatus" role="status" style="font-size:12px;color:#31564a" aria-live="polite">Database save status will appear after sign-in.</p>' +
+      '<div class="ps-v62-report-actions" style="margin-top:18px"><button class="btn outline" type="button" id="psV63DownloadReportNov17">Download 17 November Report</button></div>';
+    visit.appendChild(reportNov17);
+    if(window.pathSeekerSiteVisit27SaveStatus){
+      setPathSeekerSiteVisit27SaveStatus(window.pathSeekerSiteVisit27SaveStatus);
+    }
+    document.getElementById('psV63DownloadReportNov17').onclick=function(){
+      var reportText=window.pathSeekerSiteVisit27ReportText();
+      var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([reportText],{type:'text/plain'}));a.download='RMA-Path-Seeker-Site-Visit-Report-2026-11-17.txt';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},500);
+    };
 
     /* Site Visit No. 26 Card */
     var reportOct28=document.createElement('div');reportOct28.className='ps-v62-report';reportOct28.style.marginBottom='18px';
@@ -5605,7 +5773,7 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
     show('dashboard');
   }
   var old=window.loadPathSeeker;
-  if(old&&!window.rmaV63Wrapped){window.rmaV63Wrapped=true;window.loadPathSeeker=async function(user){await old(user);setTimeout(build,50)}}
+  if(old&&!window.rmaV63Wrapped){window.rmaV63Wrapped=true;window.loadPathSeeker=async function(user){await old(user);if(typeof window.syncPathSeekerSiteVisit27==='function')await window.syncPathSeekerSiteVisit27(user?.id);setTimeout(build,50)}}
   var timer=setInterval(function(){var r=document.getElementById('rmaPathSeekerPortal');if(r&&!r.classList.contains('hidden'))build()},250);setTimeout(function(){clearInterval(timer)},120000);
 })();
 </script>
@@ -5836,7 +6004,7 @@ setInterval(()=>{patchAdminCards41();const row=document.getElementById('psV36Lat
 'use strict';
 var TARGET=new Date('2026-10-24T11:00:00+05:30').getTime(),timer=null;
 function root(){return document.getElementById('rmaPathSeekerPortal')||document;}
-function counter(){var r=root();['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent='3 / 3';});if(r.querySelectorAll)r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){if(/used/i.test(e.textContent||''))e.textContent='3 of 3 used';});}
+function counter(){var r=root();['psV63StatMonthly','psMonthlyCounter'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent='1 / 3';});if(r.querySelectorAll)r.querySelectorAll('.ps-v63-visit-summary span').forEach(function(e){if(/completed|used/i.test(e.textContent||''))e.textContent='1 of 3 completed';});}
 function watch(){var e=document.getElementById('psV63Countdown');if(!e)return false;var total=Math.max(0,Math.floor((TARGET-Date.now())/1000)),d=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60),s=total%60;e.innerHTML='<div class="ps-v62-time"><strong>'+String(d).padStart(2,'0')+'</strong><small>Days</small></div><div class="ps-v62-time"><strong>'+String(h).padStart(2,'0')+'</strong><small>Hours</small></div><div class="ps-v62-time"><strong>'+String(m).padStart(2,'0')+'</strong><small>Minutes</small></div><div class="ps-v62-time"><strong>'+String(s).padStart(2,'0')+'</strong><small>Seconds</small></div>';return true;}
 function start(){counter();watch();if(timer)clearInterval(timer);timer=setInterval(function(){counter();watch();},1000);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
